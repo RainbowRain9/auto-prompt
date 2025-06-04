@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9DAEB6D5-AA9D-45AA-A85E-C79C3768CC7E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console.Service", "src\Console.Service\Console.Service.csproj", "{FF42A437-883E-4F9A-931E-B453A918CBDD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1C33BA8F-8F81-4AE5-A328-412C75E45014}"
+	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		.gitignore = .gitignore
+		docker-compose.yaml = docker-compose.yaml
+		LICENSE = LICENSE
+		README.md = README.md
+		README.zh-CN.md = README.zh-CN.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FF42A437-883E-4F9A-931E-B453A918CBDD} = {9DAEB6D5-AA9D-45AA-A85E-C79C3768CC7E}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FF42A437-883E-4F9A-931E-B453A918CBDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF42A437-883E-4F9A-931E-B453A918CBDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF42A437-883E-4F9A-931E-B453A918CBDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF42A437-883E-4F9A-931E-B453A918CBDD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

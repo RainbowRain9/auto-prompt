@@ -56,6 +56,13 @@ AI Prompt Optimization Platform is a professional prompt engineering tool design
 - **History Records**: Save optimization history and support version comparison
 - **Export Functionality**: Support exporting optimization results in multiple formats
 
+### 🌐 Multi-Language Support
+
+- **Language Switching**: Support Chinese and English interface switching
+- **Real-Time Translation**: Instant language switching without page refresh
+- **Localized Content**: Complete localization of all interface elements
+- **Browser Detection**: Automatic language detection based on browser settings
+
 ## 🛠️ Tech Stack
 
 ### Backend Technologies
@@ -83,6 +90,7 @@ AI Prompt Optimization Platform is a professional prompt engineering tool design
 - **Data Storage**: IndexedDB (client-side caching)
 - **Rich Text Editing**: TipTap editor
 - **Code Highlighting**: Prism.js + React Syntax Highlighter
+- **Internationalization**: React i18next for multi-language support
 
 ## 📦 Deployment Guide
 
@@ -212,6 +220,13 @@ auto-prompt/
 2. Use the search function to find specific types of templates
 3. Like and favorite interesting templates
 4. Share your high-quality templates with the community
+
+### 4. Language Switching
+
+1. Click the language switcher button (🌐) in the top-right corner or sidebar
+2. Select your preferred language (Chinese/English)
+3. The interface will switch languages instantly without page refresh
+4. Your language preference will be saved for future visits
 
 ## 🤝 Contribution Guide
 

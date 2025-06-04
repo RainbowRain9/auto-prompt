@@ -1,0 +1,9 @@
+﻿services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    ports:
+      - 10426:8080
+    build:
+      context: .
+      dockerfile: src/Console.Service/Dockerfile
+

@@ -1,0 +1,53 @@
+GNU LESSER GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+
+Copyright (C) 2024 TokenAI Team. All rights reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+================================================================================
+
+AI 提示词优化平台 - 特殊许可条款
+
+本项目基于 LGPL v3 协议，并附加以下特殊条款：
+
+1. 商业使用权限
+   - ✅ 允许直接部署本项目用于商业用途
+   - ✅ 允许在企业内部使用和部署
+   - ✅ 允许基于本项目提供商业服务
+
+2. 源码修改限制
+   - ✅ 允许修改源码用于个人学习和研究
+   - ✅ 允许修改源码用于内部使用
+   - ❌ 禁止修改源码后重新打包进行商业分发
+   - ❌ 禁止基于修改后的源码创建衍生商业产品
+
+3. 分发要求
+   - 分发时必须保留原始版权声明
+   - 分发时必须包含本许可证文件
+   - 对源码的任何修改都必须明确标注
+
+4. 免责声明
+   本软件按"现状"提供，不提供任何明示或暗示的担保，包括但不限于
+   适销性、特定用途适用性和非侵权性的担保。在任何情况下，作者或
+   版权持有人都不对任何索赔、损害或其他责任负责。
+
+5. 联系方式
+   如需商业授权或有其他问题，请联系：
+   - 官方网站：https://token-ai.cn
+   - 项目地址：https://github.com/AIDotNet/auto-prompt
+
+================================================================================
+
+完整的 LGPL v3 协议文本请访问：https://www.gnu.org/licenses/lgpl-3.0.html 

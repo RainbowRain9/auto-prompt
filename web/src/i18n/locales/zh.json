@@ -1,0 +1,383 @@
+{
+  "nav": {
+    "home": "首页",
+    "dashboard": "仪表板",
+    "prompts": "提示词管理",
+    "workbench": "工作台",
+    "code": "代码生成",
+    "documentation": "文档",
+    "settings": "设置"
+  },
+  "common": {
+    "generate": "生成",
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "edit": "编辑",
+    "search": "搜索",
+    "filter": "筛选",
+    "export": "导出",
+    "import": "导入",
+    "loading": "加载中...",
+    "retry": "重试",
+    "close": "关闭",
+    "language": "语言",
+    "chinese": "中文",
+    "english": "English",
+    "switchToDark": "切换到暗黑主题",
+    "switchToLight": "切换到明亮主题"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "退出登录",
+    "username": "用户名",
+    "password": "密码",
+    "loginSuccess": "登录成功",
+    "loginFailed": "登录失败",
+    "pleaseLogin": "请先登录"
+  },
+  "workbench": {
+    "title": "提示词优化平台",
+    "run": "运行",
+    "model": "模型",
+    "loadingModels": "加载模型中...",
+    "searchOrSelectModel": "搜索或选择模型",
+    "systemPrompt": "系统提示词",
+    "systemPromptPlaceholder": "输入您的系统提示词",
+    "addUserMessage": "添加用户消息",
+    "addAssistantMessage": "添加助手消息",
+    "userMessageDefault": "输入你的问题",
+    "assistantMessageDefault": "输入你的回答",
+    "thinking": "思考中...",
+    "reasoningProcess": "推理过程",
+    "addToConversation": "添加到会话",
+    "fetchModelsError": "获取模型列表失败，使用默认模型",
+    "inputPrompt": "输入提示词",
+    "promptPlaceholder": "请输入需要优化的提示词...",
+    "requirements": "优化需求",
+    "requirementsPlaceholder": "描述您的具体需求和期望效果...",
+    "deepReasoning": "深度推理",
+    "enableDeepReasoning": "启用深度推理模式",
+    "optimizePrompt": "优化提示词",
+    "originalPrompt": "原始提示词",
+    "optimizedPrompt": "优化后提示词",
+    "saveAsTemplate": "保存为模板",
+    "templateName": "模板名称",
+    "templateDescription": "模板描述",
+    "templateTags": "标签"
+  },
+  "messageCard": {
+    "user": "用户",
+    "assistant": "助手",
+    "system": "系统",
+    "placeholder": "请输入内容...",
+    "parameterSettings": "参数设置",
+    "cancel": "取消",
+    "apply": "应用",
+    "enterValueFor": "请输入{{key}}的值"
+  },
+  "generatePrompt": {
+    "optimizePrompt": "优化提示词",
+    "title": "优化提示词",
+    "description": "请描述您的需求，我们将为您生成更有效的提示词。",
+    "inputPromptLabel": "需要优化的提示词：",
+    "requirementsLabel": "提示词要求：",
+    "enableDeepReasoning": "启用深度推理",
+    "deepReasoningDescription": "(更深层次的分析和优化)",
+    "cancel": "取消",
+    "generate": "生成",
+    "deepReasoningTitle": "深度推理中...",
+    "deepReasoningDescription2": "AI正在深入分析您的需求，进行多维度思考...",
+    "reasoningProcess": "推理过程：",
+    "deepReasoningInProgress": "正在深度分析中...",
+    "optimizingTitle": "正在优化提示词...",
+    "optimizingDescription": "AI正在为您生成更优质的提示词，请稍候...",
+    "optimizingWithReasoning": "AI已完成深度分析，正在生成优化后的提示词...",
+    "deepAnalysisComplete": "深度分析已完成 ✓",
+    "generatingProgress": "生成进度：",
+    "generating": "正在生成中...",
+    "deepReasoningProcessTitle": "深度推理过程",
+    "optimizationComplete": "优化完成",
+    "deepReasoningProcessDescription": "AI的深度思考和分析过程：",
+    "optimizedPromptDescription": "以下是为您优化后的提示词：",
+    "optimizedPromptLabel": "优化后的提示词：",
+    "viewReasoningProcess": "查看深度推理过程",
+    "backToPrompt": "返回查看提示词",
+    "regenerate": "重新生成",
+    "saveAsTemplate": "保存为模板",
+    "copyPrompt": "复制提示词",
+    "saveTemplateTitle": "保存为提示词模板",
+    "templateTitle": "模板标题",
+    "templateTitlePlaceholder": "为这个提示词模板起个名字",
+    "templateDescription": "模板描述",
+    "templateDescriptionPlaceholder": "简要描述这个模板的用途和特点",
+    "templateContent": "提示词内容",
+    "templateContentPlaceholder": "提示词内容",
+    "templateTags": "标签",
+    "templateTagsPlaceholder": "输入标签，用逗号分隔，如：优化,AI生成,工作",
+    "saveTemplate": "保存模板",
+    "promptRequired": "需要优化的提示词不能为空",
+    "generateFailed": "生成提示词失败，请重试",
+    "templateTitleRequired": "请输入模板标题",
+    "templateDescriptionRequired": "请输入模板描述",
+    "templateContentRequired": "提示词内容不能为空",
+    "templateSaveSuccess": "模板保存成功！",
+    "templateSaveFailed": "保存模板失败，请重试",
+    "copyReasoning": "复制推理过程",
+    "copyReasoningSuccess": "已复制推理过程到剪贴板",
+    "copyPromptSuccess": "已复制提示词到剪贴板"
+  },
+  "prompts": {
+    "title": "提示词管理",
+    "pageTitle": "提示词管理",
+    "pageDescription": "创建、管理和使用您的AI提示词模板，提高工作效率",
+    "searchPlaceholder": "搜索提示词...",
+    "refresh": "刷新",
+    "createPrompt": "创建提示词",
+    "editPrompt": "编辑提示词",
+    "deletePrompt": "删除提示词",
+    "toggleFavorite": "切换收藏",
+    "addFavorite": "添加收藏",
+    "removeFavorite": "取消收藏",
+    "shareToSquare": "分享到广场",
+    "cancelShare": "取消分享",
+    "copyContent": "复制内容",
+    "viewDetail": "查看详情",
+    "noPrompts": "暂无提示词，点击上方按钮创建第一个提示词",
+    "noSearchResults": "没有找到匹配的提示词",
+    "usageStats": "使用 {{count}} 次",
+    "createTime": "{{date}}",
+    "paginationText": "第 {{start}}-{{end}} 条，共 {{total}} 条",
+    "modal": {
+      "createTitle": "创建提示词",
+      "editTitle": "编辑提示词",
+      "titleLabel": "标题",
+      "titlePlaceholder": "输入提示词标题",
+      "titleRequired": "请输入提示词标题",
+      "descriptionLabel": "描述",
+      "descriptionPlaceholder": "简要描述这个提示词的用途",
+      "descriptionRequired": "请输入提示词描述",
+      "contentLabel": "提示词内容",
+      "contentPlaceholder": "输入提示词内容，可以使用 {变量名} 来定义变量",
+      "contentRequired": "请输入提示词内容",
+      "tagsLabel": "标签",
+      "tagsPlaceholder": "输入标签，用逗号分隔",
+      "createButton": "创建",
+      "updateButton": "更新"
+    },
+    "deleteConfirm": {
+      "title": "确认删除",
+      "content": "确定要删除提示词\"{{title}}\"吗？此操作不可恢复。",
+      "okText": "删除",
+      "cancelText": "取消"
+    },
+    "messages": {
+      "createSuccess": "提示词创建成功",
+      "createFailed": "创建失败",
+      "updateSuccess": "提示词更新成功",
+      "updateFailed": "更新失败",
+      "deleteSuccess": "删除成功",
+      "deleteFailed": "删除失败，请重试",
+      "copySuccess": "已复制到剪贴板",
+      "copyFailed": "复制失败",
+      "loadFailed": "加载失败，请检查网络连接",
+      "operationFailed": "操作失败，请重试",
+      "shareFailed": "操作失败",
+      "shareSuccess": "操作成功",
+      "saveFailed": "保存失败，请重试"
+    },
+    "myPrompts": "我的提示词",
+    "communityPrompts": "社区提示词",
+    "createTemplate": "创建模板",
+    "editTemplate": "编辑模板",
+    "templateTitle": "模板标题",
+    "templateContent": "模板内容",
+    "templateDescription": "模板描述",
+    "templateTags": "标签",
+    "popularity": "热度",
+    "createdAt": "创建时间",
+    "updatedAt": "更新时间",
+    "deleteConfirm": "确认删除此模板？",
+    "favorite": "收藏",
+    "unfavorite": "取消收藏",
+    "share": "分享",
+    "copy": "复制",
+    "copySuccess": "复制成功"
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "overview": "概览",
+    "statistics": "统计数据",
+    "totalPrompts": "总提示词数",
+    "optimizations": "优化次数",
+    "templates": "模板数量",
+    "recentActivity": "最近活动",
+    "popularTemplates": "热门模板"
+  },
+  "promptSquare": {
+    "title": "提示词广场",
+    "description": "发现和使用社区分享的优质提示词模板，按热度排名展示",
+    "searchPlaceholder": "搜索提示词标题、描述、标签或创建者...",
+    "sortBy": "排序：",
+    "sortOptions": {
+      "viewCount": "查看数",
+      "likeCount": "点赞数",
+      "shareTime": "分享时间",
+      "createdTime": "创建时间"
+    },
+    "sortOrder": {
+      "desc": "降序",
+      "asc": "升序"
+    },
+    "refresh": "刷新",
+    "hotBadge": "HOT",
+    "empty": "暂无分享的提示词模板",
+    "stats": {
+      "views": "{{count}} 次查看",
+      "likes": "{{count}} 次点赞",
+      "usage": "使用 {{count}} 次"
+    },
+    "actions": {
+      "copy": "复制内容",
+      "like": "点赞",
+      "unlike": "取消点赞",
+      "view": "查看详情"
+    },
+    "pagination": "第 {{start}}-{{end}} 条，共 {{total}} 条",
+    "messages": {
+      "loadFailed": "加载失败，请检查网络连接",
+      "copySuccess": "提示词内容已复制到剪贴板",
+      "copyFailed": "复制失败，请重试",
+      "operationFailed": "操作失败，请重试",
+      "likeSuccess": "点赞成功",
+      "unlikeSuccess": "取消点赞成功"
+    },
+    "tags": {
+      "more": "+{{count}}"
+    },
+    "sharedAt": "分享时间"
+  },
+  "home": {
+    "title": "AI 提示词优化平台",
+    "subtitle": "专业的AI提示词优化、调试和分享平台",
+    "getStarted": "开始使用",
+    "features": {
+      "title": "核心功能",
+      "subtitle": "为您提供全方位的提示词优化解决方案",
+      "optimization": {
+        "title": "智能优化",
+        "description": "基于先进的AI算法，自动分析和优化提示词结构"
+      },
+      "reasoning": {
+        "title": "深度推理",
+        "description": "提供多维度思考分析，深入理解用户需求"
+      },
+      "community": {
+        "title": "社区分享",
+        "description": "发现和分享优质提示词模板，与社区用户交流经验"
+      },
+      "debugging": {
+        "title": "可视化调试",
+        "description": "强大的调试环境，实时预览提示词效果"
+      }
+    },
+    "advantages": {
+      "title": "平台优势",
+      "subtitle": "简单易用的界面，强大的功能，为您提供最佳的使用体验",
+      "items": {
+        "easyToUse": {
+          "title": "简单易用",
+          "description": "直观的用户界面，快速上手使用"
+        },
+        "fastOptimization": {
+          "title": "快速优化",
+          "description": "智能算法快速分析和优化提示词"
+        },
+        "communitySharing": {
+          "title": "社区分享",
+          "description": "与其他用户分享和交流提示词经验"
+        },
+        "continuousImprovement": {
+          "title": "持续改进",
+          "description": "基于用户反馈不断优化平台功能"
+        }
+      }
+    },
+    "testimonials": {
+      "title": "用户评价",
+      "subtitle": "听听用户们怎么说，真实反馈见证产品价值",
+      "items": {
+        "zhang": {
+          "name": "张明",
+          "role": "内容创作者",
+          "company": "自媒体工作室",
+          "content": "这个平台帮助我优化了很多提示词，写作效率提升了不少，调试功能特别实用。"
+        },
+        "li": {
+          "name": "李小雨",
+          "role": "AI爱好者",
+          "company": "个人用户",
+          "content": "分享平台里有很多优质的提示词模板，帮助我快速找到了适合的提示词，非常方便。"
+        },
+        "wang": {
+          "name": "王开发",
+          "role": "程序员",
+          "company": "科技公司",
+          "content": "调试工具的可视化界面让优化过程变得直观易懂，大大提升了我的工作效率。"
+        }
+      }
+    },
+    "cta": {
+      "title": "准备开始优化您的提示词？",
+      "subtitle": "立即体验强大的提示词优化功能，让AI为您的工作赋能",
+      "startOptimizing": "开始优化",
+      "explorePlatform": "探索平台"
+    },
+    "footer": {
+      "brandTitle": "AI 提示词工作台",
+      "brandDescription": "让AI对话更智能，让创作更高效",
+      "links": {
+        "promptOptimization": "提示词优化",
+        "promptDebugging": "提示词调试",
+        "sharingPlatform": "分享平台"
+      },
+      "copyright": "© 2024 AI 提示词工作台. 保留所有权利."
+    },
+    "stats": {
+      "activeUsers": "活跃用户",
+      "optimizations": "优化次数",
+      "sharedTemplates": "分享模板",
+      "satisfaction": "满意度"
+    }
+  },
+  "promptDetail": {
+    "title": "提示词详情",
+    "anonymousUser": "匿名用户",
+    "sharedAt": "分享于",
+    "viewCount": "查看次数",
+    "likeCount": "点赞数",
+    "usageCount": "使用次数",
+    "liked": "已点赞",
+    "like": "点赞",
+    "copyContent": "复制内容",
+    "promptContent": "提示词内容",
+    "copyTooltips": {
+      "copy": "复制",
+      "copied": "已复制"
+    },
+    "likeSuccess": "点赞成功",
+    "unlikeSuccess": "取消点赞成功",
+    "copySuccess": "已复制到剪贴板",
+    "copyFailed": "复制失败",
+    "operationFailed": "操作失败",
+    "loadDetailFailed": "获取详情失败",
+    "notFound": "未找到提示词详情"
+  },
+  "errors": {
+    "networkError": "网络错误，请检查网络连接",
+    "serverError": "服务器错误，请稍后重试",
+    "invalidInput": "输入内容无效",
+    "operationFailed": "操作失败，请重试"
+  }
+} 

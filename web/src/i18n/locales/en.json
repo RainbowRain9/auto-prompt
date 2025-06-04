@@ -1,0 +1,383 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "prompts": "Prompt Management",
+    "workbench": "Workbench",
+    "code": "Code Generation",
+    "documentation": "Documentation",
+    "settings": "Settings"
+  },
+  "common": {
+    "generate": "Generate",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "close": "Close",
+    "language": "Language",
+    "chinese": "中文",
+    "english": "English",
+    "switchToDark": "Switch to dark theme",
+    "switchToLight": "Switch to light theme"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "loginSuccess": "Login Successful",
+    "loginFailed": "Login Failed",
+    "pleaseLogin": "Please login first"
+  },
+  "workbench": {
+    "title": "Prompt Optimization Platform",
+    "run": "Run",
+    "model": "Model",
+    "loadingModels": "Loading models...",
+    "searchOrSelectModel": "Search or select model",
+    "systemPrompt": "System Prompt",
+    "systemPromptPlaceholder": "Enter your system prompt",
+    "addUserMessage": "Add User Message",
+    "addAssistantMessage": "Add Assistant Message",
+    "userMessageDefault": "Enter your question",
+    "assistantMessageDefault": "Enter your answer",
+    "thinking": "Thinking...",
+    "reasoningProcess": "Reasoning Process",
+    "addToConversation": "Add to Conversation",
+    "fetchModelsError": "Failed to fetch models, using default models",
+    "inputPrompt": "Input Prompt",
+    "promptPlaceholder": "Please enter the prompt to be optimized...",
+    "requirements": "Optimization Requirements",
+    "requirementsPlaceholder": "Describe your specific requirements and expected results...",
+    "deepReasoning": "Deep Reasoning",
+    "enableDeepReasoning": "Enable deep reasoning mode",
+    "optimizePrompt": "Optimize Prompt",
+    "originalPrompt": "Original Prompt",
+    "optimizedPrompt": "Optimized Prompt",
+    "saveAsTemplate": "Save as Template",
+    "templateName": "Template Name",
+    "templateDescription": "Template Description",
+    "templateTags": "Tags"
+  },
+  "messageCard": {
+    "user": "User",
+    "assistant": "Assistant",
+    "system": "System",
+    "placeholder": "Please enter content...",
+    "parameterSettings": "Parameter Settings",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "enterValueFor": "Please enter value for {{key}}"
+  },
+  "generatePrompt": {
+    "optimizePrompt": "Optimize Prompt",
+    "title": "Optimize Prompt",
+    "description": "Please describe your requirements, and we will generate more effective prompts for you.",
+    "inputPromptLabel": "Prompt to optimize:",
+    "requirementsLabel": "Prompt requirements:",
+    "enableDeepReasoning": "Enable deep reasoning",
+    "deepReasoningDescription": "(Deeper analysis and optimization)",
+    "cancel": "Cancel",
+    "generate": "Generate",
+    "deepReasoningTitle": "Deep reasoning in progress...",
+    "deepReasoningDescription2": "AI is deeply analyzing your requirements with multi-dimensional thinking...",
+    "reasoningProcess": "Reasoning process:",
+    "deepReasoningInProgress": "Deep analysis in progress...",
+    "optimizingTitle": "Optimizing prompt...",
+    "optimizingDescription": "AI is generating higher quality prompts for you, please wait...",
+    "optimizingWithReasoning": "AI has completed deep analysis and is generating optimized prompts...",
+    "deepAnalysisComplete": "Deep analysis completed ✓",
+    "generatingProgress": "Generation progress:",
+    "generating": "Generating...",
+    "deepReasoningProcessTitle": "Deep Reasoning Process",
+    "optimizationComplete": "Optimization Complete",
+    "deepReasoningProcessDescription": "AI's deep thinking and analysis process:",
+    "optimizedPromptDescription": "Here is your optimized prompt:",
+    "optimizedPromptLabel": "Optimized prompt:",
+    "viewReasoningProcess": "View deep reasoning process",
+    "backToPrompt": "Back to view prompt",
+    "regenerate": "Regenerate",
+    "saveAsTemplate": "Save as Template",
+    "copyPrompt": "Copy Prompt",
+    "saveTemplateTitle": "Save as Prompt Template",
+    "templateTitle": "Template Title",
+    "templateTitlePlaceholder": "Give this prompt template a name",
+    "templateDescription": "Template Description",
+    "templateDescriptionPlaceholder": "Briefly describe the purpose and features of this template",
+    "templateContent": "Prompt Content",
+    "templateContentPlaceholder": "Prompt content",
+    "templateTags": "Tags",
+    "templateTagsPlaceholder": "Enter tags separated by commas, e.g.: optimization,AI generated,work",
+    "saveTemplate": "Save Template",
+    "promptRequired": "The prompt to optimize cannot be empty",
+    "generateFailed": "Failed to generate prompt, please try again",
+    "templateTitleRequired": "Please enter template title",
+    "templateDescriptionRequired": "Please enter template description",
+    "templateContentRequired": "Prompt content cannot be empty",
+    "templateSaveSuccess": "Template saved successfully!",
+    "templateSaveFailed": "Failed to save template, please try again",
+    "copyReasoning": "Copy Reasoning Process",
+    "copyReasoningSuccess": "Reasoning process copied to clipboard",
+    "copyPromptSuccess": "Prompt copied to clipboard"
+  },
+  "prompts": {
+    "title": "Prompt Management",
+    "pageTitle": "Prompt Management",
+    "pageDescription": "Create, manage and use your AI prompt templates to improve work efficiency",
+    "searchPlaceholder": "Search prompts...",
+    "refresh": "Refresh",
+    "createPrompt": "Create Prompt",
+    "editPrompt": "Edit Prompt",
+    "deletePrompt": "Delete Prompt",
+    "toggleFavorite": "Toggle Favorite",
+    "addFavorite": "Add to Favorites",
+    "removeFavorite": "Remove from Favorites",
+    "shareToSquare": "Share to Square",
+    "cancelShare": "Cancel Share",
+    "copyContent": "Copy Content",
+    "viewDetail": "View Detail",
+    "noPrompts": "No prompts yet, click the button above to create your first prompt",
+    "noSearchResults": "No matching prompts found",
+    "usageStats": "Used {{count}} times",
+    "createTime": "{{date}}",
+    "paginationText": "{{start}}-{{end}} of {{total}} items",
+    "modal": {
+      "createTitle": "Create Prompt",
+      "editTitle": "Edit Prompt",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Enter prompt title",
+      "titleRequired": "Please enter prompt title",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Briefly describe the purpose of this prompt",
+      "descriptionRequired": "Please enter prompt description",
+      "contentLabel": "Prompt Content",
+      "contentPlaceholder": "Enter prompt content, you can use {variableName} to define variables",
+      "contentRequired": "Please enter prompt content",
+      "tagsLabel": "Tags",
+      "tagsPlaceholder": "Enter tags separated by commas",
+      "createButton": "Create",
+      "updateButton": "Update"
+    },
+    "deleteConfirm": {
+      "title": "Confirm Delete",
+      "content": "Are you sure you want to delete prompt \"{{title}}\"? This action cannot be undone.",
+      "okText": "Delete",
+      "cancelText": "Cancel"
+    },
+    "messages": {
+      "createSuccess": "Prompt created successfully",
+      "createFailed": "Failed to create",
+      "updateSuccess": "Prompt updated successfully",
+      "updateFailed": "Failed to update",
+      "deleteSuccess": "Deleted successfully",
+      "deleteFailed": "Failed to delete, please try again",
+      "copySuccess": "Copied to clipboard",
+      "copyFailed": "Failed to copy",
+      "loadFailed": "Failed to load, please check network connection",
+      "operationFailed": "Operation failed, please try again",
+      "shareFailed": "Operation failed",
+      "shareSuccess": "Operation successful",
+      "saveFailed": "Failed to save, please try again"
+    },
+    "myPrompts": "My Prompts",
+    "communityPrompts": "Community Prompts",
+    "createTemplate": "Create Template",
+    "editTemplate": "Edit Template",
+    "templateTitle": "Template Title",
+    "templateContent": "Template Content",
+    "templateDescription": "Template Description",
+    "templateTags": "Tags",
+    "popularity": "Popularity",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "deleteConfirm": "Confirm to delete this template?",
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite",
+    "share": "Share",
+    "copy": "Copy",
+    "copySuccess": "Copied successfully"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Overview",
+    "statistics": "Statistics",
+    "totalPrompts": "Total Prompts",
+    "optimizations": "Optimizations",
+    "templates": "Templates",
+    "recentActivity": "Recent Activity",
+    "popularTemplates": "Popular Templates"
+  },
+  "promptSquare": {
+    "title": "Prompt Square",
+    "description": "Discover and use high-quality prompt templates shared by the community, ranked by popularity",
+    "searchPlaceholder": "Search prompt titles, descriptions, tags, or creators...",
+    "sortBy": "Sort by:",
+    "sortOptions": {
+      "viewCount": "Views",
+      "likeCount": "Likes",
+      "shareTime": "Share Time",
+      "createdTime": "Created Time"
+    },
+    "sortOrder": {
+      "desc": "Descending",
+      "asc": "Ascending"
+    },
+    "refresh": "Refresh",
+    "hotBadge": "HOT",
+    "empty": "No shared prompt templates available",
+    "stats": {
+      "views": "{{count}} views",
+      "likes": "{{count}} likes",
+      "usage": "Used {{count}} times"
+    },
+    "actions": {
+      "copy": "Copy Content",
+      "like": "Like",
+      "unlike": "Unlike",
+      "view": "View Details"
+    },
+    "pagination": "{{start}}-{{end}} of {{total}} items",
+    "messages": {
+      "loadFailed": "Failed to load, please check network connection",
+      "copySuccess": "Prompt content copied to clipboard",
+      "copyFailed": "Failed to copy, please try again",
+      "operationFailed": "Operation failed, please try again",
+      "likeSuccess": "Liked successfully",
+      "unlikeSuccess": "Unliked successfully"
+    },
+    "tags": {
+      "more": "+{{count}}"
+    },
+    "sharedAt": "Shared at"
+  },
+  "home": {
+    "title": "AI Prompt Optimization Platform",
+    "subtitle": "Professional AI prompt optimization, debugging, and sharing platform",
+    "getStarted": "Get Started",
+    "features": {
+      "title": "Core Features",
+      "subtitle": "Comprehensive prompt optimization solutions for you",
+      "optimization": {
+        "title": "Intelligent Optimization",
+        "description": "Automatically analyze and optimize prompt structures based on advanced AI algorithms"
+      },
+      "reasoning": {
+        "title": "Deep Reasoning",
+        "description": "Provide multi-dimensional thinking analysis to deeply understand user needs"
+      },
+      "community": {
+        "title": "Community Sharing",
+        "description": "Discover and share high-quality prompt templates, exchange experiences with community users"
+      },
+      "debugging": {
+        "title": "Visualization Debugging",
+        "description": "Robust debugging environment with real-time preview of prompt effects"
+      }
+    },
+    "advantages": {
+      "title": "Platform Advantages",
+      "subtitle": "Intuitive interface, powerful features, providing you with the best user experience",
+      "items": {
+        "easyToUse": {
+          "title": "Easy to Use",
+          "description": "Intuitive user interface, quick to get started"
+        },
+        "fastOptimization": {
+          "title": "Fast Optimization",
+          "description": "Smart algorithms quickly analyze and optimize prompts"
+        },
+        "communitySharing": {
+          "title": "Community Sharing",
+          "description": "Share and exchange prompt experiences with other users"
+        },
+        "continuousImprovement": {
+          "title": "Continuous Improvement",
+          "description": "Continuously optimize platform features based on user feedback"
+        }
+      }
+    },
+    "testimonials": {
+      "title": "User Reviews",
+      "subtitle": "Listen to what users say, real feedback witnesses product value",
+      "items": {
+        "zhang": {
+          "name": "Zhang Ming",
+          "role": "Content Creator",
+          "company": "Media Studio",
+          "content": "This platform has helped me optimize many prompts, greatly improving my writing efficiency. The debugging feature is particularly useful."
+        },
+        "li": {
+          "name": "Li Xiaoyu",
+          "role": "AI Enthusiast",
+          "company": "Individual User",
+          "content": "There are many high-quality prompt templates on the sharing platform, which helped me quickly find suitable prompts. Very convenient."
+        },
+        "wang": {
+          "name": "Wang Developer",
+          "role": "Programmer",
+          "company": "Tech Company",
+          "content": "The visual interface of the debugging tool makes the optimization process intuitive and easy to understand, greatly improving my work efficiency."
+        }
+      }
+    },
+    "cta": {
+      "title": "Ready to Start Optimizing Your Prompts?",
+      "subtitle": "Experience powerful prompt optimization features immediately, let AI empower your work",
+      "startOptimizing": "Start Optimizing",
+      "explorePlatform": "Explore Platform"
+    },
+    "footer": {
+      "brandTitle": "AI Prompt Workbench",
+      "brandDescription": "Make AI conversations smarter, make creation more efficient",
+      "links": {
+        "promptOptimization": "Prompt Optimization",
+        "promptDebugging": "Prompt Debugging",
+        "sharingPlatform": "Sharing Platform"
+      },
+      "copyright": "© 2024 AI Prompt Workbench. All rights reserved."
+    },
+    "stats": {
+      "activeUsers": "Active Users",
+      "optimizations": "Optimizations",
+      "sharedTemplates": "Shared Templates",
+      "satisfaction": "Satisfaction"
+    }
+  },
+  "promptDetail": {
+    "title": "Prompt Details",
+    "anonymousUser": "Anonymous User",
+    "sharedAt": "Shared at",
+    "viewCount": "View Count",
+    "likeCount": "Like Count",
+    "usageCount": "Usage Count",
+    "liked": "Liked",
+    "like": "Like",
+    "copyContent": "Copy Content",
+    "promptContent": "Prompt Content",
+    "copyTooltips": {
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "likeSuccess": "Liked successfully",
+    "unlikeSuccess": "Unliked successfully",
+    "copySuccess": "Copied to clipboard",
+    "copyFailed": "Failed to copy",
+    "operationFailed": "Operation failed",
+    "loadDetailFailed": "Failed to load details",
+    "notFound": "Prompt details not found"
+  },
+  "errors": {
+    "networkError": "Network error, please check your network connection",
+    "serverError": "Server error, please try again later",
+    "invalidInput": "Invalid input",
+    "operationFailed": "Operation failed, please try again"
+  }
+} 

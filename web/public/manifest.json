@@ -1,0 +1,74 @@
+{
+  "name": "AI提示词优化平台",
+  "short_name": "提示词优化",
+  "description": "专业的AI提示词优化平台，提供智能prompt工程工具",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1890ff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "zh-CN",
+  "categories": ["productivity", "utilities", "education"],
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "提示词优化工作台"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "移动端提示词优化"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "提示词工作台",
+      "short_name": "工作台",
+      "description": "快速访问提示词优化工作台",
+      "url": "/workbench",
+      "icons": [
+        {
+          "src": "/shortcut-workbench.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "提示词库",
+      "short_name": "提示词库",
+      "description": "浏览和管理提示词模板",
+      "url": "/prompts",
+      "icons": [
+        {
+          "src": "/shortcut-prompts.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+} 
