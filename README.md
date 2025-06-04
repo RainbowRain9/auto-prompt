@@ -284,6 +284,10 @@ Thanks to the following open source projects and technologies:
 
 ---
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=AIDotNet/auto-prompt&type=Date)](https://www.star-history.com/#AIDotNet/auto-prompt&Date)
+
 ## 💌WeChat
 
 ![image](https://github.com/user-attachments/assets/1b1b9153-a563-496d-a1cb-c14a0d5a1bba)

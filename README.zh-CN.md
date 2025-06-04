@@ -283,6 +283,10 @@ auto-prompt/
 - **技术支持**: 通过GitHub Issues提交
 
 ---
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=AIDotNet/auto-prompt&type=Date)](https://www.star-history.com/#AIDotNet/auto-prompt&Date)
+
 
 ## 💌WeChat
 
