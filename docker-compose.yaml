@@ -7,3 +7,6 @@
       - TZ=Asia/Shanghai
     volumes:
       - ./data:/data
+    build:
+      context: .
+      dockerfile: src/Console.Service/Dockerfile
