@@ -290,7 +290,7 @@ auto-prompt/
 
 ## 💌WeChat
 
-![image](https://github.com/user-attachments/assets/1b1b9153-a563-496d-a1cb-c14a0d5a1bba)
+![image](img/wechat.jpg)
 
 
 <div align="center">
