@@ -16,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSerilog(logger);
 builder.Services.AddOpenApi();
-builder.Services.WithFast();
+builder.Services.AddFastApis();
 builder.Services.AddResponseCompression();
 
 if (builder.Configuration.GetConnectionString("Type").Equals("postgresql", StringComparison.OrdinalIgnoreCase))
@@ -63,6 +63,10 @@ app.Use((async (context, next) =>
 app.UseResponseCompression();
 app.UseStaticFiles();
 
-app.MapFast();
+app.MapFastApis(options =>
+{
+    options.Prefix = "/api";
+    options.Version = "v1";
+});
 
 await app.RunAsync();

@@ -12,7 +12,8 @@ using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
 namespace Console.Service.Services;
 
 [FastService.Route("/v1/prompt")]
-public class PromptService(IConfiguration configuration, IDbContext dbContext) : FastApi
+[Tags("提示词生成")]
+public class PromptService(IDbContext dbContext) : FastApi
 {
     [EndpointSummary("优化提示词")]
     [HttpPost("generate")]

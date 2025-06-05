@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Console.Service.Services;
 
 [FastService.Route("/v1/prompt-templates")]
+[Tags("提示词模板管理")]
 public class PromptTemplateService(IDbContext dbContext, JwtService jwtService) : FastApi
 {
     private (bool IsValid, string? UserId, object? ErrorResponse) ValidateTokenAndGetUserId(HttpContext context)
