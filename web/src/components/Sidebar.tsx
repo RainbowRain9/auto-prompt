@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useThemeStore } from '../stores/themeStore';
 import { useAuthStore } from '../stores/authStore';
-import LanguageSwitcher from './LanguageSwitcher';
 
 const { Sider } = Layout;
 
