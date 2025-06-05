@@ -1,6 +1,6 @@
-using Console.Service.DbAccess;
+using Console.Provider.PostgreSQL.Extensions;
+using Console.Provider.Sqlite.Extensions;
 using Console.Service.Services;
-using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -18,12 +18,18 @@ builder.Services.AddSerilog(logger);
 builder.Services.AddOpenApi();
 builder.Services.WithFast();
 builder.Services.AddResponseCompression();
-builder.Services.AddDbContext<ConsoleDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default"));
 
-    options.EnableSensitiveDataLogging();
-});
+if (builder.Configuration.GetConnectionString("Type").Equals("postgresql", StringComparison.OrdinalIgnoreCase))
+{
+    // 注册PostgreSQL数据库上下文
+    builder.Services.AddPostgreSQL(builder.Configuration.GetConnectionString("Default"));
+}
+else
+{
+    // 注册SQLite数据库上下文
+    builder.Services.AddSqlite(builder.Configuration.GetConnectionString("Default"));
+}
+
 
 // 注册JWT服务
 builder.Services.AddScoped<JwtService>();

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Console.Service.DbAccess;
+using Console.Core;
 using Console.Service.Dto;
 using Console.Service.Entities;
 using FastService;
@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Console.Service.Services;
 
 [FastService.Route("/v1/prompt-templates")]
-public class PromptTemplateService(ConsoleDbContext dbContext, JwtService jwtService) : FastApi
+public class PromptTemplateService(IDbContext dbContext, JwtService jwtService) : FastApi
 {
     private (bool IsValid, string? UserId, object? ErrorResponse) ValidateTokenAndGetUserId(HttpContext context)
     {

@@ -1,15 +1,21 @@
 ﻿using Console.Service.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Console.Service.DbAccess;
+namespace Console.Core;
 
-public class ConsoleDbContext(DbContextOptions<ConsoleDbContext> options) : DbContext(options)
+public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
+    : DbContext(options), IDbContext where TDbContext : DbContext
 {
     public DbSet<PromptHistory> PromptHistory { get; set; } = null!;
-    
+
     public DbSet<PromptTemplate> PromptTemplates { get; set; } = null!;
 
     public DbSet<UserLike> UserLikes { get; set; } = null!;
+
+    public Task SaveChangesAsync()
+    {
+        return base.SaveChangesAsync(CancellationToken.None);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,8 +45,7 @@ public class ConsoleDbContext(DbContextOptions<ConsoleDbContext> options) : DbCo
             options.Property(x => x.Content)
                 .IsRequired();
 
-            options.Property(x => x.Tags)
-                .HasDefaultValue("[]");
+            options.Property(x => x.Tags);
 
             options.Property(x => x.UserId)
                 .HasMaxLength(100);

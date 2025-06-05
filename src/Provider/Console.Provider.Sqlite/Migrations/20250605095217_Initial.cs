@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Console.Service.Migrations
+namespace Console.Provider.Sqlite.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -15,12 +15,12 @@ namespace Console.Service.Migrations
                 name: "PromptHistory",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Prompt = table.Column<string>(type: "text", nullable: false),
-                    Requirement = table.Column<string>(type: "text", nullable: false),
-                    DeepReasoning = table.Column<string>(type: "text", nullable: true),
-                    Result = table.Column<string>(type: "text", nullable: false),
-                    CreatedTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Prompt = table.Column<string>(type: "TEXT", nullable: false),
+                    Requirement = table.Column<string>(type: "TEXT", nullable: false),
+                    DeepReasoning = table.Column<string>(type: "TEXT", nullable: true),
+                    Result = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedTime = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -31,21 +31,21 @@ namespace Console.Service.Migrations
                 name: "PromptTemplates",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    Content = table.Column<string>(type: "text", nullable: false),
-                    Tags = table.Column<string>(type: "text", nullable: false, defaultValue: "[]"),
-                    IsFavorite = table.Column<bool>(type: "boolean", nullable: false),
-                    UsageCount = table.Column<int>(type: "integer", nullable: false),
-                    IsShared = table.Column<bool>(type: "boolean", nullable: false),
-                    ShareTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    ViewCount = table.Column<int>(type: "integer", nullable: false),
-                    LikeCount = table.Column<int>(type: "integer", nullable: false),
-                    CreatedTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    UpdatedTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    UserId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    CreatorName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    Content = table.Column<string>(type: "TEXT", nullable: false),
+                    Tags = table.Column<string>(type: "TEXT", nullable: false),
+                    IsFavorite = table.Column<bool>(type: "INTEGER", nullable: false),
+                    UsageCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    IsShared = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ShareTime = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ViewCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    LikeCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatedTime = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedTime = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UserId = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    CreatorName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -56,10 +56,10 @@ namespace Console.Service.Migrations
                 name: "UserLikes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    PromptTemplateId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    UserId = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    PromptTemplateId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CreatedTime = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

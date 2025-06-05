@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
-using Console.Service.DbAccess;
+using Console.Core;
 using Console.Service.Dto;
 using Console.Service.Entities;
 using FastService;
@@ -12,9 +12,8 @@ using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
 namespace Console.Service.Services;
 
 [FastService.Route("/v1/prompt")]
-public class PromptService(IConfiguration configuration, ConsoleDbContext dbContext) : FastApi
+public class PromptService(IConfiguration configuration, IDbContext dbContext) : FastApi
 {
-
     [EndpointSummary("优化提示词")]
     [HttpPost("generate")]
     public async Task GeneratePromptAsync(GeneratePromptInput input, HttpContext context)
@@ -101,7 +100,7 @@ public class PromptService(IConfiguration configuration, ConsoleDbContext dbCont
                 Prompt = input.Prompt
             };
 
-            await dbContext.AddAsync(entity);
+            await dbContext.PromptHistory.AddAsync(entity);
 
             await dbContext.SaveChangesAsync();
         }
@@ -220,7 +219,7 @@ public class PromptService(IConfiguration configuration, ConsoleDbContext dbCont
             Prompt = input.Prompt
         };
 
-        await dbContext.AddAsync(entity);
+        await dbContext.PromptHistory.AddAsync(entity);
 
         await dbContext.SaveChangesAsync();
     }
