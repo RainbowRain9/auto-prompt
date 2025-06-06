@@ -121,8 +121,7 @@ jobs:
       with:
         name: Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}
         path: |
-          Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.zip
-          Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.tar.gz
+          Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.*
         retention-days: 30
         
   create-release:
@@ -147,17 +146,27 @@ jobs:
       with:
         path: ./artifacts
         
+    - name: List downloaded artifacts (debug)
+      run: |
+        echo "=== Artifacts structure ==="
+        find ./artifacts -type f -name "*.zip" -o -name "*.tar.gz" | sort
+        echo "=========================="
+        
+    - name: Prepare release files
+      run: |
+        mkdir -p ./release-files
+        find ./artifacts -name "*.zip" -exec cp {} ./release-files/ \;
+        find ./artifacts -name "*.tar.gz" -exec cp {} ./release-files/ \;
+        echo "=== Release files ==="
+        ls -la ./release-files/
+        echo "===================="
+        
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         name: Release ${{ steps.get_version.outputs.VERSION }}
         tag_name: ${{ steps.get_version.outputs.VERSION }}
-        files: |
-          artifacts/${{ steps.get_version.outputs.VERSION }}-win-x64/${{ steps.get_version.outputs.VERSION }}-win-x64.zip
-          artifacts/${{ steps.get_version.outputs.VERSION }}-linux-x64/${{ steps.get_version.outputs.VERSION }}-linux-x64.tar.gz
-          artifacts/${{ steps.get_version.outputs.VERSION }}-osx-x64/${{ steps.get_version.outputs.VERSION }}-osx-x64.tar.gz
-          artifacts/${{ steps.get_version.outputs.VERSION }}-linux-arm64/${{ steps.get_version.outputs.VERSION }}-linux-arm64.tar.gz
-          artifacts/${{ steps.get_version.outputs.VERSION }}-osx-arm64/${{ steps.get_version.outputs.VERSION }}-osx-arm64.tar.gz
+        files: ./release-files/*
         draft: false
         prerelease: ${{ github.event.inputs.prerelease == 'true' || false }}
         generate_release_notes: true
