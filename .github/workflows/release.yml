@@ -33,7 +33,39 @@ jobs:
     
     strategy:
       matrix:
-        runtime: [win-x64, linux-x64, osx-x64, linux-arm64, osx-arm64]
+        include:
+          # 自包含版本 (包含.NET运行时)
+          - runtime: win-x64
+            self_contained: true
+            suffix: "self-contained"
+          - runtime: linux-x64
+            self_contained: true
+            suffix: "self-contained"
+          - runtime: osx-x64
+            self_contained: true
+            suffix: "self-contained"
+          - runtime: linux-arm64
+            self_contained: true
+            suffix: "self-contained"
+          - runtime: osx-arm64
+            self_contained: true
+            suffix: "self-contained"
+          # 框架依赖版本 (需要安装.NET运行时)
+          - runtime: win-x64
+            self_contained: false
+            suffix: "framework-dependent"
+          - runtime: linux-x64
+            self_contained: false
+            suffix: "framework-dependent"
+          - runtime: osx-x64
+            self_contained: false
+            suffix: "framework-dependent"
+          - runtime: linux-arm64
+            self_contained: false
+            suffix: "framework-dependent"
+          - runtime: osx-arm64
+            self_contained: false
+            suffix: "framework-dependent"
     
     steps:
     - name: Checkout code
@@ -94,34 +126,35 @@ jobs:
         dotnet publish src/Console.Service/Console.Service.csproj \
           -c Release \
           -r ${{ matrix.runtime }} \
-          --self-contained true \
-          -p:PublishSingleFile=true \
-          -p:PublishTrimmed=true \
+          --self-contained ${{ matrix.self_contained }} \
+          -p:PublishSingleFile=false \
+          -p:PublishTrimmed=false \
           -p:Version=${{ steps.get_version.outputs.VERSION }} \
           -p:AssemblyVersion=${{ steps.get_version.outputs.VERSION }} \
           -p:FileVersion=${{ steps.get_version.outputs.VERSION }} \
-          -o ./publish/${{ matrix.runtime }}
+          -o ./publish/${{ matrix.runtime }}-${{ matrix.suffix }}
           
     - name: Copy frontend to wwwroot
       run: |
-        mkdir -p ./publish/${{ matrix.runtime }}/wwwroot
-        cp -r web/dist/* ./publish/${{ matrix.runtime }}/wwwroot/
+        mkdir -p ./publish/${{ matrix.runtime }}-${{ matrix.suffix }}/wwwroot
+        cp -r web/dist/* ./publish/${{ matrix.runtime }}-${{ matrix.suffix }}/wwwroot/
         
     - name: Create archive
       run: |
         cd publish
+        ARCHIVE_NAME="Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}-${{ matrix.suffix }}"
         if [[ "${{ matrix.runtime }}" == win-* ]]; then
-          zip -r ../Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.zip ${{ matrix.runtime }}
+          zip -r ../${ARCHIVE_NAME}.zip ${{ matrix.runtime }}-${{ matrix.suffix }}
         else
-          tar -czf ../Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.tar.gz ${{ matrix.runtime }}
+          tar -czf ../${ARCHIVE_NAME}.tar.gz ${{ matrix.runtime }}-${{ matrix.suffix }}
         fi
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}
+        name: Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}-${{ matrix.suffix }}
         path: |
-          Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.*
+          Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}-${{ matrix.suffix }}.*
         retention-days: 30
         
   create-release:
@@ -173,21 +206,45 @@ jobs:
         body: |
           ## 🚀 Console Release ${{ steps.get_version.outputs.VERSION }}
           
-          ### 📦 下载链接
-          - **Windows x64**: Console-${{ steps.get_version.outputs.VERSION }}-win-x64.zip
-          - **Linux x64**: Console-${{ steps.get_version.outputs.VERSION }}-linux-x64.tar.gz
-          - **macOS x64**: Console-${{ steps.get_version.outputs.VERSION }}-osx-x64.tar.gz
-          - **Linux ARM64**: Console-${{ steps.get_version.outputs.VERSION }}-linux-arm64.tar.gz
-          - **macOS ARM64**: Console-${{ steps.get_version.outputs.VERSION }}-osx-arm64.tar.gz
+          ### 📦 版本说明
+          
+          #### 🔹 自包含版本 (Self-Contained) - 推荐
+          包含完整的.NET运行时，无需预装.NET环境，文件较大但兼容性最好：
+          - **Windows x64**: `Console-${{ steps.get_version.outputs.VERSION }}-win-x64-self-contained.zip`
+          - **Linux x64**: `Console-${{ steps.get_version.outputs.VERSION }}-linux-x64-self-contained.tar.gz`
+          - **macOS x64**: `Console-${{ steps.get_version.outputs.VERSION }}-osx-x64-self-contained.tar.gz`
+          - **Linux ARM64**: `Console-${{ steps.get_version.outputs.VERSION }}-linux-arm64-self-contained.tar.gz`
+          - **macOS ARM64**: `Console-${{ steps.get_version.outputs.VERSION }}-osx-arm64-self-contained.tar.gz`
+          
+          #### 🔸 框架依赖版本 (Framework-Dependent) - 轻量
+          需要预装.NET 9.0运行时，文件较小：
+          - **Windows x64**: `Console-${{ steps.get_version.outputs.VERSION }}-win-x64-framework-dependent.zip`
+          - **Linux x64**: `Console-${{ steps.get_version.outputs.VERSION }}-linux-x64-framework-dependent.tar.gz`
+          - **macOS x64**: `Console-${{ steps.get_version.outputs.VERSION }}-osx-x64-framework-dependent.tar.gz`
+          - **Linux ARM64**: `Console-${{ steps.get_version.outputs.VERSION }}-linux-arm64-framework-dependent.tar.gz`
+          - **macOS ARM64**: `Console-${{ steps.get_version.outputs.VERSION }}-osx-arm64-framework-dependent.tar.gz`
           
           ### ✨ 特性
           - 包含完整的前端和后端集成
-          - 自包含可执行文件，无需安装.NET运行时
+          - 修复Entity Framework兼容性问题
           - 支持多平台部署
+          - 提供两种部署方式选择
           
           ### 🔧 使用方法
-          1. 下载对应平台的压缩包
+          
+          #### 自包含版本：
+          1. 下载对应平台的自包含版本压缩包
           2. 解压到目标目录
-          3. 运行可执行文件即可启动服务
+          3. 直接运行可执行文件即可启动服务
+          
+          #### 框架依赖版本：
+          1. 确保已安装 [.NET 9.0 Runtime](https://dotnet.microsoft.com/download/dotnet/9.0)
+          2. 下载对应平台的框架依赖版本压缩包
+          3. 解压到目标目录
+          4. 运行可执行文件即可启动服务
+          
+          ### 📋 系统要求
+          - **自包含版本**: 无需预装任何依赖
+          - **框架依赖版本**: 需要安装.NET 9.0 Runtime
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
