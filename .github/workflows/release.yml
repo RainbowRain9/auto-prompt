@@ -1,0 +1,120 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        runtime: [win-x64, linux-x64, osx-x64, linux-arm64, osx-arm64]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Install Yarn
+      run: npm install -g yarn
+        
+    - name: Cache node modules
+      uses: actions/cache@v4
+      with:
+        path: web/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+          
+    - name: Install frontend dependencies
+      working-directory: web
+      run: |
+        yarn install
+        npm install --force
+        
+    - name: Build frontend
+      working-directory: web
+      run: yarn run build
+      
+    - name: Restore .NET dependencies
+      run: dotnet restore src/Console.Service/Console.Service.csproj
+      
+    - name: Build .NET application
+      run: dotnet build src/Console.Service/Console.Service.csproj -c Release --no-restore
+      
+    - name: Publish .NET application
+      run: |
+        dotnet publish src/Console.Service/Console.Service.csproj \
+          -c Release \
+          -r ${{ matrix.runtime }} \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -p:PublishTrimmed=true \
+          -o ./publish/${{ matrix.runtime }}
+          
+    - name: Copy frontend to wwwroot
+      run: |
+        mkdir -p ./publish/${{ matrix.runtime }}/wwwroot
+        cp -r web/dist/* ./publish/${{ matrix.runtime }}/wwwroot/
+        
+    - name: Create archive
+      run: |
+        cd publish
+        if [[ "${{ matrix.runtime }}" == win-* ]]; then
+          zip -r ../Console-${{ matrix.runtime }}.zip ${{ matrix.runtime }}
+        else
+          tar -czf ../Console-${{ matrix.runtime }}.tar.gz ${{ matrix.runtime }}
+        fi
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Console-${{ matrix.runtime }}
+        path: |
+          Console-${{ matrix.runtime }}.zip
+          Console-${{ matrix.runtime }}.tar.gz
+        retention-days: 30
+        
+  create-release:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/Console-win-x64/Console-win-x64.zip
+          artifacts/Console-linux-x64/Console-linux-x64.tar.gz
+          artifacts/Console-osx-x64/Console-osx-x64.tar.gz
+          artifacts/Console-linux-arm64/Console-linux-arm64.tar.gz
+          artifacts/Console-osx-arm64/Console-osx-arm64.tar.gz
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
