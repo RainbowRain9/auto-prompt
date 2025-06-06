@@ -17,6 +17,11 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
         return base.SaveChangesAsync(CancellationToken.None);
     }
 
+    public Task BeginMigrationAsync()
+    {
+        return Database.MigrateAsync(CancellationToken.None);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<PromptHistory>(options =>

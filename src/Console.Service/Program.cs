@@ -1,3 +1,4 @@
+using Console.Core;
 using Console.Provider.PostgreSQL.Extensions;
 using Console.Provider.Sqlite.Extensions;
 using Console.Service.Services;
@@ -36,7 +37,6 @@ builder.Services.AddScoped<JwtService>();
 
 var app = builder.Build();
 
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -68,5 +68,12 @@ app.MapFastApis(options =>
     options.Prefix = "/api";
     options.Version = "v1";
 });
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<IDbContext>();
+
+    await dbContext.BeginMigrationAsync();
+}
 
 await app.RunAsync();

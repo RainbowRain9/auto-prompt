@@ -12,4 +12,6 @@ public interface IDbContext
     public DbSet<UserLike> UserLikes { get; set; }
 
     public Task SaveChangesAsync();
+ 
+    Task BeginMigrationAsync();
 }
