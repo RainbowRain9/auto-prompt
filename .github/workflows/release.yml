@@ -5,6 +5,22 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+        type: string
+      create_release:
+        description: '是否创建GitHub Release'
+        required: false
+        default: true
+        type: boolean
+      prerelease:
+        description: '是否为预发布版本'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -23,10 +39,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Get version from tag
+    - name: Get version from tag or input
       id: get_version
       run: |
-        if [[ $GITHUB_REF == refs/tags/* ]]; then
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+        elif [[ $GITHUB_REF == refs/tags/* ]]; then
           VERSION=${GITHUB_REF#refs/tags/}
         else
           VERSION="dev-$(date +%Y%m%d%H%M%S)"
@@ -110,13 +128,17 @@ jobs:
   create-release:
     needs: build-and-release
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
     
     steps:
-    - name: Get version from tag
+    - name: Get version from tag or input
       id: get_version
       run: |
-        VERSION=${GITHUB_REF#refs/tags/}
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION=${GITHUB_REF#refs/tags/}
+        fi
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
         echo "Version: $VERSION"
         
@@ -137,7 +159,7 @@ jobs:
           artifacts/${{ steps.get_version.outputs.VERSION }}-linux-arm64/${{ steps.get_version.outputs.VERSION }}-linux-arm64.tar.gz
           artifacts/${{ steps.get_version.outputs.VERSION }}-osx-arm64/${{ steps.get_version.outputs.VERSION }}-osx-arm64.tar.gz
         draft: false
-        prerelease: false
+        prerelease: ${{ github.event.inputs.prerelease == 'true' || false }}
         generate_release_notes: true
         body: |
           ## 🚀 Console Release ${{ steps.get_version.outputs.VERSION }}
