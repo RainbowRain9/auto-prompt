@@ -23,6 +23,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Get version from tag
+      id: get_version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          VERSION="dev-$(date +%Y%m%d%H%M%S)"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+      
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -68,6 +79,9 @@ jobs:
           --self-contained true \
           -p:PublishSingleFile=true \
           -p:PublishTrimmed=true \
+          -p:Version=${{ steps.get_version.outputs.VERSION }} \
+          -p:AssemblyVersion=${{ steps.get_version.outputs.VERSION }} \
+          -p:FileVersion=${{ steps.get_version.outputs.VERSION }} \
           -o ./publish/${{ matrix.runtime }}
           
     - name: Copy frontend to wwwroot
@@ -79,18 +93,18 @@ jobs:
       run: |
         cd publish
         if [[ "${{ matrix.runtime }}" == win-* ]]; then
-          zip -r ../Console-${{ matrix.runtime }}.zip ${{ matrix.runtime }}
+          zip -r ../Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.zip ${{ matrix.runtime }}
         else
-          tar -czf ../Console-${{ matrix.runtime }}.tar.gz ${{ matrix.runtime }}
+          tar -czf ../Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.tar.gz ${{ matrix.runtime }}
         fi
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Console-${{ matrix.runtime }}
+        name: Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}
         path: |
-          Console-${{ matrix.runtime }}.zip
-          Console-${{ matrix.runtime }}.tar.gz
+          Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.zip
+          Console-${{ steps.get_version.outputs.VERSION }}-${{ matrix.runtime }}.tar.gz
         retention-days: 30
         
   create-release:
@@ -99,6 +113,13 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     
     steps:
+    - name: Get version from tag
+      id: get_version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+        
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
@@ -107,14 +128,35 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
+        name: Release ${{ steps.get_version.outputs.VERSION }}
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
         files: |
-          artifacts/Console-win-x64/Console-win-x64.zip
-          artifacts/Console-linux-x64/Console-linux-x64.tar.gz
-          artifacts/Console-osx-x64/Console-osx-x64.tar.gz
-          artifacts/Console-linux-arm64/Console-linux-arm64.tar.gz
-          artifacts/Console-osx-arm64/Console-osx-arm64.tar.gz
+          artifacts/${{ steps.get_version.outputs.VERSION }}-win-x64/${{ steps.get_version.outputs.VERSION }}-win-x64.zip
+          artifacts/${{ steps.get_version.outputs.VERSION }}-linux-x64/${{ steps.get_version.outputs.VERSION }}-linux-x64.tar.gz
+          artifacts/${{ steps.get_version.outputs.VERSION }}-osx-x64/${{ steps.get_version.outputs.VERSION }}-osx-x64.tar.gz
+          artifacts/${{ steps.get_version.outputs.VERSION }}-linux-arm64/${{ steps.get_version.outputs.VERSION }}-linux-arm64.tar.gz
+          artifacts/${{ steps.get_version.outputs.VERSION }}-osx-arm64/${{ steps.get_version.outputs.VERSION }}-osx-arm64.tar.gz
         draft: false
         prerelease: false
         generate_release_notes: true
+        body: |
+          ## 🚀 Console Release ${{ steps.get_version.outputs.VERSION }}
+          
+          ### 📦 下载链接
+          - **Windows x64**: Console-${{ steps.get_version.outputs.VERSION }}-win-x64.zip
+          - **Linux x64**: Console-${{ steps.get_version.outputs.VERSION }}-linux-x64.tar.gz
+          - **macOS x64**: Console-${{ steps.get_version.outputs.VERSION }}-osx-x64.tar.gz
+          - **Linux ARM64**: Console-${{ steps.get_version.outputs.VERSION }}-linux-arm64.tar.gz
+          - **macOS ARM64**: Console-${{ steps.get_version.outputs.VERSION }}-osx-arm64.tar.gz
+          
+          ### ✨ 特性
+          - 包含完整的前端和后端集成
+          - 自包含可执行文件，无需安装.NET运行时
+          - 支持多平台部署
+          
+          ### 🔧 使用方法
+          1. 下载对应平台的压缩包
+          2. 解压到目标目录
+          3. 运行可执行文件即可启动服务
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
