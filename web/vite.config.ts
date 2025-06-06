@@ -7,6 +7,9 @@ export default defineConfig({
     proxy: {
       '/v1': {
         target: "http://localhost:5298/",
+      },
+      '/openai':{
+        target: "http://localhost:5298/",
       }
     }
   },

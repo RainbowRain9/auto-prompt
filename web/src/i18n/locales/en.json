@@ -1,7 +1,7 @@
 {
   "nav": {
     "home": "Home",
-    "dashboard": "Dashboard",
+    "dashboard": "Prompt Square",
     "prompts": "Prompt Management",
     "workbench": "Workbench",
     "code": "Code Generation",
@@ -198,7 +198,6 @@
     "popularity": "Popularity",
     "createdAt": "Created At",
     "updatedAt": "Updated At",
-    "deleteConfirm": "Confirm to delete this template?",
     "favorite": "Favorite",
     "unfavorite": "Unfavorite",
     "share": "Share",
@@ -206,7 +205,7 @@
     "copySuccess": "Copied successfully"
   },
   "dashboard": {
-    "title": "Dashboard",
+    "title": "Prompt Square",
     "overview": "Overview",
     "statistics": "Statistics",
     "totalPrompts": "Total Prompts",

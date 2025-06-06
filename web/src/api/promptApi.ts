@@ -1,4 +1,5 @@
 import { useAuthStore } from "../stores/authStore";
+import { getCurrentLLMConfig } from '../utils/llmClient';
 
 // SSE请求配置接口
 interface SSEConfig {
@@ -51,13 +52,17 @@ export async function* SSE<T = any>(
     const timeoutId = setTimeout(() => controller.abort(), finalConfig.timeout);
 
     try {
-        const token = useAuthStore.getState().token;
+        const llmConfig = getCurrentLLMConfig();
+        if (!llmConfig) {
+            throw new Error('没有可用的LLM配置');
+        }
+
         // 发送请求
-        const response = await fetch(finalConfig.url, {
+        const response = await fetch(url, {
             method: "POST",
             headers: {
                 ...finalConfig.headers,
-                "Authorization": `Bearer ${token}`, // 添加Authorization头
+                "Authorization": `Bearer ${llmConfig.apiKey}`, // 使用LLM配置的API Key
             },
             body: JSON.stringify(data),
             signal: controller.signal,

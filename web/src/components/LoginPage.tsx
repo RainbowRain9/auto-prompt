@@ -624,9 +624,10 @@ const LoadingWrapper = styled.div`
 
 interface LoginPageProps {
   onLoginSuccess?: () => void;
+  onEnterGuestMode?: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onEnterGuestMode }) => {
   const { login } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -657,6 +658,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       window.location.href = loginUrl;
     }, 800);
   };
+
+
 
   return (
     <LoginContainer>
@@ -713,14 +716,42 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             </StyledText>
           </div>
 
-          <LoginButton
-            type="primary"
-            icon={<LoginOutlined />}
-            onClick={handleLogin}
-            className="hover-effect"
-          >
-            立即开始体验
-          </LoginButton>
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <LoginButton
+              type="primary"
+              icon={<LoginOutlined />}
+              onClick={handleLogin}
+              className="hover-effect"
+            >
+              立即开始体验
+            </LoginButton>
+            
+            <Button
+              type="default"
+              onClick={() => {
+                if (onEnterGuestMode) {
+                  onEnterGuestMode();
+                } else {
+                  console.log('onEnterGuestMode 为空');
+                }
+              }}
+              style={{
+                width: '100%',
+                height: '48px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: 'white',
+                fontWeight: '500',
+                backdropFilter: 'blur(10px)',
+                position: 'relative',
+                zIndex: 10,
+                cursor: 'pointer',
+              }}
+            >
+              游客模式体验
+            </Button>
+          </Space>
         </Space>
       </LoginCard>
     </LoginContainer>

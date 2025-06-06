@@ -1,6 +1,7 @@
 using Console.Core;
 using Console.Provider.PostgreSQL.Extensions;
 using Console.Provider.Sqlite.Extensions;
+using Console.Service.Options;
 using Console.Service.Services;
 using Scalar.AspNetCore;
 using Serilog;
@@ -14,6 +15,8 @@ var logger = new LoggerConfiguration()
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+ConsoleOptions.Initialize(builder.Configuration);
 
 builder.Services.AddSerilog(logger);
 builder.Services.AddOpenApi();
@@ -31,7 +34,7 @@ else
     builder.Services.AddSqlite(builder.Configuration.GetConnectionString("Default"));
 }
 
-
+builder.Services.AddHttpForwarder();
 // 注册JWT服务
 builder.Services.AddScoped<JwtService>();
 
@@ -75,5 +78,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 
     await dbContext.BeginMigrationAsync();
 }
+
+app.MapOpenAiProxy();
 
 await app.RunAsync();

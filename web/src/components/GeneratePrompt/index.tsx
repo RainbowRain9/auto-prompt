@@ -54,21 +54,16 @@ export default function GeneratePrompt({
     const fetchModels = async () => {
         setModelsLoading(true);
         try {
-            const response = await fetch('https://api.token-ai.cn/v1/models');
-            const data: { data: Array<{ id: string; type: string }> } = await response.json();
-            
-            // 过滤出 type === 'chat' 的模型
-            const chatModels = data.data
-                .filter(model => model.type === 'chat')
-                .map(model => ({
-                    value: model.id,
-                    label: model.id
-                }));
+            const { fetchModels: fetchLLMModels } = await import('../../utils/llmClient');
+            const chatModels = await fetchLLMModels();
             
             setModels(chatModels);
-            
-            // 如果当前选中的模型不在新列表中，选择第一个可用模型
-            if (chatModels.length > 0 && !chatModels.some(model => model.value === input.chatModel)) {
+
+            // 如果存在claude-sonnet-4-20250514则优先选择，否则如果当前选中的模型不在新列表中，选择第一个可用模型
+            const claudeModel = chatModels.find(model => model.value === 'claude-sonnet-4-20250514');
+            if (claudeModel) {
+                setInput(prev => ({ ...prev, chatModel: 'claude-sonnet-4-20250514' }));
+            } else if (chatModels.length > 0 && !chatModels.some(model => model.value === input.chatModel)) {
                 setInput(prev => ({ ...prev, chatModel: chatModels[0].value }));
             }
         } catch (error) {

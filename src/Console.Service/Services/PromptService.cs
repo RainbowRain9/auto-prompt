@@ -3,6 +3,7 @@ using System.Text.Json;
 using Console.Core;
 using Console.Service.Dto;
 using Console.Service.Entities;
+using Console.Service.Options;
 using FastService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.SemanticKernel;
@@ -36,7 +37,7 @@ public class PromptService(IDbContext dbContext) : FastApi
             bool isFirst = true;
 
             var kernelBuilder = Kernel.CreateBuilder()
-                .AddOpenAIChatCompletion(input.ChatModel, new Uri("https://api.token-ai.cn/v1"),
+                .AddOpenAIChatCompletion(input.ChatModel, new Uri(ConsoleOptions.OpenAIEndpoint),
                     token);
 
 
@@ -110,7 +111,7 @@ public class PromptService(IDbContext dbContext) : FastApi
     private async Task DeepReasoningAsync(GeneratePromptInput input, HttpContext context, string token)
     {
         var kernelBuilder = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(input.ChatModel, new Uri("https://api.token-ai.cn/v1"), token);
+            .AddOpenAIChatCompletion(input.ChatModel, new Uri(ConsoleOptions.OpenAIEndpoint), token);
 
         var kernel = kernelBuilder.Build();
 
@@ -205,7 +206,6 @@ public class PromptService(IDbContext dbContext) : FastApi
                 await context.Response.Body.FlushAsync();
             }
         }
-
 
         await context.Response.WriteAsync("data: [DONE]\n\n");
         await context.Response.Body.FlushAsync();

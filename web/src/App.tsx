@@ -12,6 +12,7 @@ import LoginPage from './components/LoginPage';
 import PromptsPage from './components/PromptsPage';
 import DashboardPage from './components/DashboardPage';
 import HomePage from './components/HomePage';
+import GuestConfigModal from './components/GuestConfigModal';
 import './styles/global.css';
 import './i18n';
 
@@ -97,9 +98,14 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   const { theme } = useThemeStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isGuestMode, enterGuestMode } = useAuthStore();
   const { language } = useLanguageStore();
   const { i18n } = useTranslation();
+  const [showGuestConfig, setShowGuestConfig] = useState(false);
+  
+  useEffect(() => {
+    console.log('showGuestConfig 状态变化:', showGuestConfig);
+  }, [showGuestConfig]);
 
   useEffect(() => {
     initializeTheme();
@@ -114,19 +120,42 @@ const App: React.FC = () => {
     window.location.reload();
   };
 
-  if (!isAuthenticated) {
-    return (
-      <ConfigProvider theme={getAntdTheme(theme === 'dark')}>
-        <LoginPage onLoginSuccess={handleLoginSuccess} />
-      </ConfigProvider>
-    );
-  }
+  const handleEnterGuestMode = () => {
+    // 进入游客模式时不直接设置状态，而是显示配置弹窗
+    setShowGuestConfig(true);
+  };
+
+  const handleGuestConfigOk = () => {
+    console.log('App: handleGuestConfigOk 被调用');
+    // 配置完成后才真正进入游客模式
+    enterGuestMode();
+    setShowGuestConfig(false);
+  };
+
+  const handleGuestConfigCancel = () => {
+    setShowGuestConfig(false);
+  };
 
   return (
     <ConfigProvider theme={getAntdTheme(theme === 'dark')}>
-      <Router>
-        <AppContent />
-      </Router>
+      {/* 如果既没有登录也没有进入游客模式，显示登录页面 */}
+      {!isAuthenticated && !isGuestMode ? (
+        <LoginPage 
+          onLoginSuccess={handleLoginSuccess}
+          onEnterGuestMode={handleEnterGuestMode}
+        />
+      ) : (
+        <Router>
+          <AppContent />
+        </Router>
+      )}
+      <GuestConfigModal
+        open={showGuestConfig}
+        onCancel={handleGuestConfigCancel}
+        onOk={handleGuestConfigOk}
+        title="配置API设置"
+        description="欢迎使用游客模式！为了使用AI功能，请先配置您的API设置。您的API密钥将安全地存储在本地浏览器中。"
+      />
     </ConfigProvider>
   );
 };

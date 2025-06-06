@@ -508,22 +508,22 @@ const StreamingMessage: React.FC<{ theme: 'dark' | 'light' }> = ({ theme }) => {
 };
 
 // 添加模型接口类型定义
-interface ModelData {
-  id: string;
-  object: string;
-  created: number;
-  owned_by: string;
-  type: string;
-}
+// interface ModelData {
+//   id: string;
+//   object: string;
+//   created: number;
+//   owned_by: string;
+//   type: string;
+// }
 
-interface ModelsResponse {
-  data: ModelData[];
-}
+// interface ModelsResponse {
+//   data: ModelData[];
+// }
 
 const Workbench: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useThemeStore();
-  const { token } = useAuthStore();
+  const { isAuthenticated, isGuestMode } = useAuthStore();
   const {
     messages,
     systemPrompt,
@@ -544,21 +544,14 @@ const Workbench: React.FC = () => {
   // 添加模型列表状态
   const [models, setModels] = useState<{ value: string; label: string }[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
+  // const [showGuestConfig, setShowGuestConfig] = useState(false);
 
   // 获取模型列表的函数
   const fetchModels = async () => {
     setModelsLoading(true);
     try {
-      const response = await fetch('https://api.token-ai.cn/v1/models');
-      const data: ModelsResponse = await response.json();
-      
-      // 过滤出 type === 'chat' 的模型
-      const chatModels = data.data
-        .filter(model => model.type === 'chat')
-        .map(model => ({
-          value: model.id,
-          label: model.id
-        }));
+      const { fetchModels: fetchLLMModels } = await import('../utils/llmClient');
+      const chatModels = await fetchLLMModels();
       
       setModels(chatModels);
       
@@ -587,7 +580,14 @@ const Workbench: React.FC = () => {
   }, [loadFromDB]);
 
   const handleRun = async () => {
-    if (!token) {
+    if (isGuestMode) {
+      // 游客模式需要检查API配置
+      const { hasValidLLMConfig } = await import('../utils/llmClient');
+      if (!hasValidLLMConfig()) {
+        message.error('请先在侧边栏配置API设置');
+        return;
+      }
+    } else if (!isAuthenticated) {
       message.error(t('auth.pleaseLogin'));
       return;
     }
@@ -737,6 +737,8 @@ const Workbench: React.FC = () => {
           <StreamingMessage theme={theme} />
         </TestSection>
       </WorkbenchContent>
+
+
     </WorkbenchContainer>
   );
 };

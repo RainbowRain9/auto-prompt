@@ -4,16 +4,19 @@ import {
   DashboardOutlined,
   ExperimentOutlined,
   LogoutOutlined,
+  LoginOutlined,
   BulbOutlined,
   HomeOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useThemeStore } from '../stores/themeStore';
 import { useAuthStore } from '../stores/authStore';
+import GuestConfigModal from './GuestConfigModal';
 
 const { Sider } = Layout;
 
@@ -242,13 +245,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCollapse
 }) => {
   const { theme } = useThemeStore();
-  const { logout, token } = useAuthStore();
+  const { logout, token, isAuthenticated, isGuestMode } = useAuthStore();
   const { t } = useTranslation();
   const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
+  const [showGuestConfig, setShowGuestConfig] = useState(false);
 
   // 获取用户信息
   const fetchUserInfo = async () => {
-    if (!token) return;
+    if (!token || !isAuthenticated) return;
     try {
       const response = await fetch('https://api.token-ai.cn/api/v1/user/info', {
         method: 'GET',
@@ -270,8 +274,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   useEffect(() => {
-    fetchUserInfo();
-  }, [token]);
+    if (isAuthenticated) {
+      fetchUserInfo();
+    }
+  }, [token, isAuthenticated]);
 
   const menuItems = [
     {
@@ -303,6 +309,14 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleCollapse = () => {
     onCollapse?.(!collapsed);
+  };
+
+  const handleGuestConfigOk = () => {
+    setShowGuestConfig(false);
+  };
+
+  const handleGuestConfigCancel = () => {
+    setShowGuestConfig(false);
   };
 
   if (collapsed) {
@@ -370,30 +384,76 @@ const Sidebar: React.FC<SidebarProps> = ({
       </MenuSection>
 
       <SidebarFooter theme={theme}>
-        <UserInfo theme={theme}>
-          <StyledAvatar
-            size={40}
-            theme={theme}
-            icon={<UserOutlined />}
-            src={userInfo?.avatar ? 'https://api.dicebear.com/7.x/adventurer-neutral/svg' : undefined}
-          >
-            {!userInfo?.avatar && (userInfo?.userName?.charAt(0)?.toUpperCase() || 'U')}
-          </StyledAvatar>
-          <div className="user-details">
-            <div className="user-name">{userInfo?.userName || t('auth.username')}</div>
-            <div className="user-email">{userInfo?.email || 'user@example.com'}</div>
-          </div>
-        </UserInfo>
-        <Space direction="vertical" style={{ width: '100%' }} size={12}>
-          <LogoutButton
-            theme={theme}
-            icon={<LogoutOutlined />}
-            onClick={handleLogout}
-          >
-            {t('auth.logout')}
-          </LogoutButton>
-        </Space>
+        {isGuestMode ? (
+          // 游客模式显示
+          <Space direction="vertical" style={{ width: '100%' }} size={12}>
+            <UserInfo theme={theme}>
+              <StyledAvatar
+                size={40}
+                theme={theme}
+                icon={<UserOutlined />}
+              >
+                G
+              </StyledAvatar>
+              <div className="user-details">
+                <div className="user-name">游客模式</div>
+                <div className="user-email">体验版本</div>
+              </div>
+            </UserInfo>
+            <LogoutButton
+              theme={theme}
+              icon={<SettingOutlined />}
+              onClick={() => setShowGuestConfig(true)}
+              style={{ marginBottom: '8px' }}
+            >
+              API设置
+            </LogoutButton>
+            <LogoutButton
+              theme={theme}
+              icon={<LoginOutlined />}
+              onClick={handleLogout}
+            >
+              登录账户
+            </LogoutButton>
+          </Space>
+        ) : (
+          // 登录用户显示
+          <>
+            <UserInfo theme={theme}>
+              <StyledAvatar
+                size={40}
+                theme={theme}
+                icon={<UserOutlined />}
+                src={userInfo?.avatar ? 'https://api.dicebear.com/7.x/adventurer-neutral/svg' : undefined}
+              >
+                {!userInfo?.avatar && (userInfo?.userName?.charAt(0)?.toUpperCase() || 'U')}
+              </StyledAvatar>
+              <div className="user-details">
+                <div className="user-name">{userInfo?.userName || t('auth.username')}</div>
+                <div className="user-email">{userInfo?.email || 'user@example.com'}</div>
+              </div>
+            </UserInfo>
+            <Space direction="vertical" style={{ width: '100%' }} size={12}>
+              <LogoutButton
+                theme={theme}
+                icon={<LogoutOutlined />}
+                onClick={handleLogout}
+              >
+                {t('auth.logout')}
+              </LogoutButton>
+            </Space>
+          </>
+        )}
       </SidebarFooter>
+
+      {/* 游客模式API配置弹窗 */}
+      <GuestConfigModal
+        open={showGuestConfig}
+        onCancel={handleGuestConfigCancel}
+        onOk={handleGuestConfigOk}
+        title="API设置"
+        description="请配置您的API设置以使用AI功能。您的API密钥将安全地存储在本地浏览器中。"
+      />
     </StyledSider>
   );
 };

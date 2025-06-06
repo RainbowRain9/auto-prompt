@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getOpenAIClient } from '../utils/openaiClient';
+import { getLLMClient, isGuestMode } from '../utils/llmClient';
 import {
   getConfig,
   saveConfig,
@@ -400,9 +400,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   sendMessages: async () => {
     const state = get();
-    const openai = getOpenAIClient();
+    const openai = getLLMClient();
     if (!openai) {
-      set({ error: '未登录，请先登录后再试' });
+      const errorMsg = isGuestMode() ? '请先配置API设置' : '未登录，请先登录后再试';
+      set({ error: errorMsg });
       return;
     }
 

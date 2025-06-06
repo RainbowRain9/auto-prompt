@@ -1,7 +1,7 @@
 {
   "nav": {
     "home": "首页",
-    "dashboard": "仪表板",
+    "dashboard": "提示词广场",
     "prompts": "提示词管理",
     "workbench": "工作台",
     "code": "代码生成",
@@ -198,7 +198,6 @@
     "popularity": "热度",
     "createdAt": "创建时间",
     "updatedAt": "更新时间",
-    "deleteConfirm": "确认删除此模板？",
     "favorite": "收藏",
     "unfavorite": "取消收藏",
     "share": "分享",
@@ -206,7 +205,7 @@
     "copySuccess": "复制成功"
   },
   "dashboard": {
-    "title": "仪表板",
+    "title": "提示词广场",
     "overview": "概览",
     "statistics": "统计数据",
     "totalPrompts": "总提示词数",
