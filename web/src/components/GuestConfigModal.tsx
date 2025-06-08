@@ -34,7 +34,7 @@ const GuestConfigModal: React.FC<GuestConfigModalProps> = ({
       } else {
         // 设置默认值
         form.setFieldsValue({
-          baseURL: 'https://api.openai.com/v1',
+          baseURL: 'https://api.token-ai.cn/v1',
           apiKey: ''
         });
       }
@@ -120,12 +120,12 @@ const GuestConfigModal: React.FC<GuestConfigModalProps> = ({
             ]}
             extra={
               <Text type="secondary">
-                例如: https://api.openai.com/v1 或您的代理地址
+                例如: https://api.token-ai.cn/v1 或您的代理地址
               </Text>
             }
           >
             <Input
-              placeholder="https://api.openai.com/v1"
+              placeholder="https://api.token-ai.cn/v1"
               prefix={<ApiOutlined />}
             />
           </Form.Item>
@@ -144,8 +144,8 @@ const GuestConfigModal: React.FC<GuestConfigModalProps> = ({
             ]}
             extra={
               <Text type="secondary">
-                您的OpenAI API密钥，以 sk- 开头。
-                <Link href="https://platform.openai.com/api-keys" target="_blank">
+                您的Token AI API密钥，以 sk- 开头。
+                <Link href="https://api.token-ai.cn/token" target="_blank">
                   获取API密钥
                 </Link>
               </Text>
