@@ -30,7 +30,7 @@ public class PromptService(IDbContext dbContext) : FastApi
             return;
         }
 
-        if (string.IsNullOrEmpty(apiUrl))
+        if (string.IsNullOrEmpty(apiUrl) || apiUrl.Contains("/openai"))
         {
             apiUrl = ConsoleOptions.OpenAIEndpoint;
         }
