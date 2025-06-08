@@ -22,22 +22,29 @@ public class PromptService(IDbContext dbContext) : FastApi
     {
         var token = context.Request.Headers["Authorization"].ToString().Trim().Replace("Bearer ", "");
 
+        var apiUrl = context.Request.Headers["X-Api-Url"].ToString();
+
         if (string.IsNullOrEmpty(token))
         {
             context.Response.StatusCode = 401;
             return;
         }
 
+        if (string.IsNullOrEmpty(apiUrl))
+        {
+            apiUrl = ConsoleOptions.OpenAIEndpoint;
+        }
+
         if (input.EnableDeepReasoning)
         {
-            await DeepReasoningAsync(input, context, token);
+            await DeepReasoningAsync(input, context, token, apiUrl);
         }
         else
         {
             bool isFirst = true;
 
             var kernelBuilder = Kernel.CreateBuilder()
-                .AddOpenAIChatCompletion(input.ChatModel, new Uri(ConsoleOptions.OpenAIEndpoint),
+                .AddOpenAIChatCompletion(input.ChatModel, new Uri(apiUrl),
                     token);
 
 
@@ -53,12 +60,12 @@ public class PromptService(IDbContext dbContext) : FastApi
                                new KernelArguments(
                                    new OpenAIPromptExecutionSettings()
                                    {
-                                       MaxTokens = 63000,
+                                       MaxTokens = 32000,
                                        Temperature = 0.7f,
                                    })
                                {
                                    { "prompt", input.Prompt },
-                                   { "requirement", input.Requirement }
+                                   { "requirement", input.Requirements }
                                }))
             {
                 if (isFirst)
@@ -95,7 +102,7 @@ public class PromptService(IDbContext dbContext) : FastApi
             var entity = new PromptHistory()
             {
                 Id = Guid.NewGuid(),
-                Requirement = input.Requirement ?? "",
+                Requirement = input.Requirements ?? "",
                 Result = result.ToString(),
                 CreatedTime = DateTime.Now,
                 DeepReasoning = "",
@@ -108,10 +115,10 @@ public class PromptService(IDbContext dbContext) : FastApi
         }
     }
 
-    private async Task DeepReasoningAsync(GeneratePromptInput input, HttpContext context, string token)
+    private async Task DeepReasoningAsync(GeneratePromptInput input, HttpContext context, string token, string apiUrl)
     {
         var kernelBuilder = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(input.ChatModel, new Uri(ConsoleOptions.OpenAIEndpoint), token);
+            .AddOpenAIChatCompletion(input.ChatModel, new Uri(apiUrl), token);
 
         var kernel = kernelBuilder.Build();
 
@@ -137,13 +144,13 @@ public class PromptService(IDbContext dbContext) : FastApi
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
-                                   MaxTokens = 63000,
+                                   MaxTokens = 32000,
                                    Temperature = 0.7f,
                                })
                            {
                                { "date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") },
                                { "prompt", input.Prompt },
-                               { "requirement", input.Requirement }
+                               { "requirement", input.Requirements }
                            }))
         {
             if (item is OpenAIStreamingChatMessageContent chatMessageContent)
@@ -177,12 +184,12 @@ public class PromptService(IDbContext dbContext) : FastApi
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
-                                   MaxTokens = 63000,
+                                   MaxTokens = 32000,
                                    Temperature = 0.7f,
                                })
                            {
                                { "prompt", input.Prompt },
-                               { "requirement", input.Requirement },
+                               { "requirement", input.Requirements },
                                { "deepReasoning", deepReasoning.ToString() }
                            }))
         {
@@ -213,7 +220,7 @@ public class PromptService(IDbContext dbContext) : FastApi
         var entity = new PromptHistory()
         {
             Id = Guid.NewGuid(),
-            Requirement = input.Requirement ?? "",
+            Requirement = input.Requirements ?? "",
             Result = result.ToString(),
             CreatedTime = DateTime.Now,
             DeepReasoning = deepReasoning.ToString(),

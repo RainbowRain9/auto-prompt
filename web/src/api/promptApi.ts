@@ -56,13 +56,13 @@ export async function* SSE<T = any>(
         if (!llmConfig) {
             throw new Error('没有可用的LLM配置');
         }
-
         // 发送请求
         const response = await fetch(url, {
             method: "POST",
             headers: {
                 ...finalConfig.headers,
                 "Authorization": `Bearer ${llmConfig.apiKey}`, // 使用LLM配置的API Key
+                "X-Api-Url": llmConfig.baseURL || '',
             },
             body: JSON.stringify(data),
             signal: controller.signal,
@@ -191,12 +191,10 @@ export async function* generatePrompt(
   config: Partial<SSEConfig> = {}
 ): AsyncGenerator<SSEEvent, void, unknown> {
   const url = '/v1/prompt/generate';
-  
   // 默认配置，专门为这个接口优化
   const defaultConfig: Partial<SSEConfig> = {
     headers: {
       'Content-Type': 'application/json',
-
     },
     timeout: 600000, // 60秒超时，适合生成任务
   };

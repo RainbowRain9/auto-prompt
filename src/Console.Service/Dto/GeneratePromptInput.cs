@@ -10,7 +10,7 @@ public class GeneratePromptInput
     /// <summary>
     /// 用户需求
     /// </summary>
-    public string? Requirement { get; set; }
+    public string? Requirements { get; set; }
 
     /// <summary>
     /// 是否启用深入推理
