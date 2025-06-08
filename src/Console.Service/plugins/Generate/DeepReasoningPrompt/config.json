@@ -20,7 +20,7 @@
       "required": false
     },
     {
-      "name": "deep-reasoning",
+      "name": "deepReasoning",
       "description": "深入推理的提示词",
       "required": true
     }
