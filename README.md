@@ -127,6 +127,7 @@ docker-compose logs -f
 - Frontend: http://localhost:10426
 - API Documentation: http://localhost:10426/scalar/v1
 
+
 ### 🔧 Development Environment Setup
 
 1. Backend Development
@@ -162,6 +163,332 @@ Configure in `src/Console.Service/appsettings.json`:
   }
 }
 ```
+
+### 🔧 Custom Endpoint Configuration
+
+This platform supports configuring custom AI API endpoints that are compatible with the OpenAI API format.
+
+#### Configuration Methods
+
+##### 1. Configuration via Configuration File (Recommended for Production)
+
+Configure in `src/Console.Service/appsettings.json`:
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "OpenAIEndpoint": "https://your-custom-api.com/v1",
+  "ConnectionStrings": {
+    "Type": "sqlite",
+    "Default": "Data Source=/data/ConsoleService.db"
+  }
+}
+```
+
+##### 2. Configuration via Environment Variables
+
+```bash
+export OPENAIENDPOINT="https://your-custom-api.com/v1"
+```
+
+##### 3. Docker Compose Environment Variable Configuration
+
+Create or modify `docker-compose.yaml`:
+
+```yaml
+services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    ports:
+      - 10426:8080
+    environment:
+      - TZ=Asia/Shanghai
+      - OpenAIEndpoint=https://your-custom-api.com/v1
+      # Optional: Configure database type
+      - ConnectionStrings:Type=sqlite
+      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
+    volumes:
+      - ./data:/data
+    build:
+      context: .
+      dockerfile: src/Console.Service/Dockerfile
+```
+
+#### Supported API Endpoint Types
+
+The platform supports the following services compatible with the OpenAI API format:
+
+- **OpenAI Official API**: `https://api.openai.com/v1`
+- **Azure OpenAI**: `https://your-resource.openai.azure.com/openai/deployments/your-deployment`
+- **Domestic Proxy Services**:
+  - `https://api.token-ai.cn/v1` (default)
+  - `https://api.deepseek.com/v1`
+  - `https://api.moonshot.cn/v1`
+- **Self-hosted Services**:
+  - Ollama: `http://localhost:11434/v1`
+  - LocalAI: `http://localhost:8080/v1`
+  - vLLM: `http://localhost:8000/v1`
+
+#### Complete Docker Compose Configuration Example
+
+##### Basic Configuration (SQLite Database)
+
+```yaml
+version: '3.8'
+
+services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    container_name: auto-prompt
+    ports:
+      - "10426:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - OpenAIEndpoint=https://api.openai.com/v1
+      - ConnectionStrings:Type=sqlite
+      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
+
+##### Advanced Configuration (PostgreSQL Database)
+
+```yaml
+version: '3.8'
+
+services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    container_name: auto-prompt
+    ports:
+      - "10426:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - OpenAIEndpoint=https://your-custom-api.com/v1
+      - ConnectionStrings:Type=postgresql
+      - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_password
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: auto-prompt-db
+    environment:
+      - POSTGRES_DB=auto_prompt
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=your_password
+      - TZ=Asia/Shanghai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+```
+
+##### Local AI Service Configuration (Ollama)
+
+```yaml
+version: '3.8'
+
+services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    container_name: auto-prompt
+    ports:
+      - "10426:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - OpenAIEndpoint=http://ollama:11434/v1
+      - ConnectionStrings:Type=sqlite
+      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
+    volumes:
+      - ./data:/data
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    # Uncomment the following if you have a GPU
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  ollama_data:
+```
+
+#### Deployment Steps
+
+1. **Select Configuration Template**
+   
+   Choose one of the configuration templates above according to your needs and save it as `docker-compose.yaml`.
+
+2. **Modify Configuration Parameters**
+   
+   ```bash
+   # Modify the API endpoint
+   - OpenAIEndpoint=https://your-api-endpoint.com/v1
+   
+   # Modify the database password (if using PostgreSQL)
+   - POSTGRES_PASSWORD=your_secure_password
+   - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_secure_password
+   ```
+
+3. **Start the Service**
+   
+   ```bash
+   # Start all services
+   docker-compose up -d
+   
+   # Check the status of the services
+   docker-compose ps
+   
+   # View logs
+   docker-compose logs -f console-service
+   ```
+
+4. **Verify Deployment**
+   
+   ```bash
+   # Check the health status of the service
+   curl http://localhost:10426/health
+   
+   # Access the API documentation
+   curl http://localhost:10426/scalar/v1
+   ```
+
+#### Environment Variable Descriptions
+
+| Variable Name | Description | Default Value | Example |
+|---------------|-------------|---------------|---------|
+| `OpenAIEndpoint` | AI API endpoint address | `https://api.token-ai.cn/v1` | `https://api.openai.com/v1` |
+| `ConnectionStrings:Type` | Database type | `sqlite` | `postgresql`, `sqlite` |
+| `ConnectionStrings:Default` | Database connection string | `Data Source=/data/ConsoleService.db` | PostgreSQL: `Host=postgres;Database=auto_prompt;Username=postgres;Password=password` |
+| `TZ` | Time zone setting | `Asia/Shanghai` | `UTC`, `America/New_York` |
+
+#### Troubleshooting
+
+##### Common Issues
+
+1. **API Endpoint Connection Failure**
+   ```bash
+   # Check if the endpoint is accessible
+   curl -I https://your-api-endpoint.com/v1/models
+   
+   # Check the container network
+   docker-compose exec console-service curl -I http://ollama:11434/v1/models
+   ```
+
+2. **Database Connection Failure**
+   ```bash
+   # Check the PostgreSQL container status
+   docker-compose logs postgres
+   
+   # Test database connection
+   docker-compose exec postgres psql -U postgres -d auto_prompt -c "SELECT 1;"
+   ```
+
+3. **Permission Issues**
+   ```bash
+   # Ensure correct permissions for the data directory
+   sudo chown -R 1000:1000 ./data
+   chmod 755 ./data
+   ```
+
+##### Log Viewing
+
+```bash
+# View application logs
+docker-compose logs -f console-service
+
+# View database logs
+docker-compose logs -f postgres
+
+# View all service logs
+docker-compose logs -f
+```
+
+#### Performance Optimization Suggestions
+
+1. **Resource Limitation Configuration**
+   ```yaml
+   services:
+     console-service:
+       deploy:
+         resources:
+           limits:
+             memory: 2G
+             cpus: '1.0'
+           reservations:
+             memory: 512M
+             cpus: '0.5'
+   ```
+
+2. **Database Optimization**
+   ```yaml
+   postgres:
+     environment:
+       - POSTGRES_SHARED_PRELOAD_LIBRARIES=pg_stat_statements
+       - POSTGRES_MAX_CONNECTIONS=200
+     command: >
+       postgres
+       -c shared_preload_libraries=pg_stat_statements
+       -c max_connections=200
+       -c shared_buffers=256MB
+       -c effective_cache_size=1GB
+   ```
+
+3. **Cache Configuration**
+   ```yaml
+   services:
+     redis:
+       image: redis:7-alpine
+       container_name: auto-prompt-redis
+       ports:
+         - "6379:6379"
+       volumes:
+         - redis_data:/data
+       restart: unless-stopped
+   ```
 
 ## 🏗️ Project Structure
 

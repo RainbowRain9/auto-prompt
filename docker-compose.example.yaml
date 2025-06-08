@@ -1,0 +1,246 @@
+# AI Prompt Optimization Platform - Docker Compose 配置示例
+# 
+# 使用说明：
+# 1. 复制此文件为 docker-compose.yaml
+# 2. 根据需要修改配置参数
+# 3. 运行 docker-compose up -d 启动服务
+#
+# 配置选项说明：
+# - 基础配置：使用SQLite数据库，适合小规模使用
+# - PostgreSQL配置：使用PostgreSQL数据库，适合生产环境
+# - Ollama配置：集成本地AI服务，无需外部API
+
+version: '3.8'
+
+services:
+  # ===========================================
+  # 主应用服务
+  # ===========================================
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    container_name: auto-prompt
+    ports:
+      - "10426:8080"
+    environment:
+      # 时区设置
+      - TZ=Asia/Shanghai
+      
+      # AI API端点配置 - 请根据需要修改
+      # OpenAI官方: https://api.openai.com/v1
+      # 国内代理: https://api.token-ai.cn/v1
+      # 自定义端点: https://your-custom-api.com/v1
+      # 本地Ollama: http://ollama:11434/v1
+      - OpenAIEndpoint=https://api.token-ai.cn/v1
+      
+      # 数据库配置
+      # SQLite配置（默认）
+      - ConnectionStrings:Type=sqlite
+      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
+      
+      # PostgreSQL配置（取消注释以使用PostgreSQL）
+      # - ConnectionStrings:Type=postgresql
+      # - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_secure_password
+      
+      # 可选：JWT配置
+      # - Jwt:Key=your_jwt_secret_key_here_minimum_32_characters
+      # - Jwt:Issuer=auto-prompt
+      # - Jwt:Audience=auto-prompt-users
+      
+      # 可选：日志级别
+      # - Logging:LogLevel:Default=Information
+      # - Logging:LogLevel:Microsoft.AspNetCore=Warning
+    
+    volumes:
+      # 数据持久化目录
+      - ./data:/data
+      # 可选：自定义配置文件
+      # - ./appsettings.json:/app/appsettings.json:ro
+    
+    # 依赖服务（根据需要启用）
+    depends_on:
+      # PostgreSQL数据库（如使用PostgreSQL，取消注释）
+      # - postgres
+      # 本地AI服务（如使用Ollama，取消注释）
+      # - ollama
+    
+    restart: unless-stopped
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # 资源限制（可选）
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # ===========================================
+  # PostgreSQL数据库服务（可选）
+  # 如需使用PostgreSQL，请取消注释以下配置
+  # ===========================================
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: auto-prompt-db
+  #   environment:
+  #     - POSTGRES_DB=auto_prompt
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=your_secure_password
+  #     - TZ=Asia/Shanghai
+  #     # 性能优化参数
+  #     - POSTGRES_SHARED_PRELOAD_LIBRARIES=pg_stat_statements
+  #     - POSTGRES_MAX_CONNECTIONS=200
+  #   
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     # 可选：自定义初始化脚本
+  #     # - ./init-scripts:/docker-entrypoint-initdb.d:ro
+  #   
+  #   ports:
+  #     - "5432:5432"
+  #   
+  #   restart: unless-stopped
+  #   
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   
+  #   # PostgreSQL性能优化
+  #   command: >
+  #     postgres
+  #     -c shared_preload_libraries=pg_stat_statements
+  #     -c max_connections=200
+  #     -c shared_buffers=256MB
+  #     -c effective_cache_size=1GB
+  #     -c work_mem=4MB
+  #     -c maintenance_work_mem=64MB
+  #     -c random_page_cost=1.1
+  #     -c temp_file_limit=2GB
+  #     -c log_min_duration_statement=1000
+  #     -c log_connections=on
+  #     -c log_disconnections=on
+
+  # ===========================================
+  # Ollama本地AI服务（可选）
+  # 如需使用本地AI服务，请取消注释以下配置
+  # ===========================================
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"
+  #   
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   
+  #   environment:
+  #     - OLLAMA_HOST=0.0.0.0
+  #     - OLLAMA_ORIGINS=*
+  #   
+  #   restart: unless-stopped
+  #   
+  #   # GPU支持（如有NVIDIA GPU，取消注释）
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: 1
+  #   #           capabilities: [gpu]
+  #   
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+  # ===========================================
+  # Redis缓存服务（可选）
+  # 用于提升性能和会话管理
+  # ===========================================
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: auto-prompt-redis
+  #   ports:
+  #     - "6379:6379"
+  #   
+  #   volumes:
+  #     - redis_data:/data
+  #     # 可选：Redis配置文件
+  #     # - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+  #   
+  #   environment:
+  #     - TZ=Asia/Shanghai
+  #   
+  #   restart: unless-stopped
+  #   
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+  #   
+  #   # Redis配置优化
+  #   command: >
+  #     redis-server
+  #     --maxmemory 256mb
+  #     --maxmemory-policy allkeys-lru
+  #     --save 900 1
+  #     --save 300 10
+  #     --save 60 10000
+
+  # ===========================================
+  # Nginx反向代理（可选）
+  # 用于负载均衡和SSL终止
+  # ===========================================
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: auto-prompt-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   
+  #   depends_on:
+  #     - console-service
+  #   
+  #   restart: unless-stopped
+
+# ===========================================
+# 数据卷定义
+# ===========================================
+volumes:
+  # PostgreSQL数据卷（如使用PostgreSQL，取消注释）
+  # postgres_data:
+  #   driver: local
+  
+  # Ollama数据卷（如使用Ollama，取消注释）
+  # ollama_data:
+  #   driver: local
+  
+  # Redis数据卷（如使用Redis，取消注释）
+  # redis_data:
+  #   driver: local
+
+# ===========================================
+# 网络配置（可选）
+# ===========================================
+# networks:
+#   auto-prompt-network:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.20.0.0/16 
