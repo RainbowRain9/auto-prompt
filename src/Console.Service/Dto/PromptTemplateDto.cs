@@ -13,7 +13,9 @@ public class PromptTemplateDto
     public DateTime? ShareTime { get; set; }
     public int ViewCount { get; set; }
     public int LikeCount { get; set; }
+    public int CommentCount { get; set; }
     public bool IsLikedByCurrentUser { get; set; }
+    public bool IsFavoritedByCurrentUser { get; set; }
     public string? CreatorName { get; set; }
     public DateTime CreatedTime { get; set; }
     public DateTime UpdatedTime { get; set; }
@@ -57,4 +59,10 @@ public class SharedPromptTemplateSearchInput
     public int PageSize { get; set; } = 20;
     public string? SortBy { get; set; } = "ViewCount"; // ViewCount, LikeCount, ShareTime, CreatedTime
     public string? SortOrder { get; set; } = "desc"; // asc, desc
+}
+
+public class AddCommentInput
+{
+    public string Content { get; set; } = string.Empty;
+    public Guid? ParentCommentId { get; set; }
 } 

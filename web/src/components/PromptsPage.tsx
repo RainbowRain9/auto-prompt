@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Card, 
   Button, 
   Input, 
   Space, 
   Typography, 
-  Row, 
-  Col, 
   Tag, 
   Modal,
   Form,
@@ -14,7 +11,10 @@ import {
   Spin,
   Empty,
   Tooltip,
-  Pagination
+  Pagination,
+  Select,
+  Dropdown,
+  Segmented
 } from 'antd';
 import {
   PlusOutlined,
@@ -26,7 +26,16 @@ import {
   StarOutlined,
   StarFilled,
   ShareAltOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  FilterOutlined,
+  AppstoreOutlined,
+  UnorderedListOutlined,
+  EyeOutlined,
+  CalendarOutlined,
+  TagOutlined,
+  MoreOutlined,
+  CloseOutlined,
+  ThunderboltOutlined
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
@@ -38,8 +47,10 @@ import {
   deletePromptTemplate,
   toggleFavorite,
   toggleShare,
-  incrementUsage
+  incrementUsage,
+  getPromptTemplate
 } from '../api/promptTemplateApi';
+import { GeneratePromptTemplateParameters } from '../api/promptApi';
 import type {
   PromptTemplate,
   CreatePromptTemplateInput,
@@ -48,16 +59,20 @@ import type {
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+const { Option } = Select;
 
 const PageContainer = styled.div`
   padding: 24px;
   height: 100vh;
-  overflow-y: auto;
+  overflow: hidden;
   background: ${props => props.theme === 'dark' ? '#0a0a0a' : '#f5f5f5'};
+  display: flex;
+  flex-direction: column;
 `;
 
 const PageHeader = styled.div`
   margin-bottom: 24px;
+  flex-shrink: 0;
   
   .page-title {
     color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
@@ -76,9 +91,20 @@ const ActionBar = styled.div`
   align-items: center;
   margin-bottom: 24px;
   gap: 16px;
+  flex-shrink: 0;
   
-  .search-input {
-    max-width: 300px;
+  .search-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    max-width: 600px;
+  }
+  
+  .filter-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   
   .action-buttons {
@@ -87,99 +113,225 @@ const ActionBar = styled.div`
   }
 `;
 
-const PromptCard = styled(Card)`
-  &.ant-card {
-    margin-bottom: 16px;
-    border-radius: 12px;
-    border: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#e8e8e8'};
-    background: ${props => props.theme === 'dark' ? '#1a1a1a' : '#ffffff'};
-    transition: all 0.3s ease;
-    cursor: pointer;
-    height: 320px;
-    display: flex;
-    flex-direction: column;
+const ContentArea = styled.div`
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  overflow: hidden;
+`;
+
+const LeftPanel = styled.div<{ showDetail?: boolean }>`
+  flex: ${props => props.showDetail ? '1' : '1'};
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.3s ease;
+`;
+
+const RightPanel = styled.div<{ visible: boolean }>`
+  width: ${props => props.visible ? '480px' : '0'};
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border-left: ${props => props.visible ? `1px solid ${props.theme === 'dark' ? '#424242' : '#e8e8e8'}` : 'none'};
+  background: ${props => props.theme === 'dark' ? '#1a1a1a' : '#ffffff'};
+  border-radius: 12px;
+`;
+
+const ListContainer = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  background: ${props => props.theme === 'dark' ? '#1a1a1a' : '#ffffff'};
+  border-radius: 12px;
+  border: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#e8e8e8'};
+`;
+
+const PromptListItem = styled.div<{ selected?: boolean }>`
+  padding: 16px 20px;
+  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#f0f0f0'};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${props => props.selected 
+    ? (props.theme === 'dark' ? '#1677ff20' : '#e6f7ff') 
+    : 'transparent'
+  };
+  border-left: ${props => props.selected ? '3px solid #1677ff' : '3px solid transparent'};
+  
+  &:hover {
+    background: ${props => props.theme === 'dark' ? '#262626' : '#f8f9fa'};
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const PromptItemHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+`;
+
+const PromptItemTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  
+  .title-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
+    margin: 0;
+  }
+`;
+
+const PromptItemActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.7;
+  
+  .action-btn {
+    padding: 4px;
+    border: none;
+    background: transparent;
+    color: ${props => props.theme === 'dark' ? '#ffffff73' : '#00000073'};
     
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, ${props => props.theme === 'dark' ? '0.3' : '0.1'});
-      border-color: #1677ff;
-    }
-    
-    .ant-card-head {
-      border-bottom: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#f0f0f0'};
-      
-      .ant-card-head-title {
-        color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
-        font-weight: 600;
-      }
-    }
-    
-    .ant-card-body {
-      padding: 16px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
+      background: ${props => props.theme === 'dark' ? '#424242' : '#f0f0f0'};
     }
   }
 `;
 
-const PromptContent = styled.div`
+const PromptItemContent = styled.div`
+  margin-bottom: 12px;
+  
+  .description {
+    color: ${props => props.theme === 'dark' ? '#ffffff73' : '#00000073'};
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .content-preview {
+    background: ${props => props.theme === 'dark' ? '#262626' : '#f8f9fa'};
+    border: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#e8e8e8'};
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
+    max-height: 60px;
+    overflow: hidden;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: linear-gradient(transparent, ${props => props.theme === 'dark' ? '#262626' : '#f8f9fa'});
+    }
+  }
+`;
+
+const PromptItemFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  
+  .stats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: ${props => props.theme === 'dark' ? '#ffffff73' : '#00000073'};
+    font-size: 12px;
+  }
+`;
+
+const DetailPanel = styled.div`
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  height: 100%;
+`;
+
+const DetailHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
   
-  .prompt-title {
-    font-size: 16px;
+  .close-btn {
+    color: ${props => props.theme === 'dark' ? '#ffffff73' : '#00000073'};
+    
+    &:hover {
+      color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
+    }
+  }
+`;
+
+const DetailContent = styled.div`
+  flex: 1;
+  
+  .detail-title {
+    font-size: 20px;
     font-weight: 600;
     color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-shrink: 0;
   }
   
-  .prompt-description {
+  .detail-description {
     color: ${props => props.theme === 'dark' ? '#ffffff73' : '#00000073'};
-    margin-bottom: 12px;
-    font-size: 14px;
-    flex-shrink: 0;
-    height: 40px;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    margin-bottom: 16px;
+    line-height: 1.5;
   }
   
-  .prompt-text {
+  .detail-content {
     background: ${props => props.theme === 'dark' ? '#262626' : '#f8f9fa'};
     border: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#e8e8e8'};
     border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 14px;
+    line-height: 1.6;
     color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
-    height: 120px;
+    white-space: pre-wrap;
+    max-height: 300px;
     overflow-y: auto;
-    flex-shrink: 0;
   }
   
-  .prompt-tags {
-    margin-bottom: 12px;
-    flex-shrink: 0;
-    height: 32px;
-    overflow: hidden;
-  }
-  
-  .prompt-actions {
+  .detail-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
-    flex-shrink: 0;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .detail-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background: ${props => props.theme === 'dark' ? '#262626' : '#f8f9fa'};
+    border-radius: 8px;
+    border: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#e8e8e8'};
   }
 `;
 
@@ -206,9 +358,13 @@ const CreateButton = styled(Button)`
 const PaginationContainer = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 24px;
+  margin-top: 16px;
   padding: 16px 0;
+  flex-shrink: 0;
 `;
+
+type ViewMode = 'list' | 'card';
+type FilterType = 'all' | 'favorite' | 'shared';
 
 const PromptsPage: React.FC = () => {
   const { theme } = useThemeStore();
@@ -221,9 +377,15 @@ const PromptsPage: React.FC = () => {
   const [form] = Form.useForm();
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 12,
+    pageSize: 20,
     total: 0
   });
+  const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [sortBy, setSortBy] = useState('createdTime');
+  const [generatingParameters, setGeneratingParameters] = useState(false);
 
   // 加载提示词列表
   const loadPrompts = async (page = 1, search = searchText) => {
@@ -236,7 +398,29 @@ const PromptsPage: React.FC = () => {
       });
 
       if (response.success) {
-        setPrompts(response.data.items);
+        let filteredPrompts = response.data.items;
+        
+        // 应用筛选
+        if (filterType === 'favorite') {
+          filteredPrompts = filteredPrompts.filter(p => p.isFavorite);
+        } else if (filterType === 'shared') {
+          filteredPrompts = filteredPrompts.filter(p => p.isShared);
+        }
+        
+        // 应用排序
+        filteredPrompts.sort((a, b) => {
+          switch (sortBy) {
+            case 'usageCount':
+              return b.usageCount - a.usageCount;
+            case 'title':
+              return a.title.localeCompare(b.title);
+            case 'createdTime':
+            default:
+              return new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime();
+          }
+        });
+
+        setPrompts(filteredPrompts);
         setPagination(prev => ({
           ...prev,
           current: response.data.page,
@@ -256,7 +440,7 @@ const PromptsPage: React.FC = () => {
   // 初始化加载
   useEffect(() => {
     loadPrompts();
-  }, []);
+  }, [filterType, sortBy]);
 
   // 搜索处理
   const handleSearch = (value: string) => {
@@ -271,6 +455,34 @@ const PromptsPage: React.FC = () => {
     loadPrompts(page);
   };
 
+  // 选择提示词
+  const handleSelectPrompt = async (prompt: PromptTemplate) => {
+    try {
+      setLoading(true);
+      const response = await getPromptTemplate(prompt.id);
+      if (response.success && response.data) {
+        setSelectedPrompt(response.data);
+        setShowDetail(true);
+      } else {
+        message.error(response.message || t('prompts.messages.loadFailed'));
+      }
+    } catch (error) {
+      console.error('获取提示词详情失败:', error);
+      message.error(t('prompts.messages.loadFailed'));
+      // 如果API调用失败，使用列表中的数据作为备选
+      setSelectedPrompt(prompt);
+      setShowDetail(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 关闭详情面板
+  const handleCloseDetail = () => {
+    setShowDetail(false);
+    setSelectedPrompt(null);
+  };
+
   // 创建新提示词
   const handleCreatePrompt = () => {
     setEditingPrompt(null);
@@ -279,7 +491,8 @@ const PromptsPage: React.FC = () => {
   };
 
   // 编辑提示词
-  const handleEditPrompt = (prompt: PromptTemplate) => {
+  const handleEditPrompt = (prompt: PromptTemplate, event?: React.MouseEvent) => {
+    event?.stopPropagation();
     setEditingPrompt(prompt);
     form.setFieldsValue({
       title: prompt.title,
@@ -310,6 +523,10 @@ const PromptsPage: React.FC = () => {
         if (response.success) {
           message.success(t('prompts.messages.updateSuccess'));
           loadPrompts(pagination.current);
+          // 如果当前选中的是被编辑的提示词，更新详情面板
+          if (selectedPrompt?.id === editingPrompt.id) {
+            setSelectedPrompt({ ...editingPrompt, ...values, tags });
+          }
         } else {
           message.error(response.message || t('prompts.messages.updateFailed'));
         }
@@ -340,7 +557,8 @@ const PromptsPage: React.FC = () => {
   };
 
   // 删除提示词
-  const handleDeletePrompt = (prompt: PromptTemplate) => {
+  const handleDeletePrompt = (prompt: PromptTemplate, event?: React.MouseEvent) => {
+    event?.stopPropagation();
     Modal.confirm({
       title: t('prompts.deleteConfirm.title'),
       content: t('prompts.deleteConfirm.content', { title: prompt.title }),
@@ -353,6 +571,10 @@ const PromptsPage: React.FC = () => {
           if (response.success) {
             message.success(t('prompts.messages.deleteSuccess'));
             loadPrompts(pagination.current);
+            // 如果删除的是当前选中的提示词，关闭详情面板
+            if (selectedPrompt?.id === prompt.id) {
+              handleCloseDetail();
+            }
           } else {
             message.error(response.message || t('prompts.messages.deleteFailed'));
           }
@@ -365,14 +587,20 @@ const PromptsPage: React.FC = () => {
   };
 
   // 切换收藏状态
-  const handleToggleFavorite = async (prompt: PromptTemplate) => {
+  const handleToggleFavorite = async (prompt: PromptTemplate, event?: React.MouseEvent) => {
+    event?.stopPropagation();
     try {
       const response = await toggleFavorite(prompt.id);
       if (response.success) {
+        const newIsFavorite = response.data?.isFavorite || !prompt.isFavorite;
         // 更新本地状态
         setPrompts(prev => prev.map(p => 
-          p.id === prompt.id ? { ...p, isFavorite: response.data?.isFavorite || !p.isFavorite } : p
+          p.id === prompt.id ? { ...p, isFavorite: newIsFavorite } : p
         ));
+        // 更新详情面板
+        if (selectedPrompt?.id === prompt.id) {
+          setSelectedPrompt(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+        }
       } else {
         message.error(response.message || t('prompts.messages.operationFailed'));
       }
@@ -383,18 +611,29 @@ const PromptsPage: React.FC = () => {
   };
 
   // 切换分享状态
-  const handleToggleShare = async (prompt: PromptTemplate) => {
+  const handleToggleShare = async (prompt: PromptTemplate, event?: React.MouseEvent) => {
+    event?.stopPropagation();
     try {
       const response = await toggleShare(prompt.id);
       if (response.success) {
+        const newIsShared = response.data?.isShared || !prompt.isShared;
+        const newShareTime = response.data?.shareTime || prompt.shareTime;
         // 更新本地状态
         setPrompts(prev => prev.map(p => 
           p.id === prompt.id ? { 
             ...p, 
-            isShared: response.data?.isShared || !p.isShared,
-            shareTime: response.data?.shareTime || p.shareTime
+            isShared: newIsShared,
+            shareTime: newShareTime
           } : p
         ));
+        // 更新详情面板
+        if (selectedPrompt?.id === prompt.id) {
+          setSelectedPrompt(prev => prev ? { 
+            ...prev, 
+            isShared: newIsShared,
+            shareTime: newShareTime
+          } : null);
+        }
         message.success(response.message || t('prompts.messages.shareSuccess'));
       } else {
         message.error(response.message || t('prompts.messages.shareFailed'));
@@ -406,7 +645,8 @@ const PromptsPage: React.FC = () => {
   };
 
   // 复制提示词内容
-  const handleCopyPrompt = async (prompt: PromptTemplate) => {
+  const handleCopyPrompt = async (prompt: PromptTemplate, event?: React.MouseEvent) => {
+    event?.stopPropagation();
     try {
       await navigator.clipboard.writeText(prompt.content);
       message.success(t('prompts.messages.copySuccess'));
@@ -415,9 +655,14 @@ const PromptsPage: React.FC = () => {
       try {
         const response = await incrementUsage(prompt.id);
         if (response.success) {
+          const newUsageCount = response.data?.usageCount || prompt.usageCount + 1;
           setPrompts(prev => prev.map(p => 
-            p.id === prompt.id ? { ...p, usageCount: response.data?.usageCount || p.usageCount + 1 } : p
+            p.id === prompt.id ? { ...p, usageCount: newUsageCount } : p
           ));
+          // 更新详情面板
+          if (selectedPrompt?.id === prompt.id) {
+            setSelectedPrompt(prev => prev ? { ...prev, usageCount: newUsageCount } : null);
+          }
         }
       } catch (error) {
         console.error('更新使用次数失败:', error);
@@ -433,6 +678,145 @@ const PromptsPage: React.FC = () => {
     loadPrompts(pagination.current);
   };
 
+  // 生成提示词模板参数
+  const handleGenerateParameters = async () => {
+    const content = form.getFieldValue('content');
+    if (!content || content.trim() === '') {
+      message.warning(t('prompts.modal.contentRequired'));
+      return;
+    }
+
+    setGeneratingParameters(true);
+    try {
+      const result = await GeneratePromptTemplateParameters(content);
+      debugger
+      // 解析标签字符串
+      let tags = [];
+      try {
+        tags = JSON.parse(result.tags);
+      } catch (e) {
+        // 如果解析失败，尝试按逗号分割
+        tags = result.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+      }
+
+      // 更新表单字段
+      form.setFieldsValue({
+        title: result.title,
+        description: result.description,
+        tags: Array.isArray(tags) ? tags.join(', ') : result.tags
+      });
+
+      message.success(t('prompts.modal.generateParametersSuccess'));
+    } catch (error) {
+      console.error('生成参数失败:', error);
+      message.error(t('prompts.modal.generateParametersFailed'));
+    } finally {
+      setGeneratingParameters(false);
+    }
+  };
+
+  // 渲染列表项
+  const renderListItem = (prompt: PromptTemplate) => (
+    <PromptListItem
+      key={prompt.id}
+      theme={theme}
+      selected={selectedPrompt?.id === prompt.id}
+      onClick={() => handleSelectPrompt(prompt)}
+    >
+      <PromptItemHeader>
+        <PromptItemTitle theme={theme}>
+          <span className="title-text">{prompt.title}</span>
+          {prompt.isFavorite && <StarFilled style={{ color: '#faad14', fontSize: 14 }} />}
+          {prompt.isShared && <ShareAltOutlined style={{ color: '#52c41a', fontSize: 14 }} />}
+        </PromptItemTitle>
+        <PromptItemActions theme={theme}>
+          <Tooltip title={t('prompts.copyContent')}>
+            <Button
+              type="text"
+              size="small"
+              className="action-btn"
+              icon={<CopyOutlined />}
+              onClick={(e) => handleCopyPrompt(prompt, e)}
+            />
+          </Tooltip>
+          <Tooltip title={prompt.isFavorite ? t('prompts.removeFavorite') : t('prompts.addFavorite')}>
+            <Button
+              type="text"
+              size="small"
+              className="action-btn"
+              icon={prompt.isFavorite ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+              onClick={(e) => handleToggleFavorite(prompt, e)}
+            />
+          </Tooltip>
+          <Dropdown
+            menu={{
+              items: [
+                                 {
+                   key: 'edit',
+                   label: t('common.edit'),
+                   icon: <EditOutlined />,
+                   onClick: () => handleEditPrompt(prompt)
+                 },
+                 {
+                   key: 'share',
+                   label: prompt.isShared ? t('prompts.cancelShare') : t('prompts.shareToSquare'),
+                   icon: <ShareAltOutlined />,
+                   onClick: () => handleToggleShare(prompt)
+                 },
+                 {
+                   type: 'divider'
+                 },
+                 {
+                   key: 'delete',
+                   label: t('common.delete'),
+                   icon: <DeleteOutlined />,
+                   danger: true,
+                   onClick: () => handleDeletePrompt(prompt)
+                 }
+              ]
+            }}
+            trigger={['click']}
+          >
+            <Button
+              type="text"
+              size="small"
+              className="action-btn"
+              icon={<MoreOutlined />}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
+        </PromptItemActions>
+      </PromptItemHeader>
+      
+      <PromptItemContent theme={theme}>
+        <div className="description">{prompt.description}</div>
+        <div className="content-preview">
+          {prompt.content.length > 120 
+            ? `${prompt.content.substring(0, 120)}...` 
+            : prompt.content
+          }
+        </div>
+      </PromptItemContent>
+      
+      <PromptItemFooter theme={theme}>
+                 <div className="tags">
+           {prompt.tags.slice(0, 3).map(tag => (
+             <Tag key={tag} color="blue">
+               {tag}
+             </Tag>
+           ))}
+           {prompt.tags.length > 3 && (
+             <Tag color="default">+{prompt.tags.length - 3}</Tag>
+           )}
+         </div>
+        <div className="stats">
+          <span><EyeOutlined /> {prompt.usageCount}</span>
+          <span><CalendarOutlined /> {new Date(prompt.createdTime).toLocaleDateString()}</span>
+        </div>
+      </PromptItemFooter>
+    </PromptListItem>
+  );
+
   return (
     <PageContainer theme={theme}>
       <PageHeader theme={theme}>
@@ -446,16 +830,51 @@ const PromptsPage: React.FC = () => {
       </PageHeader>
 
       <ActionBar>
-        <Input
-          className="search-input"
-          placeholder={t('prompts.searchPlaceholder')}
-          prefix={<SearchOutlined />}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          onPressEnter={(e) => handleSearch((e.target as HTMLInputElement).value)}
-          allowClear
-          onClear={() => handleSearch('')}
-        />
+        <div className="search-section">
+          <Input
+            placeholder={t('prompts.searchPlaceholder')}
+            prefix={<SearchOutlined />}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            onPressEnter={(e) => handleSearch((e.target as HTMLInputElement).value)}
+            allowClear
+            onClear={() => handleSearch('')}
+            style={{ maxWidth: 300 }}
+          />
+          
+          <Select
+            value={filterType}
+            onChange={setFilterType}
+            style={{ width: 120 }}
+            suffixIcon={<FilterOutlined />}
+          >
+            <Option value="all">{t('prompts.filter.all')}</Option>
+            <Option value="favorite">{t('prompts.filter.favorite')}</Option>
+            <Option value="shared">{t('prompts.filter.shared')}</Option>
+          </Select>
+          
+          <Select
+            value={sortBy}
+            onChange={setSortBy}
+            style={{ width: 140 }}
+          >
+            <Option value="createdTime">{t('prompts.sort.createTime')}</Option>
+            <Option value="usageCount">{t('prompts.sort.usage')}</Option>
+            <Option value="title">{t('prompts.sort.title')}</Option>
+          </Select>
+        </div>
+        
+        <div className="filter-section">
+          <Segmented
+            value={viewMode}
+            onChange={setViewMode}
+            options={[
+              { label: <UnorderedListOutlined />, value: 'list' },
+              { label: <AppstoreOutlined />, value: 'card' }
+            ]}
+          />
+        </div>
+        
         <div className="action-buttons">
           <Button
             icon={<ReloadOutlined />}
@@ -473,131 +892,126 @@ const PromptsPage: React.FC = () => {
         </div>
       </ActionBar>
 
-      <Spin spinning={loading}>
-        {prompts.length === 0 && !loading ? (
-          <Empty
-            description={searchText ? t('prompts.noSearchResults') : t('prompts.noPrompts')}
-            style={{ marginTop: 60 }}
-          />
-        ) : (
-          <>
-            <Row gutter={[16, 16]}>
-              {prompts.map((prompt) => (
-                <Col xs={24} sm={24} md={12} lg={8} xl={6} key={prompt.id}>
-                  <PromptCard theme={theme}>
-                    <PromptContent theme={theme}>
-                      <div className="prompt-title">
-                        {prompt.title}
-                        <Tooltip title={prompt.isFavorite ? t('prompts.removeFavorite') : t('prompts.addFavorite')}>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={prompt.isFavorite ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleFavorite(prompt);
-                            }}
-                          />
-                        </Tooltip>
-                      </div>
-                      
-                      <div className="prompt-description">
-                        {prompt.description}
-                      </div>
-                      
-                      <div className="prompt-text">
-                        {prompt.content.length > 150 
-                          ? `${prompt.content.substring(0, 150)}...` 
-                          : prompt.content
-                        }
-                      </div>
-                      
-                      <div className="prompt-tags">
-                        {prompt.tags.map(tag => (
-                          <Tag key={tag} color="blue" style={{ marginBottom: 4 }}>
-                            {tag}
-                          </Tag>
-                        ))}
-                      </div>
-                      
-                      <div className="prompt-actions">
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          {t('prompts.usageStats', { count: prompt.usageCount })} · {t('prompts.createTime', { date: new Date(prompt.createdTime).toLocaleDateString() })}
-                        </Text>
-                        <Space>
-                          <Tooltip title={t('prompts.copyContent')}>
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<CopyOutlined />}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCopyPrompt(prompt);
-                              }}
-                            />
-                          </Tooltip>
-                          <Tooltip title={prompt.isShared ? t('prompts.cancelShare') : t('prompts.shareToSquare')}>
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<ShareAltOutlined />}
-                              style={{ 
-                                color: prompt.isShared ? '#52c41a' : undefined 
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleShare(prompt);
-                              }}
-                            />
-                          </Tooltip>
-                          <Tooltip title={t('common.edit')}>
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<EditOutlined />}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditPrompt(prompt);
-                              }}
-                            />
-                          </Tooltip>
-                          <Tooltip title={t('common.delete')}>
-                            <Button
-                              type="text"
-                              size="small"
-                              danger
-                              icon={<DeleteOutlined />}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeletePrompt(prompt);
-                              }}
-                            />
-                          </Tooltip>
-                        </Space>
-                      </div>
-                    </PromptContent>
-                  </PromptCard>
-                </Col>
-              ))}
-            </Row>
+      <ContentArea>
+        <LeftPanel showDetail={showDetail}>
+          <Spin spinning={loading}>
+            {prompts.length === 0 && !loading ? (
+              <Empty
+                description={searchText ? t('prompts.noSearchResults') : t('prompts.noPrompts')}
+                style={{ marginTop: 60 }}
+              />
+            ) : (
+              <>
+                <ListContainer theme={theme}>
+                  {prompts.map(renderListItem)}
+                </ListContainer>
 
-            {pagination.total > pagination.pageSize && (
-              <PaginationContainer>
-                <Pagination
-                  current={pagination.current}
-                  total={pagination.total}
-                  pageSize={pagination.pageSize}
-                  showSizeChanger
-                  showQuickJumper
-                  showTotal={(total, range) => t('prompts.paginationText', { start: range[0], end: range[1], total })}
-                  onChange={handlePageChange}
-                  onShowSizeChange={handlePageChange}
-                />
-              </PaginationContainer>
+                {pagination.total > pagination.pageSize && (
+                  <PaginationContainer>
+                    <Pagination
+                      current={pagination.current}
+                      total={pagination.total}
+                      pageSize={pagination.pageSize}
+                      showSizeChanger
+                      showQuickJumper
+                      showTotal={(total, range) => t('prompts.paginationText', { start: range[0], end: range[1], total })}
+                      onChange={handlePageChange}
+                      onShowSizeChange={handlePageChange}
+                      size="small"
+                    />
+                  </PaginationContainer>
+                )}
+              </>
             )}
-          </>
-        )}
-      </Spin>
+          </Spin>
+        </LeftPanel>
+
+        <RightPanel visible={showDetail} theme={theme}>
+          {selectedPrompt && (
+            <DetailPanel>
+              <DetailHeader theme={theme}>
+                <Title level={4} style={{ margin: 0 }}>
+                  {t('prompts.detail.title')}
+                </Title>
+                <Button
+                  type="text"
+                  icon={<CloseOutlined />}
+                  onClick={handleCloseDetail}
+                  className="close-btn"
+                />
+              </DetailHeader>
+              
+              <DetailContent theme={theme}>
+                <div className="detail-title">
+                  {selectedPrompt.title}
+                  {selectedPrompt.isFavorite && <StarFilled style={{ color: '#faad14' }} />}
+                  {selectedPrompt.isShared && <ShareAltOutlined style={{ color: '#52c41a' }} />}
+                </div>
+                
+                <div className="detail-description">
+                  {selectedPrompt.description}
+                </div>
+                
+                <div className="detail-content">
+                  {selectedPrompt.content}
+                </div>
+                
+                <div className="detail-actions">
+                  <Button
+                    type="primary"
+                    icon={<CopyOutlined />}
+                    onClick={() => handleCopyPrompt(selectedPrompt)}
+                  >
+                    {t('prompts.copyContent')}
+                  </Button>
+                  <Button
+                    icon={selectedPrompt.isFavorite ? <StarFilled /> : <StarOutlined />}
+                    onClick={() => handleToggleFavorite(selectedPrompt)}
+                  >
+                    {selectedPrompt.isFavorite ? t('prompts.removeFavorite') : t('prompts.addFavorite')}
+                  </Button>
+                  <Button
+                    icon={<EditOutlined />}
+                    onClick={() => handleEditPrompt(selectedPrompt)}
+                  >
+                    {t('common.edit')}
+                  </Button>
+                </div>
+                
+                <div className="detail-meta">
+                  <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+                    <Text type="secondary">
+                      <EyeOutlined /> {t('prompts.usageStats', { count: selectedPrompt.usageCount })}
+                    </Text>
+                    <Text type="secondary">
+                      <CalendarOutlined /> {t('prompts.createTime', { date: new Date(selectedPrompt.createdTime).toLocaleDateString() })}
+                    </Text>
+                  </div>
+                  
+                  {selectedPrompt.tags.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      <Text type="secondary" style={{ marginRight: 8 }}>
+                        <TagOutlined /> {t('prompts.tags')}:
+                      </Text>
+                      <Space wrap>
+                        {selectedPrompt.tags.map(tag => (
+                          <Tag key={tag} color="blue">{tag}</Tag>
+                        ))}
+                      </Space>
+                    </div>
+                  )}
+                  
+                  {selectedPrompt.isShared && selectedPrompt.shareTime && (
+                    <Text type="secondary">
+                      <ShareAltOutlined /> {t('prompts.sharedAt')} {new Date(selectedPrompt.shareTime).toLocaleDateString()}
+                    </Text>
+                  )}
+                </div>
+              </DetailContent>
+            </DetailPanel>
+          )}
+        </RightPanel>
+      </ContentArea>
 
       <Modal
         title={editingPrompt ? t('prompts.modal.editTitle') : t('prompts.modal.createTitle')}
@@ -629,7 +1043,28 @@ const PromptsPage: React.FC = () => {
           
           <Form.Item
             name="content"
-            label={t('prompts.modal.contentLabel')}
+            label={
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <span>{t('prompts.modal.contentLabel')}</span>
+                <Tooltip title={t('prompts.modal.generateParametersTooltip')}>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<ThunderboltOutlined />}
+                    loading={generatingParameters}
+                    onClick={handleGenerateParameters}
+                    style={{ 
+                      color: '#1677ff',
+                      fontSize: '12px',
+                      height: '24px',
+                      padding: '0 8px'
+                    }}
+                  >
+                    {generatingParameters ? t('prompts.modal.generatingParameters') : t('prompts.modal.generateParameters')}
+                  </Button>
+                </Tooltip>
+              </div>
+            }
             rules={[{ required: true, message: t('prompts.modal.contentRequired') }]}
           >
             <TextArea

@@ -11,6 +11,10 @@ public interface IDbContext
 
     public DbSet<UserLike> UserLikes { get; set; }
 
+    public DbSet<UserFavorite> UserFavorites { get; set; }
+
+    public DbSet<PromptComment> PromptComments { get; set; }
+
     public Task SaveChangesAsync();
  
     Task BeginMigrationAsync();

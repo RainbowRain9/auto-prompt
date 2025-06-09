@@ -55,6 +55,11 @@ public class PromptTemplate
     public int LikeCount { get; set; } = 0;
 
     /// <summary>
+    /// 评论次数
+    /// </summary>
+    public int CommentCount { get; set; } = 0;
+
+    /// <summary>
     /// 创建时间
     /// </summary>
     public DateTime CreatedTime { get; set; }

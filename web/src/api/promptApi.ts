@@ -1,6 +1,13 @@
 import { useAuthStore } from "../stores/authStore";
 import { getCurrentLLMConfig } from '../utils/llmClient';
 
+// 提示词模板参数DTO
+export interface PromptTemplateParameterDto {
+    title: string;
+    description: string;
+    tags: string; // JSON数组格式的字符串
+}
+
 // SSE请求配置接口
 interface SSEConfig {
     url?: string;
@@ -206,6 +213,44 @@ export async function* generatePrompt(
   for await (const event of SSE(url, data, finalConfig)) {
     yield event;
   }
+}
+
+/**
+ * GeneratePromptTemplateParameters
+ * /v1/prompt/generateprompttemplateparameters
+ * 生成提示词模板参数（标题、描述、标签）
+ */
+export const GeneratePromptTemplateParameters = async (prompt: string): Promise<PromptTemplateParameterDto> => {
+    const llmConfig = getCurrentLLMConfig();
+    if (!llmConfig) {
+        throw new Error('没有可用的LLM配置');
+    }
+
+    const response = await fetch('/v1/prompt/generateprompttemplateparameters', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${llmConfig.apiKey}`,
+            'X-Api-Url': llmConfig.baseURL || '',
+        },
+        body: JSON.stringify({
+            prompt: prompt
+        })
+    });
+
+    // 如果401，则提示请先登录
+    if (response.status === 401) {
+        // 跳转到登录页面，清空token
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        throw new Error('未授权访问，请先登录');
+    }
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return (await response.json());
 }
 
 // 导出类型定义

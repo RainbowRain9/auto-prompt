@@ -161,6 +161,11 @@
       "contentLabel": "提示词内容",
       "contentPlaceholder": "输入提示词内容，可以使用 {变量名} 来定义变量",
       "contentRequired": "请输入提示词内容",
+      "generateParameters": "生成参数",
+      "generateParametersTooltip": "根据提示词内容自动生成标题、描述和标签",
+      "generatingParameters": "正在生成参数...",
+      "generateParametersSuccess": "参数生成成功",
+      "generateParametersFailed": "参数生成失败，请重试",
       "tagsLabel": "标签",
       "tagsPlaceholder": "输入标签，用逗号分隔",
       "createButton": "创建",
@@ -202,7 +207,22 @@
     "unfavorite": "取消收藏",
     "share": "分享",
     "copy": "复制",
-    "copySuccess": "复制成功"
+    "copySuccess": "复制成功",
+    "filter": {
+      "all": "全部",
+      "favorite": "收藏",
+      "shared": "已分享"
+    },
+    "sort": {
+      "createTime": "创建时间",
+      "usage": "使用次数",
+      "title": "标题"
+    },
+    "detail": {
+      "title": "详情"
+    },
+    "tags": "标签",
+    "sharedAt": "分享于"
   },
   "dashboard": {
     "title": "提示词广场",
@@ -241,6 +261,8 @@
       "copy": "复制内容",
       "like": "点赞",
       "unlike": "取消点赞",
+      "favorite": "收藏",
+      "unfavorite": "取消收藏",
       "view": "查看详情"
     },
     "pagination": "第 {{start}}-{{end}} 条，共 {{total}} 条",
@@ -250,7 +272,11 @@
       "copyFailed": "复制失败，请重试",
       "operationFailed": "操作失败，请重试",
       "likeSuccess": "点赞成功",
-      "unlikeSuccess": "取消点赞成功"
+      "unlikeSuccess": "取消点赞成功",
+      "favoriteSuccess": "收藏成功",
+      "unfavoriteSuccess": "取消收藏成功",
+      "commentSuccess": "评论成功",
+      "deleteSuccess": "删除成功"
     },
     "tags": {
       "more": "+{{count}}"
@@ -356,9 +382,12 @@
     "sharedAt": "分享于",
     "viewCount": "查看次数",
     "likeCount": "点赞数",
+    "commentCount": "评论数",
     "usageCount": "使用次数",
     "liked": "已点赞",
     "like": "点赞",
+    "favorite": "收藏",
+    "favorited": "已收藏",
     "copyContent": "复制内容",
     "promptContent": "提示词内容",
     "copyTooltips": {
@@ -371,7 +400,14 @@
     "copyFailed": "复制失败",
     "operationFailed": "操作失败",
     "loadDetailFailed": "获取详情失败",
-    "notFound": "未找到提示词详情"
+    "notFound": "未找到提示词详情",
+    "comments": "评论",
+    "commentPlaceholder": "写下你的评论...",
+    "replyPlaceholder": "写下你的回复...",
+    "submitComment": "发表评论",
+    "cancelReply": "取消回复",
+    "noComments": "暂无评论",
+    "deleteComment": "删除"
   },
   "errors": {
     "networkError": "网络错误，请检查网络连接",

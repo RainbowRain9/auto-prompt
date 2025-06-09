@@ -161,6 +161,11 @@
       "contentLabel": "Prompt Content",
       "contentPlaceholder": "Enter prompt content, you can use {variableName} to define variables",
       "contentRequired": "Please enter prompt content",
+      "generateParameters": "Generate Parameters",
+      "generateParametersTooltip": "Automatically generate title, description and tags based on prompt content",
+      "generatingParameters": "Generating parameters...",
+      "generateParametersSuccess": "Parameters generated successfully",
+      "generateParametersFailed": "Failed to generate parameters, please try again",
       "tagsLabel": "Tags",
       "tagsPlaceholder": "Enter tags separated by commas",
       "createButton": "Create",
@@ -241,6 +246,8 @@
       "copy": "Copy Content",
       "like": "Like",
       "unlike": "Unlike",
+      "favorite": "Favorite",
+      "unfavorite": "Unfavorite",
       "view": "View Details"
     },
     "pagination": "{{start}}-{{end}} of {{total}} items",
@@ -250,7 +257,11 @@
       "copyFailed": "Failed to copy, please try again",
       "operationFailed": "Operation failed, please try again",
       "likeSuccess": "Liked successfully",
-      "unlikeSuccess": "Unliked successfully"
+      "unlikeSuccess": "Unliked successfully",
+      "favoriteSuccess": "Favorited successfully",
+      "unfavoriteSuccess": "Unfavorited successfully",
+      "commentSuccess": "Comment added successfully",
+      "deleteSuccess": "Deleted successfully"
     },
     "tags": {
       "more": "+{{count}}"
@@ -356,9 +367,12 @@
     "sharedAt": "Shared at",
     "viewCount": "View Count",
     "likeCount": "Like Count",
+    "commentCount": "Comment Count",
     "usageCount": "Usage Count",
     "liked": "Liked",
     "like": "Like",
+    "favorite": "Favorite",
+    "favorited": "Favorited",
     "copyContent": "Copy Content",
     "promptContent": "Prompt Content",
     "copyTooltips": {
@@ -371,7 +385,14 @@
     "copyFailed": "Failed to copy",
     "operationFailed": "Operation failed",
     "loadDetailFailed": "Failed to load details",
-    "notFound": "Prompt details not found"
+    "notFound": "Prompt details not found",
+    "comments": "Comments",
+    "commentPlaceholder": "Write your comment...",
+    "replyPlaceholder": "Write your reply...",
+    "submitComment": "Submit Comment",
+    "cancelReply": "Cancel Reply",
+    "noComments": "No comments yet",
+    "deleteComment": "Delete"
   },
   "errors": {
     "networkError": "Network error, please check your network connection",

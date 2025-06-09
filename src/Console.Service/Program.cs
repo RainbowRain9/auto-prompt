@@ -1,6 +1,7 @@
 using Console.Core;
 using Console.Provider.PostgreSQL.Extensions;
 using Console.Provider.Sqlite.Extensions;
+using Console.Service.Infrastructure;
 using Console.Service.Options;
 using Console.Service.Services;
 using Scalar.AspNetCore;
@@ -22,8 +23,10 @@ builder.Services.AddSerilog(logger);
 builder.Services.AddOpenApi();
 builder.Services.AddFastApis();
 builder.Services.AddResponseCompression();
+builder.Services.AddScoped<UserContext>();
+builder.Services.AddHttpContextAccessor();
 
-if (builder.Configuration.GetConnectionString("Type").Equals("postgresql", StringComparison.OrdinalIgnoreCase))
+if (builder.Configuration.GetConnectionString("Type")?.Equals("postgresql", StringComparison.OrdinalIgnoreCase) == true)
 {
     // 注册PostgreSQL数据库上下文
     builder.Services.AddPostgreSQL(builder.Configuration.GetConnectionString("Default"));

@@ -12,6 +12,10 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
 
     public DbSet<UserLike> UserLikes { get; set; } = null!;
 
+    public DbSet<UserFavorite> UserFavorites { get; set; } = null!;
+
+    public DbSet<PromptComment> PromptComments { get; set; } = null!;
+
     public Task SaveChangesAsync()
     {
         return base.SaveChangesAsync(CancellationToken.None);
@@ -65,6 +69,7 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
             options.HasIndex(e => e.ShareTime);
             options.HasIndex(e => e.ViewCount);
             options.HasIndex(e => e.LikeCount);
+            options.HasIndex(e => e.CommentCount);
             options.HasIndex(e => e.CreatedTime);
         });
 
@@ -84,6 +89,44 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
                 .WithMany()
                 .HasForeignKey(e => e.PromptTemplateId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserFavorite>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.Property(x => x.UserId)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.HasIndex(e => e.UserId);
+            options.HasIndex(e => e.PromptTemplateId);
+            options.HasIndex(e => new { e.UserId, e.PromptTemplateId }).IsUnique();
+            
+        });
+
+        modelBuilder.Entity<PromptComment>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.Property(x => x.UserId)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.Property(x => x.UserName)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.Property(x => x.Content)
+                .IsRequired()
+                .HasMaxLength(2000);
+
+            options.HasIndex(e => e.PromptTemplateId);
+            options.HasIndex(e => e.UserId);
+            options.HasIndex(e => e.ParentCommentId);
+            options.HasIndex(e => e.CreatedTime);
+            options.HasIndex(e => e.IsDeleted);
+            
         });
     }
 }
