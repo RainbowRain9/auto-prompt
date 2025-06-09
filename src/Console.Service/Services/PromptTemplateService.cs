@@ -160,10 +160,6 @@ public class PromptTemplateService(IDbContext dbContext, JwtService jwtService) 
     [HttpPost("shared/search")]
     public async Task<object> SearchSharedPromptTemplatesAsync(SharedPromptTemplateSearchInput input, HttpContext context)
     {
-        var (isValid, userId, errorResponse) = ValidateTokenAndGetUserId(context);
-        if (!isValid)
-            return errorResponse!;
-
         try
         {
             var query = dbContext.PromptTemplates.Where(p => p.IsShared);
@@ -210,12 +206,30 @@ public class PromptTemplateService(IDbContext dbContext, JwtService jwtService) 
             var items = await query
                 .Skip((input.Page - 1) * input.PageSize)
                 .Take(input.PageSize)
+                // 只需要prompt的100个字符
+                .Select(p => new PromptTemplate
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Content = p.Content.Length > 100 ? p.Content.Substring(0, 100) + "..." : p.Content,
+                    Tags = p.Tags,
+                    IsFavorite = p.IsFavorite,
+                    UsageCount = p.UsageCount,
+                    IsShared = p.IsShared,
+                    ShareTime = p.ShareTime,
+                    ViewCount = p.ViewCount,
+                    LikeCount = p.LikeCount,
+                    CreatorName = p.CreatorName,
+                    CreatedTime = p.CreatedTime,
+                    UpdatedTime = p.UpdatedTime
+                })
                 .ToListAsync();
 
             var result = new List<PromptTemplateDto>();
             foreach (var item in items)
             {
-                result.Add(await MapToDto(item, userId));
+                result.Add(await MapToDto(item));
             }
 
             return new
