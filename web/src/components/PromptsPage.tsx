@@ -128,6 +128,25 @@ const LeftPanel = styled.div<{ showDetail?: boolean }>`
   transition: all 0.3s ease;
 `;
 
+const LeftPanelContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  
+  .ant-spin-container {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+`;
+
+const SpinContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+`;
+
 const RightPanel = styled.div<{ visible: boolean }>`
   width: ${props => props.visible ? '480px' : '0'};
   overflow: hidden;
@@ -138,11 +157,12 @@ const RightPanel = styled.div<{ visible: boolean }>`
 `;
 
 const ListContainer = styled.div`
-  flex: 1;
   overflow-y: auto;
   background: ${props => props.theme === 'dark' ? '#1a1a1a' : '#ffffff'};
   border-radius: 12px;
   border: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#e8e8e8'};
+  height: calc(100vh - 280px);
+  max-height: calc(100vh - 280px);
 `;
 
 const PromptListItem = styled.div<{ selected?: boolean }>`
@@ -894,36 +914,40 @@ const PromptsPage: React.FC = () => {
 
       <ContentArea>
         <LeftPanel showDetail={showDetail}>
-          <Spin spinning={loading}>
-            {prompts.length === 0 && !loading ? (
-              <Empty
-                description={searchText ? t('prompts.noSearchResults') : t('prompts.noPrompts')}
-                style={{ marginTop: 60 }}
-              />
-            ) : (
-              <>
-                <ListContainer theme={theme}>
-                  {prompts.map(renderListItem)}
-                </ListContainer>
+          <LeftPanelContent>
+            <Spin spinning={loading} style={{ height: '100%' }}>
+              {prompts.length === 0 && !loading ? (
+                <Empty
+                  description={searchText ? t('prompts.noSearchResults') : t('prompts.noPrompts')}
+                  style={{ marginTop: 60 }}
+                />
+              ) : (
+                <>
+                  <SpinContainer>
+                    <ListContainer theme={theme}>
+                      {prompts.map(renderListItem)}
+                    </ListContainer>
+                  </SpinContainer>
 
-                {pagination.total > pagination.pageSize && (
-                  <PaginationContainer>
-                    <Pagination
-                      current={pagination.current}
-                      total={pagination.total}
-                      pageSize={pagination.pageSize}
-                      showSizeChanger
-                      showQuickJumper
-                      showTotal={(total, range) => t('prompts.paginationText', { start: range[0], end: range[1], total })}
-                      onChange={handlePageChange}
-                      onShowSizeChange={handlePageChange}
-                      size="small"
-                    />
-                  </PaginationContainer>
-                )}
-              </>
-            )}
-          </Spin>
+                  {pagination.total > pagination.pageSize && (
+                    <PaginationContainer>
+                      <Pagination
+                        current={pagination.current}
+                        total={pagination.total}
+                        pageSize={pagination.pageSize}
+                        showSizeChanger
+                        showQuickJumper
+                        showTotal={(total, range) => t('prompts.paginationText', { start: range[0], end: range[1], total })}
+                        onChange={handlePageChange}
+                        onShowSizeChange={handlePageChange}
+                        size="small"
+                      />
+                    </PaginationContainer>
+                  )}
+                </>
+              )}
+            </Spin>
+          </LeftPanelContent>
         </LeftPanel>
 
         <RightPanel visible={showDetail} theme={theme}>
