@@ -17,10 +17,7 @@ import {
   CrownOutlined,
   SafetyOutlined,
   GlobalOutlined,
-  ClockCircleOutlined,
   ApiOutlined,
-  CodeOutlined,
-  BulbOutlined,
   HeartOutlined,
   EyeOutlined,
   LikeOutlined,
@@ -29,7 +26,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useThemeStore } from '../stores/themeStore';
-import LanguageSwitcher from './LanguageSwitcher';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -52,7 +49,6 @@ const HomePage: React.FC = () => {
     // 数字滚动动画
     const animateCounter = (key: keyof typeof counters, target: number, duration: number = 2000) => {
       const startTime = Date.now();
-      const startValue = 0;
       
       const updateCounter = () => {
         const currentTime = Date.now();

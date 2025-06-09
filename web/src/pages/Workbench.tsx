@@ -9,14 +9,14 @@ import { useThemeStore } from '../stores/themeStore';
 import { useChatStore } from '../stores/chatStore';
 import type { Message as ChatStoreMessage } from '../stores/chatStore';
 import { useAuthStore } from '../stores/authStore';
-import ThemeToggle from './ThemeToggle';
-import MessageCard from './MessageCard';
+import ThemeToggle from '../components/ThemeToggle';
+import MessageCard from '../components/MessageCard';
 import { Bot, User } from 'lucide-react';
 // @ts-ignore
 import ReactMarkdown from 'react-markdown';
-import SendButton from './SendButton';
-import GeneratePromptPanel from './GeneratePromptPanel';
-import LanguageSwitcher from './LanguageSwitcher';
+import SendButton from '../components/SendButton';
+import GeneratePromptPanel from '../components/GeneratePromptPanel';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const { Content, Header } = Layout;
 const {  Text } = Typography;
@@ -679,7 +679,7 @@ const Workbench: React.FC = () => {
                 onDelete={() => {
                   deleteMessage(msg.id as string);
                 }}
-                onParametersChange={(newParams) => {
+                onParametersChange={(newParams: any) => {
                   if (msg.id && newParams && newParams.length > 0) {
                     // 使用深拷贝避免引用问题
                     const paramsCopy = JSON.parse(JSON.stringify(newParams));
@@ -690,14 +690,14 @@ const Workbench: React.FC = () => {
                     }, 0);
                   }
                 }}
-                onContentChange={(newContent) => {
+                onContentChange={(newContent: any) => {
                   console.log('Workbench: 更新消息内容', newContent);
                   if (msg.id) {
                     let textContent: string;
                     if (typeof newContent === 'string') {
                       textContent = newContent;
                     } else {
-                      const textItem = newContent.find(item => item.type === 'text');
+                      const textItem = newContent.find((item: any) => item.type === 'text');
                       textContent = textItem?.text || '';
                     }
 
