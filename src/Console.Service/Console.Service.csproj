@@ -52,6 +52,9 @@
       <None Update="plugins\Generate\DeepReasoningFunctionCallingPrompt\skprompt.txt">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="plugins\Generate\OptimizeInitialFunctionCallingPrompt\skprompt.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>
@@ -74,6 +77,9 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <Content Update="plugins\Generate\DeepReasoningFunctionCallingPrompt\config.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Update="plugins\Generate\OptimizeInitialFunctionCallingPrompt\config.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
