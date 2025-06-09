@@ -66,7 +66,7 @@ export const getCurrentLLMConfig = (): LLMConfig | null => {
  */
 export const getLLMClient = (): OpenAI | null => {
   const config = getCurrentLLMConfig();
-  
+  debugger;
   if (!config || !config.apiKey || !config.baseURL) {
     return null;
   }
@@ -82,7 +82,7 @@ export const getLLMClient = (): OpenAI | null => {
   currentConfig = config;
   openaiInstance = new OpenAI({
     apiKey: config.apiKey,
-    baseURL: config.baseURL,
+    baseURL: config.baseURL.startsWith('/openai') ? `${window.location.origin}${config.baseURL}` : config.baseURL,
     dangerouslyAllowBrowser: true
   });
   
