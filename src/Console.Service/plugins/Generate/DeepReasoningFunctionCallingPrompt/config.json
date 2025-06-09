@@ -18,6 +18,11 @@
       "name": "requirement",
       "description": "用户的需求",
       "required": false
+    },
+    {
+      "name": "deepReasoning",
+      "description": "深入推理的提示词",
+      "required": true
     }
   ]
 }

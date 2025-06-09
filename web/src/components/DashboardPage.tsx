@@ -135,7 +135,7 @@ const ListContainer = styled.div`
   overflow-y: auto;
   background: ${props => props.theme === 'dark' ? '#1a1a1a' : '#ffffff'};
   border-radius: 12px;
-  height: calc(100vh - 200px);
+  height: calc(100vh - 90px);
   border: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#e8e8e8'};
 `;
 

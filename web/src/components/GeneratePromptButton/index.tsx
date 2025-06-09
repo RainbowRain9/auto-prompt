@@ -5,7 +5,7 @@ const StyledWrapper = styled.div`
   .button {
     background-color: #ffffff00;
     color: #fff;
-    width: 9.5em;
+    width: 12.5em;
     height: 2.9em;
     border: #3654ff 0.2em solid;
     border-radius: 11px;

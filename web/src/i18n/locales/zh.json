@@ -43,6 +43,7 @@
     "model": "模型",
     "loadingModels": "加载模型中...",
     "searchOrSelectModel": "搜索或选择模型",
+    "selectModel": "选择模型",
     "systemPrompt": "系统提示词",
     "systemPromptPlaceholder": "输入您的系统提示词",
     "addUserMessage": "添加用户消息",
@@ -79,8 +80,11 @@
   },
   "generatePrompt": {
     "optimizePrompt": "优化提示词",
+    "optimizeFunctionCalling": "优化Function Calling",
     "title": "优化提示词",
+    "functionCallingTitle": "优化Function Calling提示词",
     "description": "请描述您的需求，我们将为您生成更有效的提示词。",
+    "functionCallingDescription": "请描述您的需求，我们将为您生成更有效的Function Calling提示词。",
     "inputPromptLabel": "需要优化的提示词：",
     "requirementsLabel": "提示词要求：",
     "enableDeepReasoning": "启用深度推理",
@@ -126,7 +130,13 @@
     "templateSaveFailed": "保存模板失败，请重试",
     "copyReasoning": "复制推理过程",
     "copyReasoningSuccess": "已复制推理过程到剪贴板",
-    "copyPromptSuccess": "已复制提示词到剪贴板"
+    "copyPromptSuccess": "已复制提示词到剪贴板",
+    "deepReasoningProcess": "深度推理过程",
+    "result": "生成结果",
+    "hideDeepReasoning": "隐藏深度推理",
+    "showDeepReasoning": "显示深度推理",
+    "copied": "已复制到剪贴板",
+    "usePrompt": "使用提示词"
   },
   "prompts": {
     "title": "提示词管理",

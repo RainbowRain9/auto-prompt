@@ -43,6 +43,7 @@
     "model": "Model",
     "loadingModels": "Loading models...",
     "searchOrSelectModel": "Search or select model",
+    "selectModel": "Select Model",
     "systemPrompt": "System Prompt",
     "systemPromptPlaceholder": "Enter your system prompt",
     "addUserMessage": "Add User Message",
@@ -79,8 +80,11 @@
   },
   "generatePrompt": {
     "optimizePrompt": "Optimize Prompt",
+    "optimizeFunctionCalling": "Optimize Function Calling",
     "title": "Optimize Prompt",
+    "functionCallingTitle": "Optimize Function Calling Prompt",
     "description": "Please describe your requirements, and we will generate more effective prompts for you.",
+    "functionCallingDescription": "Please describe your requirements, and we will generate more effective Function Calling prompts for you.",
     "inputPromptLabel": "Prompt to optimize:",
     "requirementsLabel": "Prompt requirements:",
     "enableDeepReasoning": "Enable deep reasoning",
@@ -126,7 +130,13 @@
     "templateSaveFailed": "Failed to save template, please try again",
     "copyReasoning": "Copy Reasoning Process",
     "copyReasoningSuccess": "Reasoning process copied to clipboard",
-    "copyPromptSuccess": "Prompt copied to clipboard"
+    "copyPromptSuccess": "Prompt copied to clipboard",
+    "deepReasoningProcess": "Deep Reasoning Process",
+    "result": "Result",
+    "hideDeepReasoning": "Hide Deep Reasoning",
+    "showDeepReasoning": "Show Deep Reasoning",
+    "copied": "Copied to clipboard",
+    "usePrompt": "Use Prompt"
   },
   "prompts": {
     "title": "Prompt Management",

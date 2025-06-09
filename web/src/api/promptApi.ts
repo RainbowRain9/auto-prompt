@@ -216,6 +216,32 @@ export async function* generatePrompt(
 }
 
 /**
+ * /v1/prompt/optimize-function-calling
+ * 优化function calling提示词
+ */
+export async function* generateFunctionCallingPrompt(
+    data: Record<string, any>,
+    config: Partial<SSEConfig> = {}
+  ): AsyncGenerator<SSEEvent, void, unknown> {
+    const url = '/v1/prompt/optimize-function-calling';
+    // 默认配置，专门为这个接口优化
+    const defaultConfig: Partial<SSEConfig> = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 600000, // 60秒超时，适合生成任务
+    };
+  
+    // 合并配置
+    const finalConfig = { ...defaultConfig, ...config };
+  
+    // 使用基础SSE函数
+    for await (const event of SSE(url, data, finalConfig)) {
+      yield event;
+    }
+  }
+
+/**
  * GeneratePromptTemplateParameters
  * /v1/prompt/generateprompttemplateparameters
  * 生成提示词模板参数（标题、描述、标签）
