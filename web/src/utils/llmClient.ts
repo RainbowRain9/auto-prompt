@@ -144,6 +144,14 @@ export const fetchModels = async (): Promise<{ value: string; label: string }[]>
         value: model.id,
         label: model.id
       }));
+
+    // 如果=0则不过滤
+    if (chatModels.length === 0) {
+      return data.data.map(model => ({
+        value: model.id,
+        label: model.id
+      }));
+    }
     
     return chatModels;
   } catch (error) {
