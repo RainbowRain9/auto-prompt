@@ -1,0 +1,7 @@
+.image-item:hover .hover-buttons {
+  opacity: 1 !important;
+}
+
+.image-item:hover .hover-info {
+  opacity: 1 !important;
+} 

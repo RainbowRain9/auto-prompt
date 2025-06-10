@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { HomePage, DashboardPage, PromptsPage, Workbench } from '../pages';
+import { Home, Dashboard, Prompts, Workbench, ImageGeneration } from '../pages';
 
 export interface RouteConfig {
   path: string;
@@ -25,7 +25,7 @@ export const mainRoutes: RouteConfig[] = [
   },
   {
     path: '/dashboard',
-    element: <DashboardPage />,
+    element: <Dashboard />,
     key: 'dashboard',
     title: '仪表板',
     icon: 'DashboardOutlined',
@@ -34,10 +34,19 @@ export const mainRoutes: RouteConfig[] = [
   },
   {
     path: '/prompts',
-    element: <PromptsPage />,
+    element: <Prompts />,
     key: 'prompts',
     title: '提示词',
     icon: 'MessageOutlined',
+    showInSidebar: true,
+    requireAuth: false,
+  },
+  {
+    path: '/image',
+    element: <ImageGeneration />,
+    key: 'image',
+    title: '图片生成',
+    icon: 'PictureOutlined',
     showInSidebar: true,
     requireAuth: false,
   },
@@ -81,7 +90,7 @@ export const mainRoutes: RouteConfig[] = [
 export const standaloneRoutes: RouteConfig[] = [
   {
     path: '/',
-    element: <HomePage />,
+    element: <Home />,
     key: 'home',
     title: '首页',
     showInSidebar: false,

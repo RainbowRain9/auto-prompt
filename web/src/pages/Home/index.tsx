@@ -25,8 +25,8 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useThemeStore } from '../stores/themeStore';
-import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useThemeStore } from '../../stores/themeStore';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
 
 const { Title, Paragraph, Text } = Typography;
 

@@ -1,9 +1,10 @@
 {
   "nav": {
     "home": "Home",
-    "dashboard": "Prompt Square",
-    "prompts": "Prompt Management",
+    "dashboard": "Dashboard",
+    "prompts": "Prompts",
     "workbench": "Workbench",
+    "image": "Image Generation",
     "code": "Code Generation",
     "documentation": "Documentation",
     "settings": "Settings"

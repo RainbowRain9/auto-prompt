@@ -7,6 +7,7 @@ import { Sparkles, Brain, Save } from 'lucide-react';
 import { generateFunctionCallingPrompt } from '../../api/promptApi';
 import { createPromptTemplate } from '../../api/promptTemplateApi';
 import type { CreatePromptTemplateInput } from '../../api/promptTemplateApi';
+import { useModelStore } from '../../stores/modelStore';
 
 interface GenerateFunctionCallingPromptProps {
     open: boolean;
@@ -26,6 +27,7 @@ export default function GenerateFunctionCallingPrompt({
 }: GenerateFunctionCallingPromptProps) {
     const { t } = useTranslation();
     const { selectedModel } = useChatStore();
+    const { getChatModelOptions, fetchModels } = useModelStore();
 
     const [step, setStep] = useState(0);
     const [generatedPrompt, setGeneratedPrompt] = useState('');
@@ -39,8 +41,8 @@ export default function GenerateFunctionCallingPrompt({
     const [savingTemplate, setSavingTemplate] = useState(false);
     const [templateForm] = Form.useForm();
 
-    // 模型相关状态
-    const [models, setModels] = useState<{ value: string; label: string }[]>([]);
+    // 获取聊天模型选项
+    const modelOptions = getChatModelOptions();
     const [modelsLoading, setModelsLoading] = useState(false);
 
     const [input, setInput] = useState({
@@ -50,44 +52,28 @@ export default function GenerateFunctionCallingPrompt({
         chatModel: selectedModel // 使用当前选择的模型作为默认值
     });
 
-    // 获取模型列表的函数
-    const fetchModels = async () => {
-        setModelsLoading(true);
-        try {
-            const { fetchModels: fetchLLMModels } = await import('../../utils/llmClient');
-            const chatModels = await fetchLLMModels();
-            
-            setModels(chatModels);
-
-            // 如果存在claude-sonnet-4-20250514则优先选择，否则如果当前选中的模型不在新列表中，选择第一个可用模型
-            const claudeModel = chatModels.find(model => model.value === 'claude-sonnet-4-20250514');
-            if (claudeModel) {
-                setInput(prev => ({ ...prev, chatModel: 'claude-sonnet-4-20250514' }));
-            } else if (chatModels.length > 0 && !chatModels.some(model => model.value === input.chatModel)) {
-                setInput(prev => ({ ...prev, chatModel: chatModels[0].value }));
-            }
-        } catch (error) {
-            console.error('获取模型列表失败:', error);
-            message.error(t('workbench.fetchModelsError'));
-            // 使用默认模型列表作为备选
-            const defaultModels = [
-                { value: 'claude-sonnet-4-20250514', label: 'claude-sonnet-4-20250514' },
-                { value: 'gpt-4o', label: 'gpt-4o' },
-                { value: 'gpt-4.1', label: 'gpt-4.1' },
-                { value: 'gpt-3.5-turbo', label: 'gpt-3.5-turbo' },
-            ];
-            setModels(defaultModels);
-        } finally {
-            setModelsLoading(false);
-        }
-    };
-
-    // 组件打开时获取模型列表
+    // 获取模型列表
     useEffect(() => {
-        if (open) {
-            fetchModels();
+        if (open && modelOptions.length === 0) {
+            setModelsLoading(true);
+            fetchModels().finally(() => {
+                setModelsLoading(false);
+            });
         }
-    }, [open]);
+    }, [open, modelOptions.length, fetchModels]);
+
+    // 当模型列表加载完成后，设置默认模型
+    useEffect(() => {
+        if (modelOptions.length > 0) {
+            // 优先选择 claude-sonnet-4-20250514，否则选择第一个可用模型
+            const claudeModel = modelOptions.find(model => model.value === 'claude-sonnet-4-20250514');
+            const defaultModel = claudeModel ? claudeModel.value : modelOptions[0].value;
+            
+            if (!input.chatModel || !modelOptions.some(model => model.value === input.chatModel)) {
+                setInput(prev => ({ ...prev, chatModel: defaultModel }));
+            }
+        }
+    }, [modelOptions, input.chatModel]);
 
     // 当selectedModel变化时，更新input.chatModel
     useEffect(() => {
@@ -354,7 +340,7 @@ export default function GenerateFunctionCallingPrompt({
                             style={{
                                 width: '100%'
                             }}
-                            options={models.map((model) => ({
+                            options={modelOptions.map((model) => ({
                                 value: model.value,
                                 label: model.label,
                             }))}

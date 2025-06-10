@@ -35,7 +35,7 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { useThemeStore } from '../stores/themeStore';
+import { useThemeStore } from '../../stores/themeStore';
 import {
   searchSharedPromptTemplates,
   toggleLike,
@@ -45,13 +45,13 @@ import {
   getComments,
   addComment,
   deleteComment
-} from '../api/promptTemplateApi';
+} from '../../api/promptTemplateApi';
 import type {
   PromptTemplate,
   SharedPromptTemplateSearchInput,
   Comment,
   AddCommentInput
-} from '../api/promptTemplateApi';
+} from '../../api/promptTemplateApi';
 
 const { Title, Text } = Typography;
 const { Option } = Select;

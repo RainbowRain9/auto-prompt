@@ -39,7 +39,7 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { useThemeStore } from '../stores/themeStore';
+import { useThemeStore } from '../../stores/themeStore';
 import {
   searchPromptTemplates,
   createPromptTemplate,
@@ -49,13 +49,13 @@ import {
   toggleShare,
   incrementUsage,
   getPromptTemplate
-} from '../api/promptTemplateApi';
-import { GeneratePromptTemplateParameters } from '../api/promptApi';
+} from '../../api/promptTemplateApi';
+import { GeneratePromptTemplateParameters } from '../../api/promptApi';
 import type {
   PromptTemplate,
   CreatePromptTemplateInput,
   UpdatePromptTemplateInput
-} from '../api/promptTemplateApi';
+} from '../../api/promptTemplateApi';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;

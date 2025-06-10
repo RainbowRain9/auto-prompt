@@ -5,18 +5,19 @@ import {
 } from '@ant-design/icons';
 import styled  from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { useThemeStore } from '../stores/themeStore';
-import { useChatStore } from '../stores/chatStore';
-import type { Message as ChatStoreMessage } from '../stores/chatStore';
-import { useAuthStore } from '../stores/authStore';
-import ThemeToggle from '../components/ThemeToggle';
-import MessageCard from '../components/MessageCard';
+import { useThemeStore } from '../../stores/themeStore';
+import { useChatStore } from '../../stores/chatStore';
+import { useModelStore } from '../../stores/modelStore';
+import type { Message as ChatStoreMessage } from '../../stores/chatStore';
+import { useAuthStore } from '../../stores/authStore';
+import ThemeToggle from '../../components/ThemeToggle';
+import MessageCard from '../../components/MessageCard';
 import { Bot, User } from 'lucide-react';
 // @ts-ignore
 import ReactMarkdown from 'react-markdown';
-import SendButton from '../components/SendButton';
-import GeneratePromptPanel from '../components/GeneratePromptPanel';
-import LanguageSwitcher from '../components/LanguageSwitcher';
+import SendButton from '../../components/SendButton';
+import GeneratePromptPanel from '../../components/GeneratePromptPanel';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
 
 const { Content, Header } = Layout;
 const {  Text } = Typography;
@@ -541,48 +542,41 @@ const Workbench: React.FC = () => {
     updateMessageParameters,
   } = useChatStore();
 
-  // 添加模型列表状态
-  const [models, setModels] = useState<{ value: string; label: string }[]>([]);
-  const [modelsLoading, setModelsLoading] = useState(false);
-  // const [showGuestConfig, setShowGuestConfig] = useState(false);
+  // 使用模型 store
+  const {
+    fetchModels,
+    getChatModelOptions,
+    isLoading: modelsLoading,
+    error: modelsError,
+  } = useModelStore();
 
-  // 获取模型列表的函数
-  const fetchModels = async () => {
-    setModelsLoading(true);
-    try {
-      const { fetchModels: fetchLLMModels } = await import('../utils/llmClient');
-      const chatModels = await fetchLLMModels();
-      
-      setModels(chatModels);
-      
-      // 如果当前选中的模型不在新列表中，选择第一个可用模型
-      if (chatModels.length > 0 && !chatModels.some(model => model.value === selectedModel)) {
-        setSelectedModel(chatModels[0].value);
-      }
-    } catch (error) {
-      console.error('获取模型列表失败:', error);
-      message.error(t('workbench.fetchModelsError'));
-      // 使用默认模型列表作为备选
-      const defaultModels = [
-        { value: 'gpt-4.1', label: 'gpt-4.1' },
-        { value: 'gpt-4o', label: 'gpt-4o' },
-        { value: 'gpt-3.5-turbo', label: 'gpt-3.5-turbo' },
-      ];
-      setModels(defaultModels);
-    } finally {
-      setModelsLoading(false);
-    }
-  };
+  // 获取聊天模型选项
+  const modelOptions = getChatModelOptions();
 
+  // 获取模型列表
   useEffect(() => {
     loadFromDB();
-    fetchModels(); // 组件加载时获取模型列表
-  }, [loadFromDB]);
+    fetchModels(); // 获取模型列表
+  }, [loadFromDB, fetchModels]);
+
+  // 如果获取模型失败，显示错误信息
+  useEffect(() => {
+    if (modelsError) {
+      message.warning(`模型列表获取失败，使用默认模型: ${modelsError}`);
+    }
+  }, [modelsError]);
+
+  // 当模型列表加载完成后，如果没有选中模型，自动选择第一个
+  useEffect(() => {
+    if (modelOptions.length > 0 && !selectedModel) {
+      setSelectedModel(modelOptions[0].value);
+    }
+  }, [modelOptions, selectedModel, setSelectedModel]);
 
   const handleRun = async () => {
     if (isGuestMode) {
       // 游客模式需要检查API配置
-      const { hasValidLLMConfig } = await import('../utils/llmClient');
+      const { hasValidLLMConfig } = await import('../../utils/llmClient');
       if (!hasValidLLMConfig()) {
         message.error('请先在侧边栏配置API设置');
         return;
@@ -626,16 +620,12 @@ const Workbench: React.FC = () => {
                 value={selectedModel}
                 onChange={(value) => setSelectedModel(value as string)}
                 loading={modelsLoading}
-                showSearch
-                placeholder={modelsLoading ? t('workbench.loadingModels') : t('workbench.searchOrSelectModel')}
+                placeholder={modelsLoading ? t('workbench.loadingModels') : '选择聊天模型'}
                 filterOption={(input, option) =>
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                optionFilterProp="label"
-                options={models.map((model) => ({
-                  value: model.value,
-                  label: model.label,
-                }))}
+                showSearch
+                options={modelOptions}
               />
             </UiverseModelSelector>
             <GeneratePromptPanel />

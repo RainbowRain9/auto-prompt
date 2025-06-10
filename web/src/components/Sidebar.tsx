@@ -11,6 +11,7 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
   SettingOutlined,
+  PictureOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -299,6 +300,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: 'prompts',
       icon: <BulbOutlined />,
       label: t('nav.prompts'),
+    },
+    {
+      key: 'image',
+      icon: <PictureOutlined />,
+      label: t('nav.image'),
     }
   ];
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Card, Typography, Space, Spin } from 'antd';
 import { LoginOutlined, RobotOutlined, StarOutlined } from '@ant-design/icons';
 import styled, { keyframes } from 'styled-components';
-import { useAuthStore, getLoginUrl } from '../stores/authStore';
+import { useAuthStore, getLoginUrl } from '../../stores/authStore';
 
 const { Title, Text } = Typography;
 

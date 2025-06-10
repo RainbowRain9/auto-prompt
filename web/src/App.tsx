@@ -7,7 +7,7 @@ import { useAuthStore } from './stores/authStore';
 import { useLanguageStore, initializeLanguage } from './stores/languageStore';
 import { getAntdTheme } from './styles/theme';
 import Sidebar from './components/Sidebar';
-import { LoginPage } from './pages';
+import { Login } from './pages';
 import GuestConfigModal from './components/GuestConfigModal';
 import { mainRoutes, standaloneRoutes } from './config';
 import { useRoutes } from './hooks/useRoutes';
@@ -42,7 +42,9 @@ const AppContent: React.FC = () => {
 
   // 其他页面使用带侧边栏的布局
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh',
+      overflow:'hidden',
+     }}>
       <Sidebar 
         collapsed={collapsed}
         selectedKey={selectedKey}
@@ -106,7 +108,7 @@ const App: React.FC = () => {
     <ConfigProvider theme={getAntdTheme(theme === 'dark')}>
       {/* 如果既没有登录也没有进入游客模式，显示登录页面 */}
       {!isAuthenticated && !isGuestMode ? (
-        <LoginPage 
+        <Login 
           onLoginSuccess={handleLoginSuccess}
           onEnterGuestMode={handleEnterGuestMode}
         />
