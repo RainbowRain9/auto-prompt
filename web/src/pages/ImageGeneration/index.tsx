@@ -21,7 +21,7 @@ import {
   Alert,
   Progress,
   Radio,
-  AutoComplete
+  Modal
 } from 'antd';
 import {
   PictureOutlined,
@@ -32,7 +32,12 @@ import {
   ZoomInOutlined,
   UploadOutlined,
   EyeOutlined,
-  EyeInvisibleOutlined
+  EyeInvisibleOutlined,
+  BulbOutlined,
+  LoadingOutlined,
+  StarOutlined,
+  StarFilled,
+  ReloadOutlined
 } from '@ant-design/icons';
 import { useAuthStore } from '../../stores/authStore';
 import { useModelStore } from '../../stores/modelStore';
@@ -46,11 +51,47 @@ import {
   type ImageGenerateParams,
   type ImageEditParams
 } from '../../utils/imageClient';
+import { generateImagePrompt } from '../../api/promptApi';
+import { 
+  saveGeneratedImages, 
+  type SaveGeneratedImageInput,
+  toggleImageFavorite,
+  searchImages,
+  type ImageSearchInput 
+} from '../../api/imageApi';
 import './ImageGeneration.css';
 
 const { Content } = Layout;
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
+
+// 将 base64 数据 URI 转换为 Blob URL 的工具函数
+const convertBase64ToBlob = (dataUri: string): string => {
+  if (!dataUri.startsWith('data:image/')) {
+    return dataUri; // 不是base64格式，直接返回
+  }
+
+  try {
+    // 提取base64数据
+    const [header, base64Data] = dataUri.split(',');
+    const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/png';
+    
+    // 将base64转换为二进制数据
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    
+    // 创建Blob并生成URL
+    const blob = new Blob([byteArray], { type: mimeType });
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('转换base64失败:', error);
+    return dataUri; // 转换失败时返回原始数据
+  }
+};
 
 interface GeneratedImage {
   id: string;
@@ -61,10 +102,12 @@ interface GeneratedImage {
   type: 'generate' | 'edit';
   model: string;
   size: string;
+  isFavorite?: boolean;
+  savedId?: string; // 后端保存的ID
 }
 
 const ImageGeneration: React.FC = () => {
-  const { isAuthenticated, isGuestMode } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   // 使用模型 store
   const {
@@ -86,6 +129,20 @@ const ImageGeneration: React.FC = () => {
 
   // 图片管理
   const [images, setImages] = useState<GeneratedImage[]>([]);
+  
+  // 历史记录加载状态
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  // 提示词状态管理
+  const [promptValue, setPromptValue] = useState('');
+
+  // 提示词优化相关状态
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizeModalVisible, setOptimizeModalVisible] = useState(false);
+  const [optimizeRequirement, setOptimizeRequirement] = useState('');
+  const [originalPrompt, setOriginalPrompt] = useState('');
+  const [optimizedResult, setOptimizedResult] = useState('');
 
   // 编辑功能
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
@@ -102,11 +159,57 @@ const ImageGeneration: React.FC = () => {
 
   // 检查API配置
   const checkApiConfig = useCallback(() => {
-    if (isGuestMode) {
-      return hasValidLLMConfig();
+    return isAuthenticated && hasValidLLMConfig();
+  }, [isAuthenticated]);
+
+  // 加载历史记录
+  const loadHistoryImages = useCallback(async () => {
+    if (!isAuthenticated || historyLoaded || loadingHistory) {
+      return;
     }
-    return isAuthenticated;
-  }, [isAuthenticated, isGuestMode]);
+
+    setLoadingHistory(true);
+    try {
+      const searchInput: ImageSearchInput = {
+        page: 1,
+        pageSize: 50, // 加载最近50张图片
+        sortBy: 'CreatedTime',
+        sortOrder: 'desc'
+      };
+
+      const result = await searchImages(searchInput);
+      if (result.success && result.data?.items) {
+        const historyImages: GeneratedImage[] = result.data.items.map(item => ({
+          id: `history_${item.id}`,
+          url: item.imageUrl,
+          prompt: item.prompt,
+          revisedPrompt: item.revisedPrompt,
+          timestamp: new Date(item.createdTime).getTime(),
+          type: item.type as 'generate' | 'edit',
+          model: item.model,
+          size: item.size,
+          isFavorite: item.isFavorite,
+          savedId: item.id
+        }));
+
+        // 将历史记录添加到当前图片列表的末尾
+        setImages(prev => {
+          // 去重，避免重复添加
+          const existingIds = new Set(prev.map(img => img.savedId).filter(Boolean));
+          const newHistoryImages = historyImages.filter(img => !existingIds.has(img.savedId));
+          return [...prev, ...newHistoryImages];
+        });
+
+        setHistoryLoaded(true);
+        console.log(`成功加载 ${historyImages.length} 张历史图片`);
+      }
+    } catch (error: any) {
+      console.error('加载历史记录失败:', error);
+      message.warning('加载历史图片失败: ' + error.message);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [isAuthenticated, historyLoaded, loadingHistory]);
 
   // 初始化时获取模型列表
   useEffect(() => {
@@ -127,10 +230,34 @@ const ImageGeneration: React.FC = () => {
     }
   }, [imageModelOptions, form]);
 
+  // 用户登录后加载历史记录
+  useEffect(() => {
+    if (isAuthenticated && !historyLoaded && !loadingHistory) {
+      loadHistoryImages();
+    }
+  }, [isAuthenticated, historyLoaded, loadingHistory, loadHistoryImages]);
+
+  // 组件卸载时清理所有 Blob URL
+  useEffect(() => {
+    return () => {
+      // 清理所有的 Blob URL 以避免内存泄露
+      images.forEach(image => {
+        if (image.url.startsWith('blob:')) {
+          URL.revokeObjectURL(image.url);
+        }
+      });
+    };
+  }, [images]);
+
   // 生成/编辑图片
   const handleSubmit = async (values: any) => {
     if (!checkApiConfig()) {
       message.error('请先配置API设置或登录');
+      return;
+    }
+
+    if (!promptValue.trim()) {
+      message.error('请输入描述');
       return;
     }
 
@@ -154,7 +281,7 @@ const ImageGeneration: React.FC = () => {
       if (currentMode === 'generate') {
         // 文字生成图片
         const params: ImageGenerateParams = {
-          prompt: values.prompt,
+          prompt: promptValue,
           model: values.model || 'gpt-4o-image-1',
           n: values.n || 1,
           size: values.size || '1024x1024',
@@ -163,16 +290,28 @@ const ImageGeneration: React.FC = () => {
         };
 
         response = await generateImage(params);
-        newImages = response.data.map((item, index) => ({
-          id: `gen_${Date.now()}_${index}`,
-          url: item.url || '',
-          prompt: values.prompt,
-          revisedPrompt: item.revised_prompt,
-          timestamp: Date.now(),
-          type: 'generate',
-          model: params.model || 'gpt-4o-image-1',
-          size: params.size || '1024x1024',
-        }));
+        newImages = response.data.map((item, index) => {
+          // 处理图片URL，优先使用URL，其次转换base64为Blob URL
+          let imageUrl = '';
+          if (item.url) {
+            imageUrl = item.url;
+          } else if (item.b64_json) {
+            // 将base64转换为data URI，然后转换为Blob URL以提升性能
+            const dataUri = `data:image/png;base64,${item.b64_json}`;
+            imageUrl = convertBase64ToBlob(dataUri);
+          }
+
+          return {
+            id: `gen_${Date.now()}_${index}`,
+            url: imageUrl,
+            prompt: promptValue,
+            revisedPrompt: item.revised_prompt,
+            timestamp: Date.now(),
+            type: 'generate',
+            model: params.model || 'gpt-4o-image-1',
+            size: params.size || '1024x1024',
+          };
+        });
       } else {
         // 图片编辑
         let maskFile: File | undefined;
@@ -193,22 +332,34 @@ const ImageGeneration: React.FC = () => {
         const params: ImageEditParams = {
           image: editImageFile!,
           mask: maskFile,
-          prompt: values.prompt,
+          prompt: promptValue,
           model: values.model || 'gpt-image-1', // 使用用户选择的模型
           n: values.n || 1,
           size: values.size || '1024x1024',
         };
 
         response = await editImage(params);
-        newImages = response.data.map((item, index) => ({
-          id: `edit_${Date.now()}_${index}`,
-          url: item.url || '',
-          prompt: values.prompt,
-          timestamp: Date.now(),
-          type: 'edit',
-          model: values.model || 'gpt-image-1', // 使用用户选择的模型
-          size: params.size || '1024x1024',
-        }));
+        newImages = response.data.map((item, index) => {
+          // 处理图片URL，优先使用URL，其次转换base64为Blob URL
+          let imageUrl = '';
+          if (item.url) {
+            imageUrl = item.url;
+          } else if (item.b64_json) {
+            // 将base64转换为data URI，然后转换为Blob URL以提升性能
+            const dataUri = `data:image/png;base64,${item.b64_json}`;
+            imageUrl = convertBase64ToBlob(dataUri);
+          }
+
+          return {
+            id: `edit_${Date.now()}_${index}`,
+            url: imageUrl,
+            prompt: promptValue,
+            timestamp: Date.now(),
+            type: 'edit',
+            model: values.model || 'gpt-image-1', // 使用用户选择的模型
+            size: params.size || '1024x1024',
+          };
+        });
       }
 
       clearInterval(progressInterval);
@@ -216,6 +367,11 @@ const ImageGeneration: React.FC = () => {
 
       setImages(prev => [...newImages, ...prev]);
       message.success(`成功${currentMode === 'generate' ? '生成' : '编辑生成'} ${newImages.length} 张图片`);
+
+      // 如果用户已登录，保存图片到后端
+      if (isAuthenticated) {
+        await saveImagesToBackend(newImages, values);
+      }
 
     } catch (error: any) {
       message.error(error.message || '操作失败');
@@ -351,7 +507,14 @@ const ImageGeneration: React.FC = () => {
 
   // 删除图片
   const deleteImage = useCallback((imageId: string) => {
-    setImages(prev => prev.filter(img => img.id !== imageId));
+    setImages(prev => {
+      const imageToDelete = prev.find(img => img.id === imageId);
+      if (imageToDelete?.url.startsWith('blob:')) {
+        // 释放 Blob URL 以避免内存泄露
+        URL.revokeObjectURL(imageToDelete.url);
+      }
+      return prev.filter(img => img.id !== imageId);
+    });
     message.success('图片已删除');
   }, []);
 
@@ -383,8 +546,240 @@ const ImageGeneration: React.FC = () => {
   const handleRemoveImage = () => {
     setEditImageFile(null);
     setMaskCanvas(null);
-    form.resetFields(['prompt']); // 只重置提示词，保留其他设置
+    setPromptValue(''); // 重置提示词状态
   };
+
+  // 优化提示词
+  const handleOptimizePrompt = async () => {
+    if (!promptValue.trim()) {
+      message.warning('请先输入提示词');
+      return;
+    }
+
+    if (!checkApiConfig()) {
+      message.error('请先配置API设置或登录');
+      return;
+    }
+
+    setOptimizeModalVisible(true);
+  };
+
+    // 执行优化
+  const executeOptimize = async () => {
+    // 保存原始提示词
+    setOriginalPrompt(promptValue);
+    setOptimizedResult('');
+    setIsOptimizing(true);
+    
+    try {
+      let optimizedPrompt = '';
+      const data = {
+        Prompt: promptValue + (optimizeRequirement.trim() ? `\n\n优化要求：${optimizeRequirement}` : '')
+      };
+
+      for await (const event of generateImagePrompt(data)) {
+        if (event.data === '[DONE]') {
+          break;
+        }
+
+        if (event.data) {
+          try {
+            const parsed = JSON.parse(event.data);
+            if (parsed.type === 'message') {
+              optimizedPrompt += parsed.message;
+              // 实时更新优化结果显示
+              setOptimizedResult(optimizedPrompt);
+            }
+          } catch (e) {
+            // 处理非JSON格式的数据
+            optimizedPrompt += event.data;
+            // 实时更新优化结果显示
+            setOptimizedResult(optimizedPrompt);
+          }
+        }
+      }
+
+      if (optimizedPrompt.trim()) {
+        setOptimizedResult(optimizedPrompt.trim());
+        message.success('提示词优化完成');
+      } else {
+        message.warning('优化结果为空，请检查输入');
+        setOptimizedResult('');
+      }
+    } catch (error: any) {
+      message.error(error.message || '优化失败');
+      setOptimizedResult('');
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
+  // 插入优化结果
+  const insertOptimizedPrompt = () => {
+    if (optimizedResult.trim()) {
+      // 直接更新提示词状态
+      setPromptValue(optimizedResult.trim());
+      message.success('已插入优化后的提示词');
+      // 关闭模态框并重置状态
+      setOptimizeModalVisible(false);
+      setOptimizeRequirement('');
+      setOriginalPrompt('');
+      setOptimizedResult('');
+    }
+  };
+
+  // 取消优化
+  const cancelOptimize = () => {
+    if (isOptimizing) {
+      // 如果正在优化中，停止优化
+      setIsOptimizing(false);
+      message.info('已取消优化');
+    }
+    setOptimizeModalVisible(false);
+    setOptimizeRequirement('');
+    setOriginalPrompt('');
+    setOptimizedResult('');
+  };
+
+  // 用图片进行编辑
+  const handleEditImage = useCallback(async (image: GeneratedImage) => {
+    try {
+      // 将图片URL转换为File对象
+      const response = await fetch(image.url);
+      const blob = await response.blob();
+      const file = new File([blob], `edit_${image.timestamp}.png`, { type: 'image/png' });
+      
+      // 设置为编辑文件
+      setEditImageFile(file);
+      
+      // 设置提示词为原始提示词
+      setPromptValue(image.prompt);
+      
+      // 创建图片预览和初始化蒙版
+      const img = document.createElement('img');
+      img.onload = () => {
+        initMaskCanvas(img);
+        if (imageRef.current) {
+          imageRef.current.src = img.src;
+        }
+        updateCanvasDisplay();
+      };
+      img.src = image.url;
+
+      message.success('图片已加载到编辑模式，请绘制蒙版指定编辑区域');
+    } catch (error: any) {
+      message.error('加载图片失败: ' + error.message);
+    }
+  }, [initMaskCanvas, updateCanvasDisplay]);
+
+  // 切换收藏状态
+  const handleToggleFavorite = useCallback(async (image: GeneratedImage) => {
+    // 如果图片已保存到后端，调用API切换收藏状态
+    if (image.savedId && isAuthenticated) {
+      try {
+        const result = await toggleImageFavorite(image.savedId);
+        if (result.success) {
+          // 更新本地状态
+          setImages(prev => prev.map(img => 
+            img.id === image.id 
+              ? { ...img, isFavorite: result.data?.isFavorite ?? !img.isFavorite }
+              : img
+          ));
+          message.success(result.data?.isFavorite ? '已收藏' : '已取消收藏');
+        } else {
+          message.error(result.message || '操作失败');
+        }
+      } catch (error: any) {
+        message.error('操作失败: ' + error.message);
+      }
+    } else {
+      // 只是本地切换
+      setImages(prev => prev.map(img => 
+        img.id === image.id 
+          ? { ...img, isFavorite: !img.isFavorite }
+          : img
+      ));
+      message.success(image.isFavorite ? '已取消收藏' : '已收藏');
+    }
+  }, [isAuthenticated]);
+
+  // 保存图片到后端
+  const saveImagesToBackend = useCallback(async (newImages: GeneratedImage[], formValues: any) => {
+    if (!isAuthenticated) {
+      return; // 未登录用户不保存
+    }
+
+    try {
+      // 处理图片URL，如果是base64格式或Blob URL需要特殊处理
+      const processImageUrl = (imageUrl: string): string => {
+        // 检查是否是 data URI (base64) 格式
+        if (imageUrl.startsWith('data:image/')) {
+          // 对于 base64 格式的图片，我们先记录原始格式
+          // 在实际生产环境中，这里应该上传到文件服务器并返回真实URL
+          // 目前暂时返回一个标识，避免数据库存储过长的base64字符串
+          console.warn('检测到base64格式图片，建议实现文件上传服务');
+          return `base64_image_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        }
+        // 检查是否是 Blob URL (由base64转换而来)
+        if (imageUrl.startsWith('blob:')) {
+          // 对于 Blob URL，也需要特殊处理，因为它们是临时的
+          console.warn('检测到Blob URL格式图片，建议实现文件上传服务');
+          return `blob_image_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        }
+        return imageUrl;
+      };
+
+      const saveInputs: SaveGeneratedImageInput[] = newImages.map(image => ({
+        imageUrl: processImageUrl(image.url),
+        prompt: image.prompt,
+        revisedPrompt: image.revisedPrompt,
+        type: image.type,
+        model: image.model,
+        size: image.size,
+        quality: formValues.quality,
+        style: formValues.style,
+        tags: [],
+        generationParams: {
+          n: formValues.n,
+          quality: formValues.quality,
+          style: formValues.style,
+          // 标记原始数据类型
+          originalUrl: image.url.startsWith('data:image/') 
+            ? '[base64_data]' 
+            : image.url.startsWith('blob:') 
+              ? '[blob_data]' 
+              : image.url
+        }
+      }));
+
+      const result = await saveGeneratedImages(saveInputs);
+      if (result.success && result.data) {
+        // 更新本地图片的savedId
+        setImages(prev => prev.map(img => {
+          const savedImage = result.data?.find(saved => {
+            // 对于特殊格式图片，需要特殊匹配逻辑
+            if (img.url.startsWith('data:image/')) {
+              return saved.generationParams?.originalUrl === '[base64_data]';
+            } else if (img.url.startsWith('blob:')) {
+              return saved.generationParams?.originalUrl === '[blob_data]';
+            } else {
+              return saved.imageUrl === img.url;
+            }
+          });
+          return savedImage 
+            ? { ...img, savedId: savedImage.id, isFavorite: savedImage.isFavorite }
+            : img;
+        }));
+        console.log(`成功保存 ${result.data.length} 张图片到数据库`);
+      }
+    } catch (error: any) {
+      console.error('保存图片失败:', error.message);
+      // 如果是因为base64数据过大导致的错误，给出提示
+      if (error.message.includes('413') || error.message.includes('too large')) {
+        message.warning('部分图片因文件过大未能保存到云端，但仍可正常使用');
+      }
+    }
+  }, [isAuthenticated]);
 
   return (
     <Layout style={{ minHeight: '100vh', }}>
@@ -457,6 +852,7 @@ const ImageGeneration: React.FC = () => {
                     maxCount={1}
                     listType="picture-card"
                     showUploadList={false}
+                    disabled={isOptimizing || loading}
                     style={{ width: '100%' }}
                   >
                     {editImageFile ? (
@@ -572,7 +968,17 @@ const ImageGeneration: React.FC = () => {
 
                     <Alert
                       message="蒙版编辑说明"
-                      description="在图片上绘制红色区域标记需要编辑的部分。AI将根据你的描述重新生成被标记的区域。"
+                      description={
+                        <div>
+                          <p style={{ marginBottom: '8px' }}>
+                            在图片上绘制红色区域标记需要编辑的部分。AI将根据你的描述重新生成被标记的区域。
+                          </p>
+                          <p style={{ marginBottom: '0', color: '#ff7875', fontSize: '12px' }}>
+                            ⚠️ 注意：gpt-image-1模型使用"软蒙版"技术，可能会对整张图片进行重新渲染以保持一致性。
+                            建议在提示词中明确指出"只编辑蒙版区域，保持其他部分不变"。
+                          </p>
+                        </div>
+                      }
                       type="info"
                       showIcon
                       style={{ marginBottom: 16 }}
@@ -582,20 +988,44 @@ const ImageGeneration: React.FC = () => {
 
                 {/* 提示词输入 */}
                 <Form.Item
-                  name="prompt"
                   label={currentMode === 'generate' ? '图片描述' : '编辑描述'}
-                  rules={[{ required: true, message: '请输入描述' }]}
                 >
-                  <TextArea
-                    rows={4}
-                    placeholder={
-                      currentMode === 'generate'
-                        ? "详细描述你想要生成的图片，例如：一只可爱的橙色小猫坐在窗台上，阳光透过窗户洒在它身上，背景是模糊的花园"
-                        : "描述你想要在蒙版区域生成的内容，例如：把这个区域替换成一只小狗"
-                    }
-                    maxLength={4000}
-                    showCount
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <TextArea
+                      value={promptValue}
+                      onChange={(e) => setPromptValue(e.target.value)}
+                      rows={4}
+                      placeholder={
+                        currentMode === 'generate'
+                          ? "详细描述你想要生成的图片，例如：一只可爱的橙色小猫坐在窗台上，阳光透过窗户洒在它身上，背景是模糊的花园"
+                          : "描述你想要在蒙版区域生成的内容。建议格式：「只编辑蒙版标记的区域，将其替换为[具体内容]，保持图片其他部分完全不变」"
+                      }
+                      maxLength={4000}
+                      showCount
+                      disabled={isOptimizing}
+                    />
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={isOptimizing ? <LoadingOutlined /> : <BulbOutlined />}
+                      onClick={handleOptimizePrompt}
+                      disabled={isOptimizing || loading}
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 20,
+                        zIndex: 1,
+                        color: '#1677ff',
+                        border: 'none',
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        backdropFilter: 'blur(4px)',
+                        borderRadius: '4px'
+                      }}
+                      title={isOptimizing ? '正在优化...' : '优化提示词'}
+                    >
+                      {isOptimizing ? '优化中' : '优化'}
+                    </Button>
+                  </div>
                 </Form.Item>
 
                 {/* 模型选择 */}
@@ -605,6 +1035,7 @@ const ImageGeneration: React.FC = () => {
                     allowClear
                     style={{ width: '100%' }}
                     loading={modelsLoading}
+                    disabled={isOptimizing || loading}
                     showSearch
                     filterOption={(inputValue, option) => {
                       if (!inputValue) return true;
@@ -624,7 +1055,7 @@ const ImageGeneration: React.FC = () => {
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item name="size" label="尺寸">
-                      <Select>
+                      <Select disabled={isOptimizing || loading}>
                         <Select.Option value="1024x1024">1024×1024</Select.Option>
                         <Select.Option value="1792x1024">1792×1024</Select.Option>
                         <Select.Option value="1024x1792">1024×1792</Select.Option>
@@ -635,7 +1066,7 @@ const ImageGeneration: React.FC = () => {
                   </Col>
                   <Col span={12}>
                     <Form.Item name="n" label="生成数量">
-                      <Select>
+                      <Select disabled={isOptimizing || loading}>
                         <Select.Option value={1}>1张</Select.Option>
                         <Select.Option value={2}>2张</Select.Option>
                         <Select.Option value={3}>3张</Select.Option>
@@ -650,7 +1081,7 @@ const ImageGeneration: React.FC = () => {
                   <Row gutter={16}>
                     <Col span={12}>
                       <Form.Item name="quality" label="质量">
-                        <Select>
+                        <Select disabled={isOptimizing || loading}>
                           <Select.Option value="standard">标准</Select.Option>
                           <Select.Option value="hd">高清</Select.Option>
                         </Select>
@@ -658,7 +1089,7 @@ const ImageGeneration: React.FC = () => {
                     </Col>
                     <Col span={12}>
                       <Form.Item name="style" label="风格">
-                        <Select>
+                        <Select disabled={isOptimizing || loading}>
                           <Select.Option value="vivid">生动</Select.Option>
                           <Select.Option value="natural">自然</Select.Option>
                         </Select>
@@ -673,6 +1104,7 @@ const ImageGeneration: React.FC = () => {
                     type="primary"
                     htmlType="submit"
                     loading={loading}
+                    disabled={isOptimizing}
                     block
                     size="large"
                     icon={currentMode === 'generate' ? <PictureOutlined /> : <EditOutlined />}
@@ -681,13 +1113,203 @@ const ImageGeneration: React.FC = () => {
                   </Button>
                 </Form.Item>
               </Form>
+
+                            {/* 优化要求输入模态框 */}
+              <Modal
+                title="优化提示词"
+                open={optimizeModalVisible}
+                footer={
+                  optimizedResult && !isOptimizing ? (
+                    // 优化完成后显示插入和取消按钮
+                    <Space>
+                      <Button onClick={cancelOptimize}>
+                        取消
+                      </Button>
+                      <Button 
+                        type="primary" 
+                        onClick={insertOptimizedPrompt}
+                        icon={<BulbOutlined />}
+                      >
+                        插入优化结果
+                      </Button>
+                    </Space>
+                  ) : (
+                    // 优化前或优化中显示默认按钮
+                    <Space>
+                      <Button 
+                        onClick={cancelOptimize}
+                        disabled={isOptimizing}
+                      >
+                        取消
+                      </Button>
+                      <Button 
+                        type="primary"
+                        onClick={executeOptimize}
+                        loading={isOptimizing}
+                        disabled={isOptimizing || !promptValue.trim()}
+                      >
+                        {isOptimizing ? "优化中..." : "开始优化"}
+                      </Button>
+                    </Space>
+                  )
+                }
+                closable={!isOptimizing}
+                maskClosable={!isOptimizing}
+                width={600}
+              >
+                {optimizedResult && !isOptimizing ? (
+                  // 显示优化结果
+                  <div>
+                    <div style={{ marginBottom: 16 }}>
+                      <Text strong>原始提示词：</Text>
+                      <div style={{
+                        background: '#f5f5f5',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        marginTop: '4px',
+                        maxHeight: '120px',
+                        overflow: 'auto',
+                        fontSize: '13px',
+                        color: '#666',
+                        border: '1px solid #d9d9d9'
+                      }}>
+                        {originalPrompt || '（未输入）'}
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: 16 }}>
+                      <Text strong style={{ color: '#1677ff' }}>优化结果：</Text>
+                      <div style={{
+                        background: '#f6ffed',
+                        padding: '12px',
+                        borderRadius: '6px',
+                        marginTop: '4px',
+                        maxHeight: '200px',
+                        overflow: 'auto',
+                        fontSize: '14px',
+                        color: '#333',
+                        border: '1px solid #b7eb8f',
+                        lineHeight: '1.6'
+                      }}>
+                        {optimizedResult}
+                      </div>
+                    </div>
+
+                    <Alert
+                      message="提示"
+                      description='检查优化结果是否符合要求，点击"插入优化结果"将替换当前提示词。'
+                      type="info"
+                      showIcon
+                    />
+                  </div>
+                ) : isOptimizing ? (
+                  // 优化进行中
+                  <div>
+                    <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                      <Spin size="large" />
+                      <div style={{ marginTop: 16 }}>
+                        <Text type="secondary">
+                          正在优化提示词，请稍候...
+                        </Text>
+                      </div>
+                    </div>
+
+                    {optimizedResult && (
+                      <div style={{ marginTop: 20 }}>
+                        <Text strong>实时生成结果：</Text>
+                        <div style={{
+                          background: '#f6ffed',
+                          padding: '12px',
+                          borderRadius: '6px',
+                          marginTop: '8px',
+                          maxHeight: '150px',
+                          overflow: 'auto',
+                          fontSize: '14px',
+                          color: '#333',
+                          border: '1px solid #b7eb8f',
+                          lineHeight: '1.6',
+                          minHeight: '50px'
+                        }}>
+                          {optimizedResult}
+                          <span style={{ 
+                            animation: 'blink 1s infinite',
+                            fontSize: '16px',
+                            color: '#1677ff',
+                            marginLeft: '2px'
+                          }}>|</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // 优化前的输入界面
+                  <>
+                    <div style={{ marginBottom: 16 }}>
+                      <Text strong>当前提示词：</Text>
+                      <div style={{
+                        background: '#f5f5f5',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        marginTop: '4px',
+                        maxHeight: '100px',
+                        overflow: 'auto',
+                        fontSize: '13px',
+                        color: '#666',
+                        border: '1px solid #d9d9d9'
+                      }}>
+                        {promptValue || '（未输入）'}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Text strong>
+                        优化要求 <Text type="secondary">（可选）</Text>：
+                      </Text>
+                      <TextArea
+                        value={optimizeRequirement}
+                        onChange={(e) => setOptimizeRequirement(e.target.value)}
+                        rows={3}
+                        placeholder="描述你希望如何优化这个提示词，例如：让描述更加生动详细，添加光线和色彩描述..."
+                        maxLength={500}
+                        showCount
+                        style={{ marginTop: '8px' }}
+                      />
+                    </div>
+                  </>
+                )}
+              </Modal>
             </Card>
           </Col>
 
           {/* 右侧图片展示 */}
           <Col xs={24} lg={14}>
             <Card
-              title="生成结果"
+              title={
+                <Space>
+                  <span>生成结果</span>
+                  {isAuthenticated && loadingHistory && (
+                    <Spin size="small" />
+                  )}
+                  {isAuthenticated && historyLoaded && (
+                    <Tag color="green">已加载历史记录</Tag>
+                  )}
+                  {isAuthenticated && (
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<ReloadOutlined />}
+                      loading={loadingHistory}
+                      onClick={() => {
+                        setHistoryLoaded(false);
+                        loadHistoryImages();
+                      }}
+                      title="重新加载历史记录"
+                    >
+                      刷新
+                    </Button>
+                  )}
+                </Space>
+              }
               style={{
                 height: 'calc(100vh - 120px)',
                 display: 'flex',
@@ -713,7 +1335,7 @@ const ImageGeneration: React.FC = () => {
 
               <Row gutter={[16, 16]}>
                 {images.map((image) => (
-                  <Col key={image.id} xs={12} sm={8} md={6} lg={8} xl={6}>
+                  <Col key={image.id} xs={12} sm={12} md={12} lg={12} xl={8}>
                     <div className="image-item" style={{ position: 'relative' }}>
                       <div style={{
                         aspectRatio: '1',
@@ -739,11 +1361,17 @@ const ImageGeneration: React.FC = () => {
                           }}
                         />
 
-                        {/* 类型标签 */}
                         <div style={{ position: 'absolute', top: 8, left: 8 }}>
-                          <Tag color={image.type === 'generate' ? 'blue' : 'orange'}>
-                            {image.type === 'generate' ? '生成' : '编辑'}
-                          </Tag>
+                          <Space direction="vertical" size="small">
+                            <Tag color={image.type === 'generate' ? 'blue' : 'orange'}>
+                              {image.type === 'generate' ? '生成' : '编辑'}
+                            </Tag>
+                            {image.id.startsWith('history_') && (
+                              <Tag color="purple" style={{ fontSize: '10px' }}>
+                                历史
+                              </Tag>
+                            )}
+                          </Space>
                         </div>
 
                         {/* 操作按钮 */}
@@ -758,6 +1386,26 @@ const ImageGeneration: React.FC = () => {
                           }}
                         >
                           <Space direction="vertical" size="small">
+                            <Tooltip title="用于编辑">
+                              <Button
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={() => handleEditImage(image)}
+                                style={{ background: 'rgba(24,144,255,0.8)', border: 'none', color: 'white' }}
+                              />
+                            </Tooltip>
+                            <Tooltip title={image.isFavorite ? "取消收藏" : "收藏"}>
+                              <Button
+                                size="small"
+                                icon={image.isFavorite ? <StarFilled /> : <StarOutlined />}
+                                onClick={() => handleToggleFavorite(image)}
+                                style={{ 
+                                  background: image.isFavorite ? 'rgba(255,193,7,0.8)' : 'rgba(0,0,0,0.6)', 
+                                  border: 'none', 
+                                  color: 'white' 
+                                }}
+                              />
+                            </Tooltip>
                             <Tooltip title="下载">
                               <Button
                                 size="small"
@@ -778,7 +1426,6 @@ const ImageGeneration: React.FC = () => {
                           </Space>
                         </div>
 
-                        {/* 图片信息 */}
                         <div
                           className="hover-info"
                           style={{
@@ -798,25 +1445,14 @@ const ImageGeneration: React.FC = () => {
                               color: 'white',
                               fontSize: 12,
                               display: '-webkit-box',
+                              maxHeight: '100px',
                               WebkitLineClamp: 2,
                               WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden'
+                              overflow: 'auto'
                             }}
                           >
                             {image.prompt}
                           </Text>
-                          {image.revisedPrompt && (
-                            <Text
-                              style={{
-                                color: '#ccc',
-                                fontSize: 11,
-                                display: 'block',
-                                marginTop: 4
-                              }}
-                            >
-                              修订: {image.revisedPrompt}
-                            </Text>
-                          )}
                           <div style={{
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -837,7 +1473,7 @@ const ImageGeneration: React.FC = () => {
                 ))}
               </Row>
 
-              {images.length === 0 && !loading && (
+              {images.length === 0 && !loading && !loadingHistory && (
                 <div style={{
                   textAlign: 'center',
                   padding: '60px 20px',
@@ -851,6 +1487,27 @@ const ImageGeneration: React.FC = () => {
                       ? '输入描述文字开始生成图片'
                       : '上传图片并描述编辑需求'
                     }
+                    {isAuthenticated && !historyLoaded && (
+                      <>
+                        <br />
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          正在加载历史记录...
+                        </Text>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {images.length === 0 && !loading && loadingHistory && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  color: '#999'
+                }}>
+                  <Spin size="large" />
+                  <div style={{ marginTop: 16 }}>
+                    正在加载历史图片...
                   </div>
                 </div>
               )}

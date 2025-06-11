@@ -3,6 +3,7 @@ using System;
 using Console.Provider.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Console.Provider.Sqlite.Migrations
 {
     [DbContext(typeof(SqliteDbContext))]
-    partial class SqliteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250611065000_AddUser")]
+    partial class AddUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.5");
@@ -279,23 +282,13 @@ namespace Console.Provider.Sqlite.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("IpAddress")
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("LastLoginTime")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("LastPasswordChangeTime")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

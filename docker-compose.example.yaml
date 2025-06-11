@@ -25,6 +25,12 @@ services:
       # 时区设置
       - TZ=Asia/Shanghai
       
+      # 默认管理员账户配置
+      # 首次启动时会自动创建管理员账户
+      # 如果管理员用户已存在，则不会重复创建
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_PASSWORD=admin123
+      
       # AI API端点配置 - 请根据需要修改
       # OpenAI官方: https://api.openai.com/v1
       # 国内代理: https://api.token-ai.cn/v1

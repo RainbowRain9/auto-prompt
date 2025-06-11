@@ -127,6 +127,23 @@ docker-compose logs -f
 - 前端界面: http://localhost:10426
 - API文档: http://localhost:10426/scalar/v1
 
+### 🔐 默认账户信息
+
+首次部署后，系统会自动创建默认管理员账户：
+
+- **用户名**: `admin`
+- **密码**: `admin123`
+
+**安全提醒**：为确保系统安全，请在首次登录后及时修改默认密码。
+
+您可以通过环境变量自定义默认账户：
+
+```yaml
+environment:
+  - DEFAULT_USERNAME=your_admin_username
+  - DEFAULT_PASSWORD=your_secure_password
+```
+
 ### 🔧 开发环境配置
 
 1. 后端开发
@@ -151,14 +168,15 @@ npm run dev
 
 ```json
 {
-  "GenerateModel": "gpt-4o",
+  "OpenAIEndpoint": "https://api.openai.com/v1",
+  "CHAT_MODEL": "gpt-4,gpt-3.5-turbo,claude-3-sonnet",
+  "IMAGE_GENERATION_MODEL": "dall-e-3,midjourney,stable-diffusion",
+  "DEFAULT_CHAT_MODEL": "gpt-4",
+  "DEFAULT_IMAGE_GENERATION_MODEL": "dall-e-3",
+  "GenerationChatModel": "gpt-4",
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=prompt_db;Username=postgres;Password=your_password"
-  },
-  "Jwt": {
-    "Key": "your_jwt_secret_key",
-    "Issuer": "auto-prompt",
-    "Audience": "auto-prompt-users"
+    "Type": "postgresql",
+    "Default": "Host=localhost;Database=prompt_db;Username=postgres;Password=your_password"
   }
 }
 ```
@@ -170,6 +188,7 @@ npm run dev
 **[📋 完整部署指南 (DEPLOYMENT.md)](./DEPLOYMENT.md)**
 
 该文档包含：
+
 - 🔧 自定义AI API端点配置
 - 📦 多种部署配置选项（SQLite、PostgreSQL、Ollama等）
 - 🚀 自动化部署脚本使用说明
@@ -180,11 +199,17 @@ npm run dev
 ### 🔧 快速配置示例
 
 #### 使用自定义API端点
+
 ```yaml
 services:
   console-service:
     environment:
       - OpenAIEndpoint=https://your-custom-api.com/v1
+      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
+      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney
+      - DEFAULT_CHAT_MODEL=gpt-4
+      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
+      - GenerationChatModel=gpt-4
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
 ```
@@ -195,6 +220,9 @@ services:
   console-service:
     environment:
       - OpenAIEndpoint=http://ollama:11434/v1
+      - CHAT_MODEL=llama2,codellama,mistral
+      - DEFAULT_CHAT_MODEL=qwen2.5-coder-32b
+      - GenerationChatModel=qwen2.5-coder-32b
   ollama:
     image: ollama/ollama:latest
     ports:
@@ -225,14 +253,15 @@ Configure in `src/Console.Service/appsettings.json`:
 
 ```json
 {
-  "GenerateModel": "gpt-4o",
+  "OpenAIEndpoint": "https://api.openai.com/v1",
+  "CHAT_MODEL": "gpt-4,gpt-3.5-turbo,claude-3-sonnet",
+  "IMAGE_GENERATION_MODEL": "dall-e-3,midjourney,stable-diffusion",
+  "DEFAULT_CHAT_MODEL": "gpt-4",
+  "DEFAULT_IMAGE_GENERATION_MODEL": "dall-e-3",
+  "GenerationChatModel": "gpt-4",
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=prompt_db;Username=postgres;Password=your_password"
-  },
-  "Jwt": {
-    "Key": "your_jwt_secret_key",
-    "Issuer": "auto-prompt",
-    "Audience": "auto-prompt-users"
+    "Type": "postgresql",
+    "Default": "Host=localhost;Database=prompt_db;Username=postgres;Password=your_password"
   }
 }
 ```
@@ -283,7 +312,13 @@ services:
     environment:
       - TZ=Asia/Shanghai
       - OpenAIEndpoint=https://your-custom-api.com/v1
-      # 可选：配置数据库类型
+      # AI模型配置
+      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
+      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
+      - DEFAULT_CHAT_MODEL=gpt-4
+      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
+      - GenerationChatModel=gpt-4
+      # 数据库配置
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
@@ -292,6 +327,16 @@ services:
       context: .
       dockerfile: src/Console.Service/Dockerfile
 ```
+
+#### 新增环境变量详细说明
+
+##### AI模型配置变量
+
+- **`CHAT_MODEL`**: 配置平台支持的聊天模型列表，多个模型用逗号分隔。用户在前端界面可以从这些模型中选择。
+- **`IMAGE_GENERATION_MODEL`**: 配置平台支持的图像生成模型列表，多个模型用逗号分隔。
+- **`DEFAULT_CHAT_MODEL`**: 设置默认的聊天模型，当用户没有特别指定时使用此模型。
+- **`DEFAULT_IMAGE_GENERATION_MODEL`**: 设置默认的图像生成模型。
+- **`GenerationChatModel`**: 专门用于提示词优化和生成功能的聊天模型。
 
 #### 支持的API端点类型
 
@@ -323,7 +368,14 @@ services:
       - "10426:8080"
     environment:
       - TZ=Asia/Shanghai
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_PASSWORD=admin123
       - OpenAIEndpoint=https://api.openai.com/v1
+      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
+      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
+      - DEFAULT_CHAT_MODEL=gpt-4
+      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
+      - GenerationChatModel=gpt-4
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
@@ -349,7 +401,14 @@ services:
       - "10426:8080"
     environment:
       - TZ=Asia/Shanghai
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_PASSWORD=admin123
       - OpenAIEndpoint=https://your-custom-api.com/v1
+      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
+      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
+      - DEFAULT_CHAT_MODEL=gpt-4
+      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
+      - GenerationChatModel=gpt-4
       - ConnectionStrings:Type=postgresql
       - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_password
     depends_on:
@@ -397,7 +456,14 @@ services:
       - "10426:8080"
     environment:
       - TZ=Asia/Shanghai
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_PASSWORD=admin123
       - OpenAIEndpoint=http://ollama:11434/v1
+      - CHAT_MODEL=llama2,codellama,mistral
+      - IMAGE_GENERATION_MODEL=stable-diffusion
+      - DEFAULT_CHAT_MODEL=llama2
+      - DEFAULT_IMAGE_GENERATION_MODEL=stable-diffusion
+      - GenerationChatModel=llama2
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
@@ -474,6 +540,16 @@ volumes:
 | 变量名 | 说明 | 默认值 | 示例 |
 |--------|------|--------|------|
 | `OpenAIEndpoint` | AI API端点地址 | `https://api.token-ai.cn/v1` | `https://api.openai.com/v1` |
+| `CHAT_MODEL` | 可用的聊天模型列表（逗号分隔） | `gpt-4.1,o4-mini,claude-sonnet-4-20250514,claude-3-7-sonnet` | `gpt-4,gpt-3.5-turbo,claude-3-sonnet` |
+| `IMAGE_GENERATION_MODEL` | 可用的图像生成模型列表（逗号分隔） | `gpt-image-1,dall-e-3,imagen4` | `dall-e-3,midjourney,stable-diffusion` |
+| `DEFAULT_CHAT_MODEL` | 默认聊天模型 | `gpt-4.1-mini` | `gpt-4` |
+| `DEFAULT_IMAGE_GENERATION_MODEL` | 默认图像生成模型 | `gpt-4.1` | `dall-e-3` |
+| `GenerationChatModel` | 提示词生成使用的聊天模型 | `gpt-4.1-mini` | `gpt-4` |
+| `DEFAULT_USERNAME` | 默认管理员用户名 | `admin` | `admin`, `root`, `administrator` |
+| `DEFAULT_PASSWORD` | 默认管理员密码 | `admin123` | `your_secure_password` |
+| `Jwt:Key` | JWT密钥 | 自动生成的默认密钥 | `your_secret_key_here` |
+| `Jwt:Issuer` | JWT发行者 | `prompt-console` | `your-app-name` |
+| `Jwt:Audience` | JWT受众 | `prompt-console-users` | `your-app-users` |
 | `ConnectionStrings:Type` | 数据库类型 | `sqlite` | `postgresql`, `sqlite` |
 | `ConnectionStrings:Default` | 数据库连接字符串 | `Data Source=/data/ConsoleService.db` | PostgreSQL: `Host=postgres;Database=auto_prompt;Username=postgres;Password=password` |
 | `TZ` | 时区设置 | `Asia/Shanghai` | `UTC`, `America/New_York` |

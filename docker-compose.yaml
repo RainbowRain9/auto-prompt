@@ -5,6 +5,8 @@
       - 10426:8080
     environment:
       - TZ=Asia/Shanghai
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_PASSWORD=admin123
     volumes:
       - ./data:/data
     build:

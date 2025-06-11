@@ -1,3 +1,4 @@
+
 import { useAuthStore } from "../stores/authStore";
 import { getCurrentLLMConfig } from '../utils/llmClient';
 
@@ -63,13 +64,17 @@ export async function* SSE<T = any>(
         if (!llmConfig) {
             throw new Error('没有可用的LLM配置');
         }
+        
+        // 获取用户token用于身份验证
+        const { token } = useAuthStore.getState();
+        
         // 发送请求
         const response = await fetch(url, {
             method: "POST",
             headers: {
                 ...finalConfig.headers,
-                "Authorization": `Bearer ${llmConfig.apiKey}`, // 使用LLM配置的API Key
-                "X-Api-Url": llmConfig.baseURL || '',
+                "Authorization": `Bearer ${token}`, // 用户身份验证
+                "prompt-key": llmConfig.apiKey, // 使用LLM配置的API Key
             },
             body: JSON.stringify(data),
             signal: controller.signal,
@@ -91,6 +96,12 @@ export async function* SSE<T = any>(
         // 检查是否为SSE流
         const contentType = response.headers.get('content-type');
         if (!contentType?.includes('text/event-stream')) {
+            // 检查是否为JSON响应，如果是则尝试解析错误信息
+            if (contentType?.includes('application/json')) {
+                const errorData = await response.json();
+                const errorMessage = errorData.message || errorData.error || '未知错误';
+                throw new Error(errorMessage);
+            }
             throw new Error('响应不是有效的SSE流');
         }
 
@@ -252,12 +263,15 @@ export const GeneratePromptTemplateParameters = async (prompt: string): Promise<
         throw new Error('没有可用的LLM配置');
     }
 
+    // 获取用户token用于身份验证
+    const { token } = useAuthStore.getState();
+
     const response = await fetch('/v1/prompt/generateprompttemplateparameters', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${llmConfig.apiKey}`,
-            'X-Api-Url': llmConfig.baseURL || '',
+            'Authorization': `Bearer ${token}`, // 用户身份验证
+            'prompt-key': llmConfig.apiKey,
         },
         body: JSON.stringify({
             prompt: prompt
@@ -278,6 +292,36 @@ export const GeneratePromptTemplateParameters = async (prompt: string): Promise<
 
     return (await response.json());
 }
+
+
+/**
+ * 封装 /v1/prompt/generate 接口的SSE请求
+ * @param data 请求参数对象（支持任意结构）
+ * @param config 可选配置
+ * @returns 异步迭代器，可用于 await for 循环
+ */
+export async function* generateImagePrompt(
+    data: Record<string, any>,
+    config: Partial<SSEConfig> = {}
+  ): AsyncGenerator<SSEEvent, void, unknown> {
+    const url = '/v1/prompt/optimizeimageprompt';
+    // 默认配置，专门为这个接口优化
+    const defaultConfig: Partial<SSEConfig> = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 600000, // 60秒超时，适合生成任务
+    };
+  
+    // 合并配置
+    const finalConfig = { ...defaultConfig, ...config };
+  
+    // 使用基础SSE函数
+    for await (const event of SSE(url, data, finalConfig)) {
+      yield event;
+    }
+  }
+  
 
 // 导出类型定义
 export type { SSEConfig, SSEEvent };

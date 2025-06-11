@@ -25,6 +25,8 @@ public class ModelsService : FastApi
                 objectType = "model",
                 created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             }),
+            ConsoleOptions.DefaultChatModel,
+            ConsoleOptions.DefaultImageGenerationModel
         };
     }
 }

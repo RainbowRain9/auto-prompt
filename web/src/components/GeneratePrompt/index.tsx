@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Modal, Form, Input, Button, Space, Typography, message, Checkbox, Select, Steps, Collapse, Card, Switch, Spin } from 'antd';
+import { Modal, Form, Input, Button, Space, Typography, message, Checkbox, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '../../stores/chatStore';
 import GeneratePromptButton from '../GeneratePromptButton';
@@ -8,9 +8,6 @@ import { generatePrompt } from '../../api/promptApi';
 import { createPromptTemplate } from '../../api/promptTemplateApi';
 import type { CreatePromptTemplateInput } from '../../api/promptTemplateApi';
 import { useModelStore } from '../../stores/modelStore';
-import type { Parameter } from '../../stores/chatStore';
-import { ArrowRightOutlined, CopyOutlined, SaveOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
-import styled from 'styled-components';
 
 interface GeneratePromptProps {
     open: boolean;

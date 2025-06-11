@@ -16,6 +16,10 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
 
     public DbSet<PromptComment> PromptComments { get; set; } = null!;
 
+    public DbSet<User> Users { get; set; } = null!;
+
+    public DbSet<GeneratedImage> GeneratedImages { get; set; } = null!;
+
     public Task SaveChangesAsync()
     {
         return base.SaveChangesAsync(CancellationToken.None);
@@ -127,6 +131,74 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
             options.HasIndex(e => e.CreatedTime);
             options.HasIndex(e => e.IsDeleted);
             
+        });
+
+        modelBuilder.Entity<User>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.Property(x => x.Username)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            options.Property(x => x.PasswordHash)
+                .IsRequired();
+
+            options.Property(x => x.DisplayName)
+                .HasMaxLength(100);
+
+            options.Property(x => x.Email)
+                .HasMaxLength(200);
+
+            options.HasIndex(e => e.Username).IsUnique();
+            options.HasIndex(e => e.Email);
+            options.HasIndex(e => e.CreatedTime);
+            options.HasIndex(e => e.LastLoginTime);
+            options.HasIndex(e => e.IsActive);
+        });
+
+        modelBuilder.Entity<GeneratedImage>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.Property(x => x.ImageUrl)
+                .IsRequired();
+
+            options.Property(x => x.Prompt)
+                .IsRequired();
+
+            options.Property(x => x.Type)
+                .IsRequired()
+                .HasMaxLength(10);
+
+            options.Property(x => x.Model)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.Property(x => x.Size)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            options.Property(x => x.Quality)
+                .HasMaxLength(20);
+
+            options.Property(x => x.Style)
+                .HasMaxLength(20);
+
+            options.Property(x => x.UserId)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.Property(x => x.UserName)
+                .HasMaxLength(100);
+
+            options.Property(x => x.Tags);
+
+            options.HasIndex(e => e.UserId);
+            options.HasIndex(e => e.Type);
+            options.HasIndex(e => e.Model);
+            options.HasIndex(e => e.IsFavorite);
+            options.HasIndex(e => e.CreatedTime);
         });
     }
 }

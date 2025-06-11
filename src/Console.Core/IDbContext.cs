@@ -15,6 +15,10 @@ public interface IDbContext
 
     public DbSet<PromptComment> PromptComments { get; set; }
 
+    public DbSet<User> Users { get; set; }
+
+    public DbSet<GeneratedImage> GeneratedImages { get; set; }
+
     public Task SaveChangesAsync();
  
     Task BeginMigrationAsync();

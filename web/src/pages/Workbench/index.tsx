@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Layout, Button, Select, Typography,  Card, Input,  message, Collapse,  } from 'antd';
 import {
   PlusOutlined,
@@ -524,7 +524,7 @@ const StreamingMessage: React.FC<{ theme: 'dark' | 'light' }> = ({ theme }) => {
 const Workbench: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useThemeStore();
-  const { isAuthenticated, isGuestMode } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const {
     messages,
     systemPrompt,
@@ -574,15 +574,15 @@ const Workbench: React.FC = () => {
   }, [modelOptions, selectedModel, setSelectedModel]);
 
   const handleRun = async () => {
-    if (isGuestMode) {
-      // 游客模式需要检查API配置
-      const { hasValidLLMConfig } = await import('../../utils/llmClient');
-      if (!hasValidLLMConfig()) {
-        message.error('请先在侧边栏配置API设置');
-        return;
-      }
-    } else if (!isAuthenticated) {
+    if (!isAuthenticated) {
       message.error(t('auth.pleaseLogin'));
+      return;
+    }
+
+    // 检查是否有有效的API配置
+    const { hasValidLLMConfig } = await import('../../utils/llmClient');
+    if (!hasValidLLMConfig()) {
+      message.error('请先在侧边栏配置API设置');
       return;
     }
 

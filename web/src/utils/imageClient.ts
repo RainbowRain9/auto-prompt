@@ -60,7 +60,7 @@ export async function generateImage(params: ImageGenerateParams): Promise<ImageR
       size: params.size || '1024x1024',
       quality: params.quality || 'standard',
       style: params.style || 'vivid',
-      response_format: params.response_format || 'url',
+      ...(params.model !== 'gpt-image-1' ? { response_format: params.response_format || 'url' } : {}),
       user: params.user,
     });
 
@@ -90,7 +90,7 @@ export async function editImage(params: ImageEditParams): Promise<ImageResponse>
       model: params.model || 'gpt-image-1',
       n: params.n || 1,
       size: params.size || '1024x1024',
-      response_format: params.response_format || 'url',
+      ...(params.model !== 'gpt-image-1' ? { response_format: params.response_format || 'url' } : {}),
       user: params.user,
     });
 
@@ -118,7 +118,7 @@ export async function createImageVariation(params: ImageVariationParams): Promis
       model: params.model || 'gpt-image-1',
       n: params.n || 1,
       size: params.size || '1024x1024',
-      response_format: params.response_format || 'url',
+      ...(params.model !== 'gpt-image-1' ? { response_format: params.response_format || 'url' } : {}),
       user: params.user,
     });
 

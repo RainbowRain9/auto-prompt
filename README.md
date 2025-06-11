@@ -127,6 +127,23 @@ docker-compose logs -f
 - Frontend: http://localhost:10426
 - API Documentation: http://localhost:10426/scalar/v1
 
+### 🔐 Default Account Information
+
+After the first deployment, the system will automatically create a default admin account:
+
+- **Username**: `admin`
+- **Password**: `admin123`
+
+**Security Notice**: For system security, please change the default password immediately after first login.
+
+You can customize the default account through environment variables:
+
+```yaml
+environment:
+  - DEFAULT_USERNAME=your_admin_username
+  - DEFAULT_PASSWORD=your_secure_password
+```
+
 
 ### 🔧 Development Environment Setup
 
@@ -152,9 +169,15 @@ Configure in `src/Console.Service/appsettings.json`:
 
 ```json
 {
-  "GenerateModel": "gpt-4o",
+  "OpenAIEndpoint": "https://api.openai.com/v1",
+  "CHAT_MODEL": "gpt-4,gpt-3.5-turbo,claude-3-sonnet",
+  "IMAGE_GENERATION_MODEL": "dall-e-3,midjourney,stable-diffusion",
+  "DEFAULT_CHAT_MODEL": "gpt-4",
+  "DEFAULT_IMAGE_GENERATION_MODEL": "dall-e-3",
+  "GenerationChatModel": "gpt-4",
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=prompt_db;Username=postgres;Password=your_password"
+    "Type": "postgresql",
+    "Default": "Host=localhost;Database=prompt_db;Username=postgres;Password=your_password"
   },
   "Jwt": {
     "Key": "your_jwt_secret_key",
@@ -210,7 +233,13 @@ services:
     environment:
       - TZ=Asia/Shanghai
       - OpenAIEndpoint=https://your-custom-api.com/v1
-      # Optional: Configure database type
+      # AI Model Configuration
+      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
+      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
+      - DEFAULT_CHAT_MODEL=gpt-4
+      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
+      - GenerationChatModel=gpt-4
+      # Database Configuration
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
@@ -219,6 +248,16 @@ services:
       context: .
       dockerfile: src/Console.Service/Dockerfile
 ```
+
+#### New Environment Variables Detailed Description
+
+##### AI Model Configuration Variables
+
+- **`CHAT_MODEL`**: Configure the list of chat models supported by the platform, separated by commas. Users can select from these models in the frontend interface.
+- **`IMAGE_GENERATION_MODEL`**: Configure the list of image generation models supported by the platform, separated by commas.
+- **`DEFAULT_CHAT_MODEL`**: Set the default chat model to use when users don't specify one.
+- **`DEFAULT_IMAGE_GENERATION_MODEL`**: Set the default image generation model.
+- **`GenerationChatModel`**: Chat model specifically used for prompt optimization and generation features.
 
 #### Supported API Endpoint Types
 
@@ -250,7 +289,14 @@ services:
       - "10426:8080"
     environment:
       - TZ=Asia/Shanghai
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_PASSWORD=admin123
       - OpenAIEndpoint=https://api.openai.com/v1
+      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
+      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
+      - DEFAULT_CHAT_MODEL=gpt-4
+      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
+      - GenerationChatModel=gpt-4
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
@@ -276,7 +322,14 @@ services:
       - "10426:8080"
     environment:
       - TZ=Asia/Shanghai
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_PASSWORD=admin123
       - OpenAIEndpoint=https://your-custom-api.com/v1
+      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
+      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
+      - DEFAULT_CHAT_MODEL=gpt-4
+      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
+      - GenerationChatModel=gpt-4
       - ConnectionStrings:Type=postgresql
       - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_password
     depends_on:
@@ -324,7 +377,14 @@ services:
       - "10426:8080"
     environment:
       - TZ=Asia/Shanghai
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_PASSWORD=admin123
       - OpenAIEndpoint=http://ollama:11434/v1
+      - CHAT_MODEL=llama2,codellama,mistral
+      - IMAGE_GENERATION_MODEL=stable-diffusion
+      - DEFAULT_CHAT_MODEL=llama2
+      - DEFAULT_IMAGE_GENERATION_MODEL=stable-diffusion
+      - GenerationChatModel=llama2
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
@@ -401,6 +461,13 @@ volumes:
 | Variable Name | Description | Default Value | Example |
 |---------------|-------------|---------------|---------|
 | `OpenAIEndpoint` | AI API endpoint address | `https://api.token-ai.cn/v1` | `https://api.openai.com/v1` |
+| `CHAT_MODEL` | Available chat models (comma-separated) | `gpt-4.1,o4-mini,claude-sonnet-4-20250514,claude-3-7-sonnet` | `gpt-4,gpt-3.5-turbo,claude-3-sonnet` |
+| `IMAGE_GENERATION_MODEL` | Available image generation models (comma-separated) | `gpt-image-1,dall-e-3,imagen4` | `dall-e-3,midjourney,stable-diffusion` |
+| `DEFAULT_CHAT_MODEL` | Default chat model | `gpt-4.1-mini` | `gpt-4` |
+| `DEFAULT_IMAGE_GENERATION_MODEL` | Default image generation model | `gpt-4.1` | `dall-e-3` |
+| `GenerationChatModel` | Chat model for prompt generation | `gpt-4.1-mini` | `gpt-4` |
+| `DEFAULT_USERNAME` | Default admin username | `admin` | `admin`, `root`, `administrator` |
+| `DEFAULT_PASSWORD` | Default admin password | `admin123` | `your_secure_password` |
 | `ConnectionStrings:Type` | Database type | `sqlite` | `postgresql`, `sqlite` |
 | `ConnectionStrings:Default` | Database connection string | `Data Source=/data/ConsoleService.db` | PostgreSQL: `Host=postgres;Database=auto_prompt;Username=postgres;Password=password` |
 | `TZ` | Time zone setting | `Asia/Shanghai` | `UTC`, `America/New_York` |
@@ -445,83 +512,6 @@ docker-compose logs -f postgres
 
 # View all service logs
 docker-compose logs -f
-```
-
-#### Performance Optimization Suggestions
-
-1. **Resource Limitation Configuration**
-   ```yaml
-   services:
-     console-service:
-       deploy:
-         resources:
-           limits:
-             memory: 2G
-             cpus: '1.0'
-           reservations:
-             memory: 512M
-             cpus: '0.5'
-   ```
-
-2. **Database Optimization**
-   ```yaml
-   postgres:
-     environment:
-       - POSTGRES_SHARED_PRELOAD_LIBRARIES=pg_stat_statements
-       - POSTGRES_MAX_CONNECTIONS=200
-     command: >
-       postgres
-       -c shared_preload_libraries=pg_stat_statements
-       -c max_connections=200
-       -c shared_buffers=256MB
-       -c effective_cache_size=1GB
-   ```
-
-3. **Cache Configuration**
-   ```yaml
-   services:
-     redis:
-       image: redis:7-alpine
-       container_name: auto-prompt-redis
-       ports:
-         - "6379:6379"
-       volumes:
-         - redis_data:/data
-       restart: unless-stopped
-   ```
-
-## 🏗️ Project Structure
-
-```
-auto-prompt/
-├── src/
-│   └── Console.Service/          # Backend services
-│       ├── Controllers/          # API controllers
-│       ├── Services/             # Business services
-│       ├── Entities/             # Data entities
-│       ├── Dto/                  # Data transfer objects
-│       ├── DbAccess/             # Data access layer
-│       ├── plugins/              # AI plugin configuration
-│       │   └── Generate/         # Prompt generation plugins
-│       │       ├── DeepReasoning/           # Deep reasoning
-│       │       ├── DeepReasoningPrompt/     # Deep reasoning prompts
-│       │       └── OptimizeInitialPrompt/   # Initial optimization
-│       └── Migrations/           # Database migrations
-├── web/                          # Frontend application
-│   ├── src/
-│   │   ├── components/           # React components
-│   │   │   ├── GeneratePrompt/   # Prompt generation components
-│   │   │   ├── Workbench/        # Workbench
-│   │   │   ├── DashboardPage/    # Dashboard
-│   │   │   └── PromptsPage/      # Prompt management
-│   │   ├── stores/               # State management
-│   │   ├── api/                  # API interfaces
-│   │   ├── styles/               # Style files
-│   │   └── utils/                # Utility functions
-│   ├── public/                   # Static assets
-│   └── dist/                     # Build output
-├── docker-compose.yaml           # Docker orchestration configuration
-└── README.md                     # Project documentation
 ```
 
 ## 🎮 Usage Guide

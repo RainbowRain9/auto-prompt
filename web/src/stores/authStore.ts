@@ -1,39 +1,60 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { resetLLMClient, clearGuestLLMConfig } from '../utils/llmClient';
+import { resetLLMClient, clearLLMConfig } from '../utils/llmClient';
 
 interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
-  isGuestMode: boolean;
-  login: (token: string) => void;
+  apiKey: string | null;
+  loginType: 'thor' | 'password' | null;
+  login: (token: string, loginType: 'thor' | 'password') => void;
   logout: () => void;
-  enterGuestMode: () => void;
-  exitGuestMode: () => void;
+  setApiConfig: (apiKey: string) => void;
+  hasApiConfig: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
       isAuthenticated: false,
-      isGuestMode: false,
-      login: (token: string) => {
-        set({ token, isAuthenticated: true, isGuestMode: false });
+      apiKey: null,
+      loginType: null,
+      login: (token: string, loginType: 'thor' | 'password') => {
+        if (loginType === 'thor') {
+          set({ 
+            token, 
+            isAuthenticated: true, 
+            loginType,
+            apiKey: token
+          });
+        } else {
+          set({ 
+            token, 
+            isAuthenticated: true, 
+            loginType,
+            apiKey: null
+          });
+        }
         resetLLMClient();
       },
       logout: () => {
-        set({ token: null, isAuthenticated: false, isGuestMode: false });
-        clearGuestLLMConfig();
+        set({ 
+          token: null, 
+          isAuthenticated: false, 
+          apiKey: null,
+          loginType: null
+        });
+        clearLLMConfig();
         resetLLMClient();
       },
-      enterGuestMode: () => {
-        set({ token: null, isAuthenticated: false, isGuestMode: true });
+      setApiConfig: (apiKey: string) => {
+        set({ apiKey });
         resetLLMClient();
       },
-      exitGuestMode: () => {
-        set({ isGuestMode: false });
-        resetLLMClient();
+      hasApiConfig: () => {
+        const state = get();
+        return !!(state.apiKey);
       },
     }),
     {

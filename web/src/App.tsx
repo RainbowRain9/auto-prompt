@@ -8,7 +8,7 @@ import { useLanguageStore, initializeLanguage } from './stores/languageStore';
 import { getAntdTheme } from './styles/theme';
 import Sidebar from './components/Sidebar';
 import { Login } from './pages';
-import GuestConfigModal from './components/GuestConfigModal';
+import ApiConfigModal from './components/GuestConfigModal';
 import { mainRoutes, standaloneRoutes } from './config';
 import { useRoutes } from './hooks/useRoutes';
 import './styles/global.css';
@@ -66,15 +66,11 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   const { theme } = useThemeStore();
-  const { isAuthenticated, isGuestMode, enterGuestMode } = useAuthStore();
+  const { isAuthenticated, hasApiConfig, setApiConfig } = useAuthStore();
   const { language } = useLanguageStore();
   const { i18n } = useTranslation();
-  const [showGuestConfig, setShowGuestConfig] = useState(false);
+  const [showApiConfig, setShowApiConfig] = useState(false);
   
-  useEffect(() => {
-    console.log('showGuestConfig 状态变化:', showGuestConfig);
-  }, [showGuestConfig]);
-
   useEffect(() => {
     initializeTheme();
     initializeLanguage();
@@ -84,45 +80,49 @@ const App: React.FC = () => {
     i18n.changeLanguage(language);
   }, [language, i18n]);
 
+  useEffect(() => {
+    // 检查已登录用户是否需要配置API
+    if (isAuthenticated && !hasApiConfig()) {
+      setShowApiConfig(true);
+    }
+  }, [isAuthenticated, hasApiConfig]);
+
   const handleLoginSuccess = () => {
     window.location.reload();
   };
 
-  const handleEnterGuestMode = () => {
-    // 进入游客模式时不直接设置状态，而是显示配置弹窗
-    setShowGuestConfig(true);
+  const handleApiConfigOk = (config: { apiKey: string;  }) => {
+    // 保存API配置
+    setApiConfig(config.apiKey);
+    setShowApiConfig(false);
   };
 
-  const handleGuestConfigOk = () => {
-    console.log('App: handleGuestConfigOk 被调用');
-    // 配置完成后才真正进入游客模式
-    enterGuestMode();
-    setShowGuestConfig(false);
-  };
-
-  const handleGuestConfigCancel = () => {
-    setShowGuestConfig(false);
+  const handleApiConfigCancel = () => {
+    // 如果用户没有API配置就不能使用系统
+    if (!hasApiConfig()) {
+      // 可以选择退出登录或者提示必须配置
+      setShowApiConfig(true);
+    } else {
+      setShowApiConfig(false);
+    }
   };
 
   return (
     <ConfigProvider theme={getAntdTheme(theme === 'dark')}>
-      {/* 如果既没有登录也没有进入游客模式，显示登录页面 */}
-      {!isAuthenticated && !isGuestMode ? (
-        <Login 
-          onLoginSuccess={handleLoginSuccess}
-          onEnterGuestMode={handleEnterGuestMode}
-        />
+      {/* 如果没有登录，显示登录页面 */}
+      {!isAuthenticated ? (
+        <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
         <Router>
           <AppContent />
         </Router>
       )}
-      <GuestConfigModal
-        open={showGuestConfig}
-        onCancel={handleGuestConfigCancel}
-        onOk={handleGuestConfigOk}
-        title="配置API设置"
-        description="欢迎使用游客模式！为了使用AI功能，请先配置您的API设置。您的API密钥将安全地存储在本地浏览器中。"
+      
+      {/* API配置弹窗 */}
+      <ApiConfigModal
+        open={showApiConfig}
+        onCancel={handleApiConfigCancel}
+        onOk={handleApiConfigOk}
       />
     </ConfigProvider>
   );

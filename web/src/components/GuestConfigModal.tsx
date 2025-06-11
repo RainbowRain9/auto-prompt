@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Button, message, Space, Typography, Alert } from 'antd';
-import { ApiOutlined, KeyOutlined, InfoCircleOutlined } from '@ant-design/icons';
-// import { useTranslation } from 'react-i18next';
-import { setGuestLLMConfig, getGuestLLMConfig, type LLMConfig } from '../utils/llmClient';
+import { KeyOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { useAuthStore } from '../stores/authStore';
+import type { LLMConfig } from '../utils/llmClient';
 
 const { Text, Link } = Typography;
 
-interface GuestConfigModalProps {
+interface ApiConfigModalProps {
   open: boolean;
   onCancel: () => void;
   onOk: (config: LLMConfig) => void;
@@ -14,32 +14,30 @@ interface GuestConfigModalProps {
   description?: string;
 }
 
-const GuestConfigModal: React.FC<GuestConfigModalProps> = ({
+const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
   open,
   onCancel,
   onOk,
   title,
   description
 }) => {
-  // const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const { apiKey, loginType, setApiConfig } = useAuthStore();
 
   useEffect(() => {
     if (open) {
       // 打开弹窗时，加载已保存的配置
-      const savedConfig = getGuestLLMConfig();
-      if (savedConfig) {
-        form.setFieldsValue(savedConfig);
+      if (apiKey ) {
+        form.setFieldsValue({ apiKey });
       } else {
         // 设置默认值
         form.setFieldsValue({
-          baseURL: 'https://api.token-ai.cn/v1',
           apiKey: ''
         });
       }
     }
-  }, [open, form]);
+  }, [open, form, apiKey]);
 
   const handleSubmit = async () => {
     try {
@@ -48,19 +46,18 @@ const GuestConfigModal: React.FC<GuestConfigModalProps> = ({
       
       const config: LLMConfig = {
         apiKey: values.apiKey.trim(),
-        baseURL: values.baseURL.trim()
       };
 
       // 验证配置是否有效
-      if (!config.apiKey || !config.baseURL) {
+      if (!config.apiKey) {
         message.error('请填写完整的API配置信息');
         return;
       }
 
-      // 保存配置
-      setGuestLLMConfig(config);
-      message.success('API配置已保存');
+      // 保存到 authStore
+      setApiConfig(config.apiKey);
       
+      message.success('API配置已保存');
       onOk(config);
     } catch (error) {
       console.error('保存配置失败:', error);
@@ -74,9 +71,24 @@ const GuestConfigModal: React.FC<GuestConfigModalProps> = ({
     onCancel();
   };
 
+  const getModalTitle = () => {
+    if (title) return title;
+    return loginType === 'password' ? '配置API密钥' : '修改API设置';
+  };
+
+  const getDescription = () => {
+    if (description) return description;
+    
+    if (loginType === 'password') {
+      return "您需要配置API密钥才能使用AI功能。您的API密钥将安全地存储在本地浏览器中。";
+    } else {
+      return "您可以修改API配置来使用不同的AI服务。您的API密钥将安全地存储在本地浏览器中。";
+    }
+  };
+
   return (
     <Modal
-      title={title || '配置API设置'}
+      title={getModalTitle()}
       open={open}
       onCancel={handleCancel}
       width={600}
@@ -91,11 +103,8 @@ const GuestConfigModal: React.FC<GuestConfigModalProps> = ({
     >
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Alert
-          message="游客模式说明"
-          description={
-            description || 
-            "作为游客，您需要提供自己的API配置才能使用AI功能。您的API密钥将安全地存储在本地浏览器中，不会上传到服务器。"
-          }
+          message="API配置说明"
+          description={getDescription()}
           type="info"
           icon={<InfoCircleOutlined />}
           showIcon
@@ -106,30 +115,6 @@ const GuestConfigModal: React.FC<GuestConfigModalProps> = ({
           layout="vertical"
           requiredMark={false}
         >
-          <Form.Item
-            name="baseURL"
-            label={
-              <Space>
-                <ApiOutlined />
-                <Text strong>API 基础地址</Text>
-              </Space>
-            }
-            rules={[
-              { required: true, message: '请输入API基础地址' },
-              { type: 'url', message: '请输入有效的URL地址' }
-            ]}
-            extra={
-              <Text type="secondary">
-                例如: https://api.token-ai.cn/v1 或您的代理地址
-              </Text>
-            }
-          >
-            <Input
-              placeholder="https://api.token-ai.cn/v1"
-              prefix={<ApiOutlined />}
-            />
-          </Form.Item>
-
           <Form.Item
             name="apiKey"
             label={
@@ -169,4 +154,4 @@ const GuestConfigModal: React.FC<GuestConfigModalProps> = ({
   );
 };
 
-export default GuestConfigModal; 
+export default ApiConfigModal; 

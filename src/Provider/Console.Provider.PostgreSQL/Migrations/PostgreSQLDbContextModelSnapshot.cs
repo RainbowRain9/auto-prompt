@@ -22,6 +22,83 @@ namespace Console.Provider.PostgreSQL.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Console.Service.Entities.GeneratedImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("GenerationParams")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Prompt")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Quality")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("RevisedPrompt")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Size")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Style")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedTime");
+
+                    b.HasIndex("IsFavorite");
+
+                    b.HasIndex("Model");
+
+                    b.HasIndex("Type");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GeneratedImages");
+                });
+
             modelBuilder.Entity("Console.Service.Entities.PromptComment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -186,6 +263,66 @@ namespace Console.Provider.PostgreSQL.Migrations
                     b.HasIndex("ViewCount");
 
                     b.ToTable("PromptTemplates");
+                });
+
+            modelBuilder.Entity("Console.Service.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastLoginTime")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("LastPasswordChangeTime")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedTime");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("LastLoginTime");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Console.Service.Entities.UserFavorite", b =>

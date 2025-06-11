@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Console.Core;
 using Console.Service.Dto;
 using Console.Service.Entities;
@@ -8,7 +9,6 @@ using FastService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
 
 namespace Console.Service.Services;
 
@@ -20,9 +20,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async Task<PromptTemplateParameterDto> GeneratePromptTemplateParametersAsync(
         [FromBody] GeneratePromptTemplateParameterInput input, HttpContext context)
     {
-        var token = context.Request.Headers["Authorization"].ToString().Trim().Replace("Bearer ", "");
-
-        var apiUrl = context.Request.Headers["X-Api-Url"].ToString();
+        var token = context.Request.Headers["prompt-key"].ToString();
 
         if (string.IsNullOrEmpty(token))
         {
@@ -30,13 +28,8 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             throw new UnauthorizedAccessException("未授权访问，请提供有效的API令牌。");
         }
 
-        if (string.IsNullOrEmpty(apiUrl) || apiUrl.Contains("/openai"))
-        {
-            apiUrl = ConsoleOptions.OpenAIEndpoint;
-        }
-
         var kernelBuilder = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(ConsoleOptions.GenerationChatModel, new Uri(apiUrl), token);
+            .AddOpenAIChatCompletion(ConsoleOptions.GenerationChatModel, new Uri(ConsoleOptions.OpenAIEndpoint), token);
 
         var kernel = kernelBuilder.Build();
 
@@ -53,8 +46,8 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             });
 
         // 正则表达式提取<data>
-        var regex = new System.Text.RegularExpressions.Regex(@"<data>(.*?)<\/data>",
-            System.Text.RegularExpressions.RegexOptions.Singleline);
+        var regex = new Regex(@"<data>(.*?)<\/data>",
+            RegexOptions.Singleline);
         var match = regex.Match(plugins.ToString());
         if (match.Success)
         {
@@ -83,31 +76,25 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async Task OptimizeFunctionCallingPromptAsync(
         [FromBody] OptimizeFunctionCallingPromptInput input, HttpContext context)
     {
-        var token = context.Request.Headers["Authorization"].ToString().Trim().Replace("Bearer ", "");
+        var token = context.Request.Headers["prompt-key"].ToString();
 
-        var apiUrl = context.Request.Headers["X-Api-Url"].ToString();
 
         if (string.IsNullOrEmpty(token))
         {
             context.Response.StatusCode = 401;
             throw new UnauthorizedAccessException("未授权访问，请提供有效的API令牌。");
         }
-
-        if (string.IsNullOrEmpty(apiUrl) || apiUrl.Contains("/openai"))
-        {
-            apiUrl = ConsoleOptions.OpenAIEndpoint;
-        }
-
+        
         if (input.EnableDeepReasoning)
         {
-            await DeepReasoningFunctionCallingAsync(input, context, token, apiUrl);
+            await DeepReasoningFunctionCallingAsync(input, context, token, ConsoleOptions.OpenAIEndpoint);
         }
         else
         {
             bool isFirst = true;
 
             var kernelBuilder = Kernel.CreateBuilder()
-                .AddOpenAIChatCompletion(input.ChatModel, new Uri(apiUrl),
+                .AddOpenAIChatCompletion(input.ChatModel, new Uri(ConsoleOptions.OpenAIEndpoint),
                     token);
 
 
@@ -181,11 +168,9 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
     [EndpointSummary("优化image提示词")]
     public async Task OptimizeImagePromptAsync(
-        [FromBody] GeneratePromptInput input, HttpContext context)
+        [FromBody] GenerateImagePromptInput input, HttpContext context)
     {
-        var token = context.Request.Headers["Authorization"].ToString().Trim().Replace("Bearer ", "");
-
-        var apiUrl = context.Request.Headers["X-Api-Url"].ToString();
+        var token = context.Request.Headers["prompt-key"].ToString();
 
         if (string.IsNullOrEmpty(token))
         {
@@ -193,15 +178,10 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             throw new UnauthorizedAccessException("未授权访问，请提供有效的API令牌。");
         }
 
-        if (string.IsNullOrEmpty(apiUrl) || apiUrl.Contains("/openai"))
-        {
-            apiUrl = ConsoleOptions.OpenAIEndpoint;
-        }
-
         bool isFirst = true;
 
         var kernelBuilder = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(input.ChatModel, new Uri(apiUrl),
+            .AddOpenAIChatCompletion(ConsoleOptions.DefaultImageGenerationModel, new Uri(ConsoleOptions.OpenAIEndpoint),
                 token);
         var kernel = kernelBuilder.Build();
         var plugins = kernel.CreatePluginFromPromptDirectory(
@@ -392,31 +372,24 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     [HttpPost("generate")]
     public async Task GeneratePromptAsync(GeneratePromptInput input, HttpContext context)
     {
-        var token = context.Request.Headers["Authorization"].ToString().Trim().Replace("Bearer ", "");
-
-        var apiUrl = context.Request.Headers["X-Api-Url"].ToString();
-
+        var token = context.Request.Headers["prompt-key"].ToString();
+        
         if (string.IsNullOrEmpty(token))
         {
             context.Response.StatusCode = 401;
             return;
         }
 
-        if (string.IsNullOrEmpty(apiUrl) || apiUrl.Contains("/openai"))
-        {
-            apiUrl = ConsoleOptions.OpenAIEndpoint;
-        }
-
         if (input.EnableDeepReasoning)
         {
-            await DeepReasoningAsync(input, context, token, apiUrl);
+            await DeepReasoningAsync(input, context, token, ConsoleOptions.OpenAIEndpoint);
         }
         else
         {
             bool isFirst = true;
 
             var kernelBuilder = Kernel.CreateBuilder()
-                .AddOpenAIChatCompletion(input.ChatModel, new Uri(apiUrl),
+                .AddOpenAIChatCompletion(input.ChatModel, new Uri(ConsoleOptions.OpenAIEndpoint),
                     token);
 
 

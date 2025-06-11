@@ -24,6 +24,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddFastApis();
 builder.Services.AddResponseCompression();
 builder.Services.AddScoped<UserContext>();
+builder.Services.AddSingleton<GlobalExceptionMiddleware>();
 builder.Services.AddHttpContextAccessor();
 
 if (builder.Configuration.GetConnectionString("Type")?.Equals("postgresql", StringComparison.OrdinalIgnoreCase) == true)
@@ -43,14 +44,12 @@ builder.Services.AddScoped<JwtService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference("scalar");
-}
+app.MapOpenApi();
+app.MapScalarApiReference("scalar");
 
 app.UseSerilogRequestLogging();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.Use((async (context, next) =>
 {
