@@ -58,7 +58,7 @@ services:
     
     volumes:
       # 数据持久化目录
-      - ./data:/data
+      - ./data:/app/data
       # 可选：自定义配置文件
       # - ./appsettings.json:/app/appsettings.json:ro
     

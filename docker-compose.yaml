@@ -8,7 +8,7 @@
       - DEFAULT_USERNAME=admin
       - DEFAULT_PASSWORD=admin123
     volumes:
-      - ./data:/data
+      - ./data:/app/data
     build:
       context: .
       dockerfile: src/Console.Service/Dockerfile
