@@ -19,6 +19,8 @@ public interface IDbContext
 
     public DbSet<GeneratedImage> GeneratedImages { get; set; }
 
+    public DbSet<ApiKey> ApiKeys { get; set; }
+
     public Task SaveChangesAsync();
  
     Task BeginMigrationAsync();

@@ -7,6 +7,7 @@ using Console.Service.Entities;
 using Console.Service.Options;
 using FastService;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 
@@ -20,7 +21,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async Task<PromptTemplateParameterDto> GeneratePromptTemplateParametersAsync(
         [FromBody] GeneratePromptTemplateParameterInput input, HttpContext context)
     {
-        var token = context.Request.Headers["prompt-key"].ToString();
+        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
 
         if (string.IsNullOrEmpty(token))
         {
@@ -76,15 +77,33 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async Task OptimizeFunctionCallingPromptAsync(
         [FromBody] OptimizeFunctionCallingPromptInput input, HttpContext context)
     {
-        var token = context.Request.Headers["prompt-key"].ToString();
-
-
+        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
         if (string.IsNullOrEmpty(token))
         {
             context.Response.StatusCode = 401;
             throw new UnauthorizedAccessException("未授权访问，请提供有效的API令牌。");
         }
-        
+
+        if (token.StartsWith("sk-"))
+        {
+            // 如果是sk 则是API Key
+            var apiKey = await dbContext.ApiKeys
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Key == token);
+
+            if (apiKey == null)
+            {
+                throw new InvalidOperationException("API Key not found.");
+            }
+
+            if (apiKey.ExpiresAt != null && apiKey.ExpiresAt < DateTime.Now)
+            {
+                throw new InvalidOperationException("API Key has expired.");
+            }
+
+            token = apiKey.OpenAiApiKey;
+        }
+
         if (input.EnableDeepReasoning)
         {
             await DeepReasoningFunctionCallingAsync(input, context, token, ConsoleOptions.OpenAIEndpoint);
@@ -170,12 +189,32 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async Task OptimizeImagePromptAsync(
         [FromBody] GenerateImagePromptInput input, HttpContext context)
     {
-        var token = context.Request.Headers["prompt-key"].ToString();
+        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
 
         if (string.IsNullOrEmpty(token))
         {
             context.Response.StatusCode = 401;
             throw new UnauthorizedAccessException("未授权访问，请提供有效的API令牌。");
+        }
+
+        if (token.StartsWith("sk-"))
+        {
+            // 如果是sk 则是API Key
+            var apiKey = await dbContext.ApiKeys
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Key == token);
+
+            if (apiKey == null)
+            {
+                throw new InvalidOperationException("API Key not found.");
+            }
+
+            if (apiKey.ExpiresAt != null && apiKey.ExpiresAt < DateTime.Now)
+            {
+                throw new InvalidOperationException("API Key has expired.");
+            }
+
+            token = apiKey.OpenAiApiKey;
         }
 
         bool isFirst = true;
@@ -246,6 +285,14 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
         await dbContext.PromptHistory.AddAsync(entity);
 
+        if (token.StartsWith("sk-"))
+        {
+            await dbContext.ApiKeys
+                .Where(x => x.Key == token)
+                .ExecuteUpdateAsync(x => x.SetProperty(a => a.UsageCount, a => a.UsageCount + 1)
+                    .SetProperty(a => a.LastUsedTime, a => DateTime.Now));
+        }
+
         await dbContext.SaveChangesAsync();
     }
 
@@ -308,7 +355,6 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             }
         }
 
-
         await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
         {
             type = "deep-reasoning-end",
@@ -335,8 +381,6 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                 {
                     continue;
                 }
-
-                deepReasoning.Append(chatMessageContent.Content);
 
                 await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
                 {
@@ -372,12 +416,32 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     [HttpPost("generate")]
     public async Task GeneratePromptAsync(GeneratePromptInput input, HttpContext context)
     {
-        var token = context.Request.Headers["prompt-key"].ToString();
-        
+        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
+
         if (string.IsNullOrEmpty(token))
         {
             context.Response.StatusCode = 401;
             return;
+        }
+
+        if (token.StartsWith("sk-"))
+        {
+            // 如果是sk 则是API Key
+            var apiKey = await dbContext.ApiKeys
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Key == token);
+
+            if (apiKey == null)
+            {
+                throw new InvalidOperationException("API Key not found.");
+            }
+
+            if (apiKey.ExpiresAt != null && apiKey.ExpiresAt < DateTime.Now)
+            {
+                throw new InvalidOperationException("API Key has expired.");
+            }
+
+            token = apiKey.OpenAiApiKey;
         }
 
         if (input.EnableDeepReasoning)
@@ -455,6 +519,14 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             };
 
             await dbContext.PromptHistory.AddAsync(entity);
+
+            if (token.StartsWith("sk-"))
+            {
+                await dbContext.ApiKeys
+                    .Where(x => x.Key == token)
+                    .ExecuteUpdateAsync(x => x.SetProperty(a => a.UsageCount, a => a.UsageCount + 1)
+                        .SetProperty(a => a.LastUsedTime, a => DateTime.Now));
+            }
 
             await dbContext.SaveChangesAsync();
         }

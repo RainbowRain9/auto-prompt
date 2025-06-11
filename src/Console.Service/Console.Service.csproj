@@ -15,21 +15,24 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.SemanticKernel" Version="1.54.0" />
-        <PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.54.0" />
-        <PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.54.0-preview" />
-        <PackageReference Include="Microsoft.SemanticKernel.Agents.Orchestration" Version="1.54.0-preview" />
-        <PackageReference Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" Version="1.54.0" />
-        <PackageReference Include="Microsoft.SemanticKernel.Yaml" Version="1.54.0" />
+        <PackageReference Include="Microsoft.SemanticKernel" Version="1.56.0" />
+        <PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.56.0" />
+        <PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.56.0-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Agents.Orchestration" Version="1.56.0-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" Version="1.56.0" />
+        <PackageReference Include="Microsoft.SemanticKernel.Yaml" Version="1.56.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-        <PackageReference Include="Scalar.AspNetCore" Version="2.4.6" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.4.13" />
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.0" />
-        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.3.0" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.0" />
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.12.0" />
         <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
+        <PackageReference Include="ModelContextProtocol" Version="0.2.0-preview.3" />
+        <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.2.0-preview.3" />
+        <PackageReference Include="ModelContextProtocolServer.Sse" Version="0.0.1-preview-06" />
     </ItemGroup>
 
     <ItemGroup>

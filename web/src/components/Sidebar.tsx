@@ -11,6 +11,7 @@ import {
   UserOutlined,
   SettingOutlined,
   PictureOutlined,
+  KeyOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -257,6 +258,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: 'image',
       icon: <PictureOutlined />,
       label: t('nav.image'),
+    },
+    {
+      key: 'apikeys',
+      icon: <KeyOutlined />,
+      label: 'API Key 管理',
     }
   ];
 

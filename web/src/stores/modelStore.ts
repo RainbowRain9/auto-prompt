@@ -15,11 +15,16 @@ export interface ModelResponse {
 
 interface ModelState {
   chatModels: Model[];
+  defaultChatModel: string;
+  defaultImageGenerationModel: string;
   imageModels: Model[];
   isLoading: boolean;
   error: string | null;
   lastFetched: number;
-  fetchModels: () => Promise<void>;
+  fetchModels: () => Promise<{
+    defaultChatModel: string;
+    defaultImageGenerationModel: string;
+  }>;
   getChatModelOptions: () => { value: string; label: string }[];
   getImageModelOptions: () => { value: string; label: string }[];
 }
@@ -35,29 +40,40 @@ export const useModelStore = create<ModelState>()(
       isLoading: false,
       error: null,
       lastFetched: 0,
-
+      defaultImageGenerationModel: '',
+      defaultChatModel: '',
       fetchModels: async () => {
-        const { lastFetched, isLoading } = get();
+        const { lastFetched, isLoading, defaultChatModel, defaultImageGenerationModel } = get();
         const now = Date.now();
 
-        // 如果正在加载或缓存未过期，则跳过
+        // 如果正在加载或缓存未过期，则返回当前默认值
         if (isLoading || (now - lastFetched < CACHE_DURATION && lastFetched > 0)) {
-          return;
+          return {
+            defaultChatModel,
+            defaultImageGenerationModel
+          };
         }
 
         set({ isLoading: true, error: null });
 
         try {
           const response = await getModels();
-          
+
           if (response && response.chatModels && response.imageModels) {
             set({
               chatModels: response.chatModels,
               imageModels: response.imageModels,
+              defaultChatModel: response.defaultChatModel,
+              defaultImageGenerationModel: response.defaultImageGenerationModel,
               lastFetched: now,
               isLoading: false,
               error: null,
             });
+
+            return {
+              defaultChatModel: response.defaultChatModel,
+              defaultImageGenerationModel: response.defaultImageGenerationModel
+            };
           } else {
             throw new Error('Invalid response format');
           }
@@ -67,21 +83,11 @@ export const useModelStore = create<ModelState>()(
             error: error instanceof Error ? error.message : '获取模型列表失败',
             isLoading: false,
           });
-          
-          // 如果API调用失败，使用默认模型列表
+
           const defaultChatModels: Model[] = [
             { id: 'gpt-4o', objectType: 'model', created: Date.now() },
             { id: 'gpt-4o-mini', objectType: 'model', created: Date.now() },
             { id: 'gpt-4-turbo', objectType: 'model', created: Date.now() },
-            { id: 'gpt-3.5-turbo', objectType: 'model', created: Date.now() },
-            { id: 'claude-3-5-sonnet-20241022', objectType: 'model', created: Date.now() },
-            { id: 'claude-3-5-haiku-20241022', objectType: 'model', created: Date.now() },
-            { id: 'claude-3-opus-20240229', objectType: 'model', created: Date.now() },
-            { id: 'gemini-pro', objectType: 'model', created: Date.now() },
-            { id: 'gemini-1.5-pro', objectType: 'model', created: Date.now() },
-            { id: 'deepseek-chat', objectType: 'model', created: Date.now() },
-            { id: 'qwen-max', objectType: 'model', created: Date.now() },
-            { id: 'glm-4', objectType: 'model', created: Date.now() },
           ];
 
           const defaultImageModels: Model[] = [
@@ -93,8 +99,15 @@ export const useModelStore = create<ModelState>()(
           set({
             chatModels: defaultChatModels,
             imageModels: defaultImageModels,
+            defaultChatModel: defaultChatModels[0].id,
+            defaultImageGenerationModel: defaultImageModels[0].id,
             lastFetched: now,
           });
+
+          return {
+            defaultChatModel: defaultChatModels[0].id,
+            defaultImageGenerationModel: defaultImageModels[0].id
+          };
         }
       },
 

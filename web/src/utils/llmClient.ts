@@ -89,7 +89,7 @@ export const fetchModels = async (): Promise<{ value: string; label: string }[]>
   try {
     const response = await fetch(`${window.location.origin}/openai`, {
       headers: {
-        'prompt-key': config.apiKey,
+        'api-key': config.apiKey,
         'Content-Type': 'application/json',
       },
     });

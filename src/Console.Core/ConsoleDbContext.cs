@@ -20,6 +20,8 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
 
     public DbSet<GeneratedImage> GeneratedImages { get; set; } = null!;
 
+    public DbSet<ApiKey> ApiKeys { get; set; } = null!;
+
     public Task SaveChangesAsync()
     {
         return base.SaveChangesAsync(CancellationToken.None);
@@ -199,6 +201,37 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
             options.HasIndex(e => e.Model);
             options.HasIndex(e => e.IsFavorite);
             options.HasIndex(e => e.CreatedTime);
+        });
+
+        modelBuilder.Entity<ApiKey>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.Property(x => x.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.Property(x => x.Key)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.Property(x => x.OpenAiApiKey)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            options.Property(x => x.UserId)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.Property(x => x.Description)
+                .HasMaxLength(500);
+
+            options.HasIndex(e => e.UserId);
+            options.HasIndex(e => e.Key).IsUnique();
+            options.HasIndex(e => e.CreatedTime);
+            options.HasIndex(e => e.IsEnabled);
+            options.HasIndex(e => e.ExpiresAt);
+            options.HasIndex(e => new { e.UserId, e.Name }).IsUnique();
         });
     }
 }

@@ -74,7 +74,7 @@ export async function* SSE<T = any>(
             headers: {
                 ...finalConfig.headers,
                 "Authorization": `Bearer ${token}`, // 用户身份验证
-                "prompt-key": llmConfig.apiKey, // 使用LLM配置的API Key
+                "api-key": llmConfig.apiKey, // 使用LLM配置的API Key
             },
             body: JSON.stringify(data),
             signal: controller.signal,
@@ -271,7 +271,7 @@ export const GeneratePromptTemplateParameters = async (prompt: string): Promise<
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`, // 用户身份验证
-            'prompt-key': llmConfig.apiKey,
+            'api-key': llmConfig.apiKey,
         },
         body: JSON.stringify({
             prompt: prompt

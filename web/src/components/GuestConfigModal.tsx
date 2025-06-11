@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Button, message, Space, Typography, Alert } from 'antd';
-import { KeyOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { useAuthStore } from '../stores/authStore';
+import { KeyOutlined, InfoCircleOutlined, LoginOutlined } from '@ant-design/icons';
+import { useAuthStore, getLoginUrl } from '../stores/authStore';
 import type { LLMConfig } from '../utils/llmClient';
 
 const { Text, Link } = Typography;
@@ -23,7 +23,7 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { apiKey, loginType, setApiConfig } = useAuthStore();
+  const { apiKey, loginType, setApiConfig, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     if (open) {
@@ -71,13 +71,32 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
     onCancel();
   };
 
+  const handleLogin = () => {
+    // 跳转到登录页面，刷新整个页面以触发App.tsx中的登录检查
+    window.location.reload();
+  };
+
+  const handleThorLogin = () => {
+    setLoading(true);
+    setTimeout(() => {
+      const currentUrl = window.location.href;
+      const loginUrl = getLoginUrl(currentUrl);
+      window.location.href = loginUrl;
+    }, 800);
+  };
+
   const getModalTitle = () => {
     if (title) return title;
+    if (!isAuthenticated) return '需要登录';
     return loginType === 'password' ? '配置API密钥' : '修改API设置';
   };
 
   const getDescription = () => {
     if (description) return description;
+    
+    if (!isAuthenticated) {
+      return "您需要先登录才能使用AI功能。请选择登录方式。";
+    }
     
     if (loginType === 'password') {
       return "您需要配置API密钥才能使用AI功能。您的API密钥将安全地存储在本地浏览器中。";
@@ -86,6 +105,62 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
     }
   };
 
+  // 如果用户未登录，显示登录选项
+  if (!isAuthenticated) {
+    return (
+      <Modal
+        title={getModalTitle()}
+        open={open}
+        onCancel={handleCancel}
+        width={500}
+        footer={[
+          <Button key="cancel" onClick={handleCancel}>
+            取消
+          </Button>,
+        ]}
+      >
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Alert
+            message="需要登录"
+            description={getDescription()}
+            type="warning"
+            icon={<InfoCircleOutlined />}
+            showIcon
+          />
+
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <Button
+              type="primary"
+              icon={<LoginOutlined />}
+              onClick={handleThorLogin}
+              block
+              loading={loading}
+            >
+              使用 Thor 平台登录
+            </Button>
+            
+            <Button
+              type="default"
+              icon={<LoginOutlined />}
+              onClick={handleLogin}
+              block
+            >
+              使用账户密码登录
+            </Button>
+          </Space>
+
+          <Alert
+            message="登录说明"
+            description="登录后您将能够使用所有AI功能，包括提示词优化、图片生成等。"
+            type="info"
+            showIcon
+          />
+        </Space>
+      </Modal>
+    );
+  }
+
+  // 已登录用户的API配置界面
   return (
     <Modal
       title={getModalTitle()}

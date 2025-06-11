@@ -39,6 +39,7 @@ import {
   StarFilled,
   ReloadOutlined
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { useModelStore } from '../../stores/modelStore';
 import { hasValidLLMConfig } from '../../utils/llmClient';
@@ -107,12 +108,14 @@ interface GeneratedImage {
 }
 
 const ImageGeneration: React.FC = () => {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuthStore();
 
   // 使用模型 store
   const {
     fetchModels,
     getImageModelOptions,
+    defaultImageGenerationModel,
     isLoading: modelsLoading,
     error: modelsError,
   } = useModelStore();
@@ -201,27 +204,34 @@ const ImageGeneration: React.FC = () => {
         });
 
         setHistoryLoaded(true);
-        console.log(`成功加载 ${historyImages.length} 张历史图片`);
+        console.log(t('imageGeneration.messages.historyLoadSuccess', { count: historyImages.length }));
       }
     } catch (error: any) {
-      console.error('加载历史记录失败:', error);
-      message.warning('加载历史图片失败: ' + error.message);
+      console.error(t('imageGeneration.messages.historyLoadFailed'), error);
+      message.warning(t('imageGeneration.messages.historyLoadFailed') + ': ' + error.message);
     } finally {
       setLoadingHistory(false);
     }
-  }, [isAuthenticated, historyLoaded, loadingHistory]);
+  }, [isAuthenticated, historyLoaded, loadingHistory, t]);
 
   // 初始化时获取模型列表
   useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
+    const initializeModels = async () => {
+      const response = await fetchModels();
+      // 如果表单还没有设置模型值，使用默认图片模型
+      if (response.defaultImageGenerationModel && !form.getFieldValue('model')) {
+        form.setFieldValue('model', response.defaultImageGenerationModel);
+      }
+    };
+    initializeModels();
+  }, [fetchModels, form]);
 
   // 如果获取模型失败，显示错误信息
   useEffect(() => {
     if (modelsError) {
-      message.warning(`模型列表获取失败，使用默认模型: ${modelsError}`);
+      message.warning(t('imageGeneration.messages.modelsLoadFailed') + ': ' + modelsError);
     }
-  }, [modelsError]);
+  }, [modelsError, t]);
 
   // 当图片模型列表加载完成后，设置默认模型
   useEffect(() => {
@@ -229,6 +239,13 @@ const ImageGeneration: React.FC = () => {
       form.setFieldValue('model', imageModelOptions[0].value);
     }
   }, [imageModelOptions, form]);
+
+  // 当默认图片模型可用时，更新表单默认值
+  useEffect(() => {
+    if (defaultImageGenerationModel && !form.getFieldValue('model')) {
+      form.setFieldValue('model', defaultImageGenerationModel);
+    }
+  }, [defaultImageGenerationModel, form]);
 
   // 用户登录后加载历史记录
   useEffect(() => {
@@ -252,17 +269,17 @@ const ImageGeneration: React.FC = () => {
   // 生成/编辑图片
   const handleSubmit = async (values: any) => {
     if (!checkApiConfig()) {
-      message.error('请先配置API设置或登录');
+      message.error(t('imageGeneration.messages.configRequired'));
       return;
     }
 
     if (!promptValue.trim()) {
-      message.error('请输入描述');
+      message.error(t('imageGeneration.messages.promptRequired'));
       return;
     }
 
     if (currentMode === 'edit' && !editImageFile) {
-      message.error('请先上传要编辑的图片');
+      message.error(t('imageGeneration.messages.imageRequired'));
       return;
     }
 
@@ -366,7 +383,7 @@ const ImageGeneration: React.FC = () => {
       setProgress(100);
 
       setImages(prev => [...newImages, ...prev]);
-      message.success(`成功${currentMode === 'generate' ? '生成' : '编辑生成'} ${newImages.length} 张图片`);
+      message.success(t(currentMode === 'generate' ? 'imageGeneration.messages.generateSuccess' : 'imageGeneration.messages.editSuccess', { count: newImages.length }));
 
       // 如果用户已登录，保存图片到后端
       if (isAuthenticated) {
@@ -374,7 +391,7 @@ const ImageGeneration: React.FC = () => {
       }
 
     } catch (error: any) {
-      message.error(error.message || '操作失败');
+      message.error(error.message || t('imageGeneration.messages.generateFailed'));
     } finally {
       setLoading(false);
       setProgress(0);
@@ -515,8 +532,8 @@ const ImageGeneration: React.FC = () => {
       }
       return prev.filter(img => img.id !== imageId);
     });
-    message.success('图片已删除');
-  }, []);
+    message.success(t('imageGeneration.messages.imageDeleted'));
+  }, [t]);
 
   // 文件上传处理
   const handleImageUpload = useCallback((file: File) => {
@@ -552,12 +569,12 @@ const ImageGeneration: React.FC = () => {
   // 优化提示词
   const handleOptimizePrompt = async () => {
     if (!promptValue.trim()) {
-      message.warning('请先输入提示词');
+      message.warning(t('imageGeneration.messages.optimizePromptFirst'));
       return;
     }
 
     if (!checkApiConfig()) {
-      message.error('请先配置API设置或登录');
+      message.error(t('imageGeneration.messages.configRequired'));
       return;
     }
 
@@ -601,13 +618,13 @@ const ImageGeneration: React.FC = () => {
 
       if (optimizedPrompt.trim()) {
         setOptimizedResult(optimizedPrompt.trim());
-        message.success('提示词优化完成');
+        message.success(t('imageGeneration.messages.optimizeComplete'));
       } else {
-        message.warning('优化结果为空，请检查输入');
+        message.warning(t('imageGeneration.messages.optimizeEmpty'));
         setOptimizedResult('');
       }
     } catch (error: any) {
-      message.error(error.message || '优化失败');
+      message.error(error.message || t('imageGeneration.messages.optimizeFailed'));
       setOptimizedResult('');
     } finally {
       setIsOptimizing(false);
@@ -619,7 +636,7 @@ const ImageGeneration: React.FC = () => {
     if (optimizedResult.trim()) {
       // 直接更新提示词状态
       setPromptValue(optimizedResult.trim());
-      message.success('已插入优化后的提示词');
+      message.success(t('imageGeneration.messages.optimizeInserted'));
       // 关闭模态框并重置状态
       setOptimizeModalVisible(false);
       setOptimizeRequirement('');
@@ -633,7 +650,7 @@ const ImageGeneration: React.FC = () => {
     if (isOptimizing) {
       // 如果正在优化中，停止优化
       setIsOptimizing(false);
-      message.info('已取消优化');
+      message.info(t('imageGeneration.messages.optimizeCanceled'));
     }
     setOptimizeModalVisible(false);
     setOptimizeRequirement('');
@@ -666,11 +683,11 @@ const ImageGeneration: React.FC = () => {
       };
       img.src = image.url;
 
-      message.success('图片已加载到编辑模式，请绘制蒙版指定编辑区域');
+      message.success(t('imageGeneration.messages.imageLoaded'));
     } catch (error: any) {
-      message.error('加载图片失败: ' + error.message);
+      message.error(t('imageGeneration.messages.loadImageFailed') + ': ' + error.message);
     }
-  }, [initMaskCanvas, updateCanvasDisplay]);
+  }, [initMaskCanvas, updateCanvasDisplay, t]);
 
   // 切换收藏状态
   const handleToggleFavorite = useCallback(async (image: GeneratedImage) => {
@@ -685,12 +702,12 @@ const ImageGeneration: React.FC = () => {
               ? { ...img, isFavorite: result.data?.isFavorite ?? !img.isFavorite }
               : img
           ));
-          message.success(result.data?.isFavorite ? '已收藏' : '已取消收藏');
+          message.success(result.data?.isFavorite ? t('imageGeneration.messages.favoriteSuccess') : t('imageGeneration.messages.unfavoriteSuccess'));
         } else {
-          message.error(result.message || '操作失败');
+          message.error(result.message || t('imageGeneration.messages.operationFailed'));
         }
       } catch (error: any) {
-        message.error('操作失败: ' + error.message);
+        message.error(t('imageGeneration.messages.operationFailed') + ': ' + error.message);
       }
     } else {
       // 只是本地切换
@@ -699,9 +716,9 @@ const ImageGeneration: React.FC = () => {
           ? { ...img, isFavorite: !img.isFavorite }
           : img
       ));
-      message.success(image.isFavorite ? '已取消收藏' : '已收藏');
+      message.success(image.isFavorite ? t('imageGeneration.messages.unfavoriteSuccess') : t('imageGeneration.messages.favoriteSuccess'));
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, t]);
 
   // 保存图片到后端
   const saveImagesToBackend = useCallback(async (newImages: GeneratedImage[], formValues: any) => {
@@ -776,10 +793,10 @@ const ImageGeneration: React.FC = () => {
       console.error('保存图片失败:', error.message);
       // 如果是因为base64数据过大导致的错误，给出提示
       if (error.message.includes('413') || error.message.includes('too large')) {
-        message.warning('部分图片因文件过大未能保存到云端，但仍可正常使用');
+        message.warning(t('imageGeneration.messages.saveCloudFailed'));
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, t]);
 
   return (
     <Layout style={{ minHeight: '100vh', }}>
@@ -787,12 +804,12 @@ const ImageGeneration: React.FC = () => {
         <div style={{ marginBottom: '24px' }}>
           <Title level={2} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <PictureOutlined />
-            AI 图片生成工具
+            {t('imageGeneration.title')}
           </Title>
           <Paragraph type="secondary" style={{ margin: '8px 0 0 0' }}>
             {currentMode === 'generate'
-              ? '使用文字描述生成图片，支持多种模型和参数调节'
-              : '基于上传的图片进行编辑，支持蒙版绘制指定编辑区域'
+              ? t('imageGeneration.description.generate')
+              : t('imageGeneration.description.edit')
             }
           </Paragraph>
         </div>
@@ -804,9 +821,9 @@ const ImageGeneration: React.FC = () => {
               title={
                 <Space>
                   {currentMode === 'generate' ? <PictureOutlined /> : <EditOutlined />}
-                  {currentMode === 'generate' ? '文字生成图片' : '图片编辑'}
+                  {currentMode === 'generate' ? t('imageGeneration.generateMode') : t('imageGeneration.editMode')}
                   <Tag color={currentMode === 'generate' ? 'blue' : 'orange'}>
-                    {currentMode === 'generate' ? '生成模式' : '编辑模式'}
+                    {currentMode === 'generate' ? t('imageGeneration.generateModeTag') : t('imageGeneration.editModeTag')}
                   </Tag>
                 </Space>
               }
@@ -821,7 +838,7 @@ const ImageGeneration: React.FC = () => {
                 layout="vertical"
                 onFinish={handleSubmit}
                 initialValues={{
-                  model: imageModelOptions.length > 0 ? imageModelOptions[0].value : 'gpt-image-1',
+                  model: defaultImageGenerationModel || 'gpt-image-1',
                   size: '1024x1024',
                   quality: 'standard',
                   style: 'vivid',
@@ -832,7 +849,7 @@ const ImageGeneration: React.FC = () => {
                 <Form.Item
                   label={
                     <Space>
-                      <span>上传图片</span>
+                      <span>{t('imageGeneration.upload.title')}</span>
                       {editImageFile && (
                         <Button
                           type="link"
@@ -840,7 +857,7 @@ const ImageGeneration: React.FC = () => {
                           onClick={handleRemoveImage}
                           style={{ padding: 0, height: 'auto' }}
                         >
-                          切换到文字生成
+                          {t('imageGeneration.upload.switchToGenerate')}
                         </Button>
                       )}
                     </Space>
@@ -864,9 +881,9 @@ const ImageGeneration: React.FC = () => {
                     ) : (
                       <div style={{ padding: '20px', textAlign: 'center' }}>
                         <UploadOutlined style={{ fontSize: '24px', marginBottom: '8px', color: '#1677ff' }} />
-                        <div>上传图片开启编辑模式</div>
+                        <div>{t('imageGeneration.upload.uploadText')}</div>
                         <Text type="secondary" style={{ fontSize: '12px' }}>
-                          支持 PNG、JPEG、WebP 格式
+                          {t('imageGeneration.upload.supportedFormats')}
                         </Text>
                       </div>
                     )}

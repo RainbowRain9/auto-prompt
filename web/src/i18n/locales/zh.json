@@ -425,5 +425,119 @@
     "serverError": "服务器错误，请稍后重试",
     "invalidInput": "输入内容无效",
     "operationFailed": "操作失败，请重试"
+  },
+  "imageGeneration": {
+    "title": "AI 图片生成工具",
+    "generateMode": "文字生成图片",
+    "editMode": "图片编辑",
+    "generateModeTag": "生成模式",
+    "editModeTag": "编辑模式",
+    "description": {
+      "generate": "使用文字描述生成图片，支持多种模型和参数调节",
+      "edit": "基于上传的图片进行编辑，支持蒙版绘制指定编辑区域"
+    },
+    "upload": {
+      "title": "上传图片",
+      "switchToGenerate": "切换到文字生成",
+      "uploadText": "上传图片开启编辑模式",
+      "supportedFormats": "支持 PNG、JPEG、WebP 格式"
+    },
+    "mask": {
+      "title": "蒙版编辑工具",
+      "drawMode": "绘制",
+      "eraseMode": "擦除",
+      "brushSize": "画笔",
+      "clear": "清空",
+      "show": "显示",
+      "hide": "隐藏",
+      "description": "在图片上绘制红色区域标记需要编辑的部分。AI将根据你的描述重新生成被标记的区域。",
+      "warning": "⚠️ 注意：gpt-image-1模型使用软蒙版技术，可能会对整张图片进行重新渲染以保持一致性。建议在提示词中明确指出只编辑蒙版区域，保持其他部分不变。"
+    },
+    "prompt": {
+      "generateLabel": "图片描述",
+      "editLabel": "编辑描述",
+      "generatePlaceholder": "详细描述你想要生成的图片，例如：一只可爱的橙色小猫坐在窗台上，阳光透过窗户洒在它身上，背景是模糊的花园",
+      "editPlaceholder": "描述你想要在蒙版区域生成的内容。建议格式：「只编辑蒙版标记的区域，将其替换为[具体内容]，保持图片其他部分完全不变」",
+      "optimize": "优化",
+      "optimizing": "优化中"
+    },
+    "model": {
+      "label": "模型",
+      "placeholder": "选择图片生成模型"
+    },
+    "parameters": {
+      "size": "尺寸",
+      "quantity": "生成数量",
+      "quality": "质量",
+      "style": "风格",
+      "standard": "标准",
+      "hd": "高清",
+      "vivid": "生动",
+      "natural": "自然"
+    },
+    "buttons": {
+      "generateImage": "生成图片",
+      "editImage": "编辑图片",
+      "optimizePrompt": "优化提示词",
+      "useForEdit": "用于编辑",
+      "favorite": "收藏",
+      "unfavorite": "取消收藏",
+      "download": "下载",
+      "delete": "删除",
+      "refresh": "刷新"
+    },
+    "results": {
+      "title": "生成结果",
+      "historyLoaded": "已加载历史记录",
+      "loadingHistory": "正在加载历史记录...",
+      "generating": "正在生成图片...",
+      "editing": "正在编辑图片...",
+      "preview": "预览",
+      "generateTag": "生成",
+      "editTag": "编辑",
+      "historyTag": "历史",
+      "noImages": "还没有生成的图片",
+      "noImagesGenerate": "输入描述文字开始生成图片",
+      "noImagesEdit": "上传图片并描述编辑需求"
+    },
+    "optimize": {
+      "modalTitle": "优化提示词",
+      "originalPrompt": "原始提示词：",
+      "optimizedResult": "优化结果：",
+      "requirement": "优化要求",
+      "requirementOptional": "（可选）",
+      "requirementPlaceholder": "描述你希望如何优化这个提示词，例如：让描述更加生动详细，添加光线和色彩描述...",
+      "currentPrompt": "当前提示词：",
+      "noInput": "（未输入）",
+      "startOptimize": "开始优化",
+      "optimizing": "优化中...",
+      "insertResult": "插入优化结果",
+      "realTimeResult": "实时生成结果：",
+      "checkResult": "检查优化结果是否符合要求，点击插入优化结果将替换当前提示词。"
+    },
+    "messages": {
+      "configRequired": "请先配置API设置或登录",
+      "promptRequired": "请输入描述",
+      "imageRequired": "请先上传要编辑的图片",
+      "generateSuccess": "成功生成 {{count}} 张图片",
+      "editSuccess": "成功编辑生成 {{count}} 张图片",
+      "generateFailed": "操作失败",
+      "imageLoaded": "图片已加载到编辑模式，请绘制蒙版指定编辑区域",
+      "loadImageFailed": "加载图片失败",
+      "favoriteSuccess": "已收藏",
+      "unfavoriteSuccess": "已取消收藏",
+      "operationFailed": "操作失败",
+      "imageDeleted": "图片已删除",
+      "optimizePromptFirst": "请先输入提示词",
+      "optimizeComplete": "提示词优化完成",
+      "optimizeEmpty": "优化结果为空，请检查输入",
+      "optimizeFailed": "优化失败",
+      "optimizeInserted": "已插入优化后的提示词",
+      "optimizeCanceled": "已取消优化",
+      "historyLoadSuccess": "成功加载 {{count}} 张历史图片",
+      "historyLoadFailed": "加载历史图片失败",
+      "saveCloudFailed": "部分图片因文件过大未能保存到云端，但仍可正常使用",
+      "modelsLoadFailed": "模型列表获取失败，使用默认模型"
+    }
   }
 } 

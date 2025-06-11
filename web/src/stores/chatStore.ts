@@ -11,6 +11,7 @@ import {
   initializeDefaultData, // 用于确保数据库初始化
 } from '../utils/db'; // 假设 db.ts 在 utils 文件夹下
 import { replaceParameters } from '../utils/messageHelper';
+import { useModelStore } from './modelStore';
 
 // 定义消息类型，与 db.ts 中的 WorkbenchMessage 保持一致
 export type MessageRole = 'system' | 'user' | 'assistant';
@@ -89,6 +90,9 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     if (get().isLoading) return;
     set({ isLoading: true });
     try {
+
+      const response = await useModelStore.getState().fetchModels();
+
       await initializeDefaultData(); // 确保数据库和默认数据已初始化
       const config = await getConfig(workspaceId);
       const dbMessages = await getMessagesFromDB(workspaceId);
@@ -101,7 +105,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           role: msg.role,
           content: msg.content
         };
-        
+
         // 如果有arguments字段，解析为Parameter[]
         if (msg.arguments) {
           try {
@@ -112,7 +116,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             console.error('Failed to parse message arguments:', e);
           }
         }
-        
+
         return message;
       });
       if (loadedMessages.length === 0) {
@@ -121,7 +125,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       }
 
       set({
-        selectedModel: config?.selectedModel || 'gpt-4o',
+        selectedModel: config?.selectedModel || response.defaultChatModel,
         systemPrompt: config?.systemPrompt || '',
         messages: loadedMessages,
         workspaceId,
@@ -157,7 +161,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     // if (!content.trim()) return;
 
     const { workspaceId } = get();
-    
+
     // 保留原始内容，不添加参数到文本中
     const finalContent = content ?? '';
 
@@ -189,7 +193,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     if (!content.trim()) return;
 
     const { workspaceId } = get();
-    
+
     // 保留原始内容，不添加参数到文本中
     let finalContent = content;
 
@@ -223,10 +227,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
     if (messageIndex === -1) return;
 
-    
+
     const existingMessage = messages[messageIndex];
     const parameters = existingMessage.parameters || [];
-    
+
     // 保留原始内容，不添加参数到文本中
     let finalContent = content;
 
@@ -258,7 +262,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   // 更新消息参数
   updateMessageParameters: async (messageId: string, parameters: Parameter[]) => {
     console.log('Store.updateMessageParameters called with:', { messageId, parameters }); // 添加调试日志
-    
+
     const { messages, workspaceId } = get();
     const messageIndex = messages.findIndex(m => m.id === messageId);
 
@@ -270,10 +274,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     // 获取现有消息
     const existingMessage = messages[messageIndex];
     console.log('Existing message:', existingMessage); // 添加调试日志
-    
+
     // 深拷贝参数以避免引用问题
     const parametersCopy = JSON.parse(JSON.stringify(parameters));
-    
+
     // 创建更新后的消息对象
     const updatedMessage = {
       ...existingMessage,
@@ -288,7 +292,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         // 确保JSON字符串化是新的，不复用之前的
         const jsonArguments = parameters.length > 0 ? JSON.stringify(parametersCopy) : undefined;
         console.log('JSON arguments to save:', jsonArguments); // 添加调试日志
-        
+
         const dbUpdate = {
           id: updatedMessage.id,
           workspaceId,
@@ -298,10 +302,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           timestamp: updatedMessage.timestamp || Date.now()
         };
         console.log('Updating in database:', dbUpdate); // 添加调试日志
-        
+
         await updateMessage(dbUpdate);
         console.log('Database update successful'); // 添加调试日志
-        
+
         // 更新状态 - 使用新的更新模式
         set(state => {
           // 创建消息的新副本
@@ -360,8 +364,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         workspaceId,
         role: tempMessage.role,
         content: tempMessage.content,
-        arguments: tempMessage.parameters && tempMessage.parameters.length > 0 
-          ? JSON.stringify(tempMessage.parameters) 
+        arguments: tempMessage.parameters && tempMessage.parameters.length > 0
+          ? JSON.stringify(tempMessage.parameters)
           : undefined
       });
 
@@ -381,7 +385,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     } catch (error) {
       console.error('Failed to add temp message to conversation:', error);
       // 即使出错也清空临时消息状态
-      set({ 
+      set({
         tempMessage: null,
         streamingContent: '',
         streamingReasoningContent: null
@@ -391,7 +395,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   // 清空临时消息
   clearTemp: () => {
-    set({ 
+    set({
       tempMessage: null,
       streamingContent: '',
       streamingReasoningContent: null
@@ -413,8 +417,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       return;
     }
 
-    set({ 
-      isLoading: true, 
+    set({
+      isLoading: true,
       error: null,
       streamingContent: '',
       streamingReasoningContent: null,
@@ -437,16 +441,16 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         if (typeof msg.content === 'string') {
           // 使用messageHelper中的replaceParameters函数替换参数
           let processedContent = msg.content;
-          
+
           // 只有当消息有参数且参数有值时才进行替换
           if (msg.parameters && msg.parameters.length > 0) {
             // 使用参数值替换文本中的参数占位符
             processedContent = replaceParameters(msg.content, msg.parameters);
           }
-          
-          messagesToSend.push({ 
-            role: msg.role, 
-            content: processedContent 
+
+          messagesToSend.push({
+            role: msg.role,
+            content: processedContent
           });
         } else {
           console.warn("Message content is not a string, skipping:", msg);
@@ -471,21 +475,21 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       let assistantContent = '';
       let reasoningContent: string | null = null;
       let pendingUpdate = false;
-      
+
       // 处理流式响应
       for await (const chunk of stream) {
         // 更新内容
         const content = chunk.choices[0]?.delta?.content || '';
         if (content) {
           assistantContent += content;
-          
+
           // 检查是否存在reasoning_content字段
           const reasoningContentDelta = (chunk.choices[0]?.delta as any)?.reasoning_content;
           if (reasoningContentDelta) {
             reasoningContent = reasoningContent || '';
             reasoningContent += reasoningContentDelta;
           }
-          
+
           // 创建新的临时消息对象，避免直接修改引用
           const newTempMessage: Message = {
             role: 'assistant' as MessageRole,
@@ -493,14 +497,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             timestamp: Date.now(),
             parameters: []
           };
-          
+
           // 节流更新：检查距离上次更新的时间是否超过了设定的间隔
           const now = Date.now();
           const { lastUpdateTime } = get();
-          
+
           if (now - lastUpdateTime >= UPDATE_INTERVAL) {
             // 如果超过了更新间隔，则更新UI
-            set({ 
+            set({
               streamingContent: assistantContent,
               streamingReasoningContent: reasoningContent,
               tempMessage: newTempMessage,
@@ -510,14 +514,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           } else if (!pendingUpdate) {
             // 如果未超过更新间隔且没有待更新的内容，设置一个定时器
             pendingUpdate = true;
-            
+
             setTimeout(() => {
               // 获取最新的状态
               const currentState = get();
               // 只有在仍在流式传输且有内容更新时才更新
-              if (currentState.isLoading && (currentState.streamingContent !== assistantContent || 
-                  currentState.streamingReasoningContent !== reasoningContent)) {
-                set({ 
+              if (currentState.isLoading && (currentState.streamingContent !== assistantContent ||
+                currentState.streamingReasoningContent !== reasoningContent)) {
+                set({
                   streamingContent: assistantContent,
                   streamingReasoningContent: reasoningContent,
                   tempMessage: newTempMessage,
@@ -537,8 +541,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         timestamp: Date.now(),
         parameters: []
       };
-      
-      set({ 
+
+      set({
         streamingContent: assistantContent,
         streamingReasoningContent: reasoningContent,
         tempMessage: finalTempMessage,

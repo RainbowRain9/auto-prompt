@@ -2,6 +2,7 @@ using Console.Core;
 using Console.Provider.PostgreSQL.Extensions;
 using Console.Provider.Sqlite.Extensions;
 using Console.Service.Infrastructure;
+using Console.Service.MCP;
 using Console.Service.Migrate;
 using Console.Service.Options;
 using Console.Service.Services;
@@ -14,7 +15,8 @@ AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
 
 var logger = new LoggerConfiguration()
     .MinimumLevel.Information()
-    .WriteTo.Console(outputTemplate: "TokenAI-工作台日志({Level:u3}) => {Timestamp:HH:mm:ss} {Message:lj}{NewLine}{Exception}")
+    .WriteTo.Console(
+        outputTemplate: "TokenAI-工作台日志({Level:u3}) => {Timestamp:HH:mm:ss} {Message:lj}{NewLine}{Exception}")
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +25,7 @@ await InitializeConsole.Initialize();
 
 ConsoleOptions.Initialize(builder.Configuration);
 
+builder.Services.AddMcp();
 builder.Services.AddSerilog(logger);
 builder.Services.AddOpenApi();
 builder.Services.AddFastApis();
@@ -101,5 +104,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 
 app.MapOpenAiProxy();
+
+app.MapMcp("/mcp");
 
 await app.RunAsync();

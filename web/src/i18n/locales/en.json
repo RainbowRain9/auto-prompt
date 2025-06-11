@@ -410,5 +410,119 @@
     "serverError": "Server error, please try again later",
     "invalidInput": "Invalid input",
     "operationFailed": "Operation failed, please try again"
+  },
+  "imageGeneration": {
+    "title": "AI Image Generation Tool",
+    "generateMode": "Text to Image",
+    "editMode": "Image Editing",
+    "generateModeTag": "Generate Mode",
+    "editModeTag": "Edit Mode",
+    "description": {
+      "generate": "Generate images from text descriptions with support for multiple models and parameter adjustments",
+      "edit": "Edit uploaded images with mask drawing to specify editing areas"
+    },
+    "upload": {
+      "title": "Upload Image",
+      "switchToGenerate": "Switch to Text Generation",
+      "uploadText": "Upload image to enable edit mode",
+      "supportedFormats": "Supports PNG, JPEG, WebP formats"
+    },
+    "mask": {
+      "title": "Mask Editing Tools",
+      "drawMode": "Draw",
+      "eraseMode": "Erase",
+      "brushSize": "Brush",
+      "clear": "Clear",
+      "show": "Show",
+      "hide": "Hide",
+      "description": "Draw red areas on the image to mark parts that need editing. AI will regenerate the marked areas based on your description.",
+      "warning": "⚠️ Note: The gpt-image-1 model uses \"soft mask\" technology and may re-render the entire image for consistency. It's recommended to specify \"only edit the masked area, keep other parts unchanged\" in the prompt."
+    },
+    "prompt": {
+      "generateLabel": "Image Description",
+      "editLabel": "Edit Description",
+      "generatePlaceholder": "Describe the image you want to generate in detail, for example: A cute orange kitten sitting on a windowsill, with sunlight streaming through the window onto it, with a blurred garden background",
+      "editPlaceholder": "Describe what you want to generate in the masked area. Suggested format: \"Only edit the masked area, replace it with [specific content], keep other parts of the image completely unchanged\"",
+      "optimize": "Optimize",
+      "optimizing": "Optimizing"
+    },
+    "model": {
+      "label": "Model",
+      "placeholder": "Select image generation model"
+    },
+    "parameters": {
+      "size": "Size",
+      "quantity": "Quantity",
+      "quality": "Quality",
+      "style": "Style",
+      "standard": "Standard",
+      "hd": "HD",
+      "vivid": "Vivid",
+      "natural": "Natural"
+    },
+    "buttons": {
+      "generateImage": "Generate Image",
+      "editImage": "Edit Image",
+      "optimizePrompt": "Optimize Prompt",
+      "useForEdit": "Use for Edit",
+      "favorite": "Favorite",
+      "unfavorite": "Unfavorite",
+      "download": "Download",
+      "delete": "Delete",
+      "refresh": "Refresh"
+    },
+    "results": {
+      "title": "Generation Results",
+      "historyLoaded": "History Loaded",
+      "loadingHistory": "Loading history...",
+      "generating": "Generating image...",
+      "editing": "Editing image...",
+      "preview": "Preview",
+      "generateTag": "Generate",
+      "editTag": "Edit",
+      "historyTag": "History",
+      "noImages": "No generated images yet",
+      "noImagesGenerate": "Enter description text to start generating images",
+      "noImagesEdit": "Upload image and describe editing requirements"
+    },
+    "optimize": {
+      "modalTitle": "Optimize Prompt",
+      "originalPrompt": "Original Prompt:",
+      "optimizedResult": "Optimized Result:",
+      "requirement": "Optimization Requirements",
+      "requirementOptional": "(Optional)",
+      "requirementPlaceholder": "Describe how you want to optimize this prompt, for example: make the description more vivid and detailed, add lighting and color descriptions...",
+      "currentPrompt": "Current Prompt:",
+      "noInput": "(No input)",
+      "startOptimize": "Start Optimization",
+      "optimizing": "Optimizing...",
+      "insertResult": "Insert Optimized Result",
+      "realTimeResult": "Real-time Generation Result:",
+      "checkResult": "Check if the optimization result meets your requirements. Click \"Insert Optimized Result\" to replace the current prompt."
+    },
+    "messages": {
+      "configRequired": "Please configure API settings or login first",
+      "promptRequired": "Please enter description",
+      "imageRequired": "Please upload an image to edit first",
+      "generateSuccess": "Successfully generated {{count}} images",
+      "editSuccess": "Successfully edited and generated {{count}} images",
+      "generateFailed": "Operation failed",
+      "imageLoaded": "Image loaded to edit mode, please draw mask to specify editing area",
+      "loadImageFailed": "Failed to load image",
+      "favoriteSuccess": "Favorited",
+      "unfavoriteSuccess": "Unfavorited",
+      "operationFailed": "Operation failed",
+      "imageDeleted": "Image deleted",
+      "optimizePromptFirst": "Please enter prompt first",
+      "optimizeComplete": "Prompt optimization completed",
+      "optimizeEmpty": "Optimization result is empty, please check input",
+      "optimizeFailed": "Optimization failed",
+      "optimizeInserted": "Optimized prompt inserted",
+      "optimizeCanceled": "Optimization canceled",
+      "historyLoadSuccess": "Successfully loaded {{count}} historical images",
+      "historyLoadFailed": "Failed to load historical images",
+      "saveCloudFailed": "Some images could not be saved to cloud due to large file size, but can still be used normally",
+      "modelsLoadFailed": "Failed to fetch model list, using default models"
+    }
   }
 } 

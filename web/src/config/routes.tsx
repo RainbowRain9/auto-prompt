@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Home, Dashboard, Prompts, Workbench, ImageGeneration } from '../pages';
+import ApiKeysPage from '../pages/ApiKeys';
 
 export interface RouteConfig {
   path: string;
@@ -47,6 +48,15 @@ export const mainRoutes: RouteConfig[] = [
     key: 'image',
     title: '图片生成',
     icon: 'PictureOutlined',
+    showInSidebar: true,
+    requireAuth: false,
+  },
+  {
+    path: '/apikeys',
+    element: <ApiKeysPage />,
+    key: 'apikeys',
+    title: 'API Key 管理',
+    icon: 'KeyOutlined',
     showInSidebar: true,
     requireAuth: false,
   },
