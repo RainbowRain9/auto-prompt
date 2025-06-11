@@ -2,6 +2,7 @@ using Console.Core;
 using Console.Provider.PostgreSQL.Extensions;
 using Console.Provider.Sqlite.Extensions;
 using Console.Service.Infrastructure;
+using Console.Service.Migrate;
 using Console.Service.Options;
 using Console.Service.Services;
 using Scalar.AspNetCore;
@@ -10,12 +11,15 @@ using Serilog;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
 
+
 var logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.Console()
+    .MinimumLevel.Information()
+    .WriteTo.Console(outputTemplate: "TokenAI-工作台日志({Level:u3}) => {Timestamp:HH:mm:ss} {Message:lj}{NewLine}{Exception}")
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+await InitializeConsole.Initialize();
 
 ConsoleOptions.Initialize(builder.Configuration);
 
@@ -25,6 +29,7 @@ builder.Services.AddFastApis();
 builder.Services.AddResponseCompression();
 builder.Services.AddScoped<UserContext>();
 builder.Services.AddSingleton<GlobalExceptionMiddleware>();
+builder.Services.AddHostedService<MigrateDataBackgroundService>();
 builder.Services.AddHttpContextAccessor();
 
 if (builder.Configuration.GetConnectionString("Type")?.Equals("postgresql", StringComparison.OrdinalIgnoreCase) == true)

@@ -8,7 +8,7 @@ public class MigrateDataBackgroundService(IServiceProvider service, ILogger<Migr
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var scope = service.CreateAsyncScope();
+        await using var scope = service.CreateAsyncScope();
 
         var dbContext = scope.ServiceProvider.GetRequiredService<IDbContext>();
 
@@ -38,5 +38,8 @@ public class MigrateDataBackgroundService(IServiceProvider service, ILogger<Migr
         {
             logger.LogInformation("默认用户已存在，跳过创建。用户名：{Username}", defaultUsername);
         }
+
+
+        logger.LogInformation("TokenAI Console 服务已启动!");
     }
 }

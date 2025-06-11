@@ -11,6 +11,9 @@ public static class SqliteExtensions
         services.AddDbContext<IDbContext, SqliteDbContext>(options =>
         {
             options.UseSqlite(connectionString);
+            
+            // 不输出日志
+            options.EnableSensitiveDataLogging(false);
         });
         
         return services;

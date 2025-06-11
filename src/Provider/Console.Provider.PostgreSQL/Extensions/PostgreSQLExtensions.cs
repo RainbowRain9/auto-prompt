@@ -11,6 +11,8 @@ public static class PostgreSQLExtensions
         services.AddDbContext<IDbContext, PostgreSQLDbContext>(options =>
         {
             options.UseNpgsql(connectionString);
+            // 不输出日志
+            options.EnableSensitiveDataLogging(false);
         });
         
         return services;
