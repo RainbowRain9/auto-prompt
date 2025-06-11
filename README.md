@@ -243,7 +243,7 @@ services:
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
-      - ./data:/data
+      - ./data:/app/data
     build:
       context: .
       dockerfile: src/Console.Service/Dockerfile
@@ -300,7 +300,7 @@ services:
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
-      - ./data:/data
+      - ./data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -388,7 +388,7 @@ services:
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
-      - ./data:/data
+      - ./data:/app/data
     depends_on:
       - ollama
     restart: unless-stopped
