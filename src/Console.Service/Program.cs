@@ -34,6 +34,20 @@ if (builder.Configuration.GetConnectionString("Type")?.Equals("postgresql", Stri
 }
 else
 {
+    var str = builder.Configuration.GetConnectionString("Default");
+
+    // 获取str的sqlite的所在文件地址
+    var sqliteFilePath = str?.Replace("Data Source=", string.Empty).Trim();
+    // 后面有可能会有其他参数，所以需要去掉前面的Data Source=部分
+    sqliteFilePath = sqliteFilePath.Replace(":", string.Empty).Trim();
+    var info = new FileInfo(sqliteFilePath);
+
+    if (info.Directory?.Exists == false)
+    {
+        info.Directory.Create();
+    }
+
+
     // 注册SQLite数据库上下文
     builder.Services.AddSqlite(builder.Configuration.GetConnectionString("Default"));
 }
