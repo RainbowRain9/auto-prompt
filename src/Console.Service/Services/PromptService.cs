@@ -84,7 +84,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             throw new UnauthorizedAccessException("未授权访问，请提供有效的API令牌。");
         }
 
-        if (token.StartsWith("sk-"))
+        if (token.StartsWith("tk-"))
         {
             // 如果是sk 则是API Key
             var apiKey = await dbContext.ApiKeys
@@ -180,6 +180,14 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
             await dbContext.PromptHistory.AddAsync(entity);
 
+            if (token.StartsWith("tk-"))
+            {
+                await dbContext.ApiKeys
+                    .Where(x => x.Key == token)
+                    .ExecuteUpdateAsync(x => x.SetProperty(a => a.UsageCount, a => a.UsageCount + 1)
+                        .SetProperty(a => a.LastUsedTime, a => DateTime.Now));
+            }
+            
             await dbContext.SaveChangesAsync();
         }
     }
@@ -197,7 +205,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             throw new UnauthorizedAccessException("未授权访问，请提供有效的API令牌。");
         }
 
-        if (token.StartsWith("sk-"))
+        if (token.StartsWith("tk-"))
         {
             // 如果是sk 则是API Key
             var apiKey = await dbContext.ApiKeys
@@ -285,7 +293,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
         await dbContext.PromptHistory.AddAsync(entity);
 
-        if (token.StartsWith("sk-"))
+        if (token.StartsWith("tk-"))
         {
             await dbContext.ApiKeys
                 .Where(x => x.Key == token)
@@ -409,6 +417,13 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
         await dbContext.PromptHistory.AddAsync(entity);
 
+        if (token.StartsWith("tk-"))
+        {
+            await dbContext.ApiKeys
+                .Where(x => x.Key == token)
+                .ExecuteUpdateAsync(x => x.SetProperty(a => a.UsageCount, a => a.UsageCount + 1)
+                    .SetProperty(a => a.LastUsedTime, a => DateTime.Now));
+        }
         await dbContext.SaveChangesAsync();
     }
 
@@ -424,7 +439,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             return;
         }
 
-        if (token.StartsWith("sk-"))
+        if (token.StartsWith("tk-"))
         {
             // 如果是sk 则是API Key
             var apiKey = await dbContext.ApiKeys
@@ -520,7 +535,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
             await dbContext.PromptHistory.AddAsync(entity);
 
-            if (token.StartsWith("sk-"))
+            if (token.StartsWith("tk-"))
             {
                 await dbContext.ApiKeys
                     .Where(x => x.Key == token)

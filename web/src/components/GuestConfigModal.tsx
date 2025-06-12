@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Button, message, Space, Typography, Alert } from 'antd';
+import { Modal, Input, Button, message, Space, Typography, Alert } from 'antd';
 import { KeyOutlined, InfoCircleOutlined, LoginOutlined } from '@ant-design/icons';
 import { useAuthStore, getLoginUrl } from '../stores/authStore';
 import type { LLMConfig } from '../utils/llmClient';
@@ -21,38 +21,61 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
   title,
   description
 }) => {
-  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [apiKeyValue, setApiKeyValue] = useState('');
+  const [apiKeyError, setApiKeyError] = useState('');
   const { apiKey, loginType, setApiConfig, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     if (open) {
       // 打开弹窗时，加载已保存的配置
-      if (apiKey ) {
-        form.setFieldsValue({ apiKey });
+      if (apiKey) {
+        setApiKeyValue(apiKey);
       } else {
         // 设置默认值
-        form.setFieldsValue({
-          apiKey: ''
-        });
+        setApiKeyValue('');
       }
+      // 清除错误状态
+      setApiKeyError('');
     }
-  }, [open, form, apiKey]);
+  }, [open, apiKey]);
+
+  const validateApiKey = (value: string): boolean => {
+    if (!value || value.trim() === '') {
+      setApiKeyError('请输入API密钥');
+      return false;
+    }
+    if (value.trim().length < 10) {
+      setApiKeyError('API密钥长度不能少于10个字符');
+      return false;
+    }
+    setApiKeyError('');
+    return true;
+  };
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setApiKeyValue(value);
+    // 清除之前的错误信息
+    if (apiKeyError) {
+      setApiKeyError('');
+    }
+  };
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      const values = await form.validateFields();
       
-      const config: LLMConfig = {
-        apiKey: values.apiKey.trim(),
-      };
-
-      // 验证配置是否有效
-      if (!config.apiKey) {
-        message.error('请填写完整的API配置信息');
+      const trimmedApiKey = apiKeyValue.trim();
+      
+      // 验证输入
+      if (!validateApiKey(trimmedApiKey)) {
         return;
       }
+
+      const config: LLMConfig = {
+        apiKey: trimmedApiKey,
+      };
 
       // 保存到 authStore
       setApiConfig(config.apiKey);
@@ -67,7 +90,8 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
   };
 
   const handleCancel = () => {
-    form.resetFields();
+    setApiKeyValue('');
+    setApiKeyError('');
     onCancel();
   };
 
@@ -111,6 +135,7 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
       <Modal
         title={getModalTitle()}
         open={open}
+        closable={false}
         onCancel={handleCancel}
         width={500}
         footer={[
@@ -168,9 +193,6 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
       onCancel={handleCancel}
       width={600}
       footer={[
-        <Button key="cancel" onClick={handleCancel}>
-          取消
-        </Button>,
         <Button key="submit" type="primary" loading={loading} onClick={handleSubmit}>
           保存配置
         </Button>,
@@ -184,39 +206,38 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
           icon={<InfoCircleOutlined />}
           showIcon
         />
-
-        <Form
-          form={form}
-          layout="vertical"
-          requiredMark={false}
-        >
-          <Form.Item
-            name="apiKey"
-            label={
-              <Space>
-                <KeyOutlined />
-                <Text strong>API 密钥</Text>
-              </Space>
-            }
-            rules={[
-              { required: true, message: '请输入API密钥' },
-              { min: 10, message: 'API密钥长度不能少于10个字符' }
-            ]}
-            extra={
-              <Text type="secondary">
-                您的Token AI API密钥，以 sk- 开头。
-                <Link href="https://api.token-ai.cn/token" target="_blank">
-                  获取API密钥
-                </Link>
-              </Text>
-            }
-          >
-            <Input.Password
-              placeholder="sk-..."
-              prefix={<KeyOutlined />}
-            />
-          </Form.Item>
-        </Form>
+        
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Space>
+              <KeyOutlined />
+              <Text strong>API 密钥</Text>
+            </Space>
+          </div>
+          
+          <Input.Password
+            value={apiKeyValue}
+            onChange={handleApiKeyChange}
+            placeholder="sk-..."
+            prefix={<KeyOutlined />}
+            status={apiKeyError ? 'error' : ''}
+          />
+          
+          {apiKeyError && (
+            <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+              {apiKeyError}
+            </div>
+          )}
+          
+          <div style={{ marginTop: 8 }}>
+            <Text type="secondary">
+              您的Token AI API密钥，以 sk- 开头。
+              <Link href="https://api.token-ai.cn/token" target="_blank">
+                获取API密钥
+              </Link>
+            </Text>
+          </div>
+        </div>
 
         <Alert
           message="隐私保护"

@@ -34,7 +34,7 @@ public class PromptTool(IDbContext dbContext)
             throw new InvalidOperationException("Token is required for this operation.");
         }
 
-        if (token.StartsWith("sk-"))
+        if (token.StartsWith("tk-"))
         {
             // 如果是sk 则是API Key
             var apiKey = await dbContext.ApiKeys
@@ -107,7 +107,7 @@ public class PromptTool(IDbContext dbContext)
 
         await dbContext.PromptHistory.AddAsync(entity);
 
-        if (token.StartsWith("sk-"))
+        if (token.StartsWith("tk-"))
         {
             await dbContext.ApiKeys
                 .Where(x => x.Key == token)
@@ -145,7 +145,7 @@ public class PromptTool(IDbContext dbContext)
             throw new InvalidOperationException("Token is required for this operation.");
         }
 
-        if (token.StartsWith("sk-"))
+        if (token.StartsWith("tk-"))
         {
             // 如果是sk 则是API Key
             var apiKey = await dbContext.ApiKeys
@@ -234,7 +234,7 @@ public class PromptTool(IDbContext dbContext)
 
             await dbContext.PromptHistory.AddAsync(entity);
 
-            if (token.StartsWith("sk-"))
+            if (token.StartsWith("tk-"))
             {
                 await dbContext.ApiKeys
                     .Where(x => x.Key == token)

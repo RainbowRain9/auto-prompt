@@ -48,7 +48,7 @@ public class ApiKeyService(IDbContext dbContext, JwtService jwtService) : FastAp
         using var rng = RandomNumberGenerator.Create();
         var bytes = new byte[32];
         rng.GetBytes(bytes);
-        return $"sk-{Convert.ToBase64String(bytes).Replace("+", "").Replace("/", "").Replace("=", "")}";
+        return $"tk-{Convert.ToBase64String(bytes).Replace("+", "").Replace("/", "").Replace("=", "")}";
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ public class ApiKeyService(IDbContext dbContext, JwtService jwtService) : FastAp
         {
             Id = entity.Id,
             Name = entity.Name,
-            Key = MaskApiKey(entity.Key),
+            Key = entity.Key,
             CreatedTime = entity.CreatedTime,
             LastUsedTime = entity.LastUsedTime,
             IsEnabled = entity.IsEnabled,
