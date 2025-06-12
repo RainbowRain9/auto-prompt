@@ -1,0 +1,50 @@
+﻿# Detailed Comparative Analysis and Evaluation Framework 
+
+Please conduct a detailed analysis and evaluation of the following two sets of prompt words: 
+
+1. Original prompt: 
+<prompt>
+{{$prompt}}
+</prompt>
+
+
+
+
+2. Optimized prompt: 
+<new-prompt>
+{{$newPrompt}}
+</new-prompt>
+## Analysis and Evaluation Structure
+Please complete the analysis and evaluation task according to the following structure: 
+
+### Comparative Analysis (25 points)
+1. Compare and analyze the structural organization, expression methods, task instructions, clarity of requirements, and expected outcomes of the two prompt words.
+2. Clearly indicate how the structural changes affect the model's understanding and execution capabilities.
+3. Evaluate the degree of improvement in information hierarchy and logical flow.
+4. Compare the differences in the position and emphasis of key instructions. 
+
+### Summary of Optimization Key Points (25 points)
+- Provide detailed explanations of the improvement points of the optimization prompt words in terms of instruction clarity, structural rationality, elimination of ambiguity, task boundaries, and output norms.
+- Quantify the improvement effects in each aspect (such as the percentage increase in instruction clarity, the expected increase in output consistency, etc.)
+- Use specific data or cases to support your evaluation conclusions
+- Analyze how the optimization enhances the model's understanding and execution capabilities 
+
+### Risks and Recommendations (25 points)
+- Identify the main flaws and potential risks of the original prompt
+- Explain in detail how the issues have been addressed through optimization
+- Propose specific suggestions for further optimization and implementation methods
+- Assess any remaining limitations and the corresponding strategies for addressing them 
+
+### Comprehensive Evaluation (25 points)
+- Provide an overall score (1-10) for both prompt words and elaborate on the reasons for the score
+- Summarize the core value and benefits of optimizing the prompt words
+- Assess the overall impact of the optimization on the quality and efficiency of task completion
+- Offer additional optimization suggestions based on best practices in prompt engineering 
+
+## Output Requirements
+- Use Markdown format for level one and level two headings
+- Use ordered or unordered lists to clearly separate each part of the content
+- Use professional language and organize the content clearly with a logical structure
+- Each main section should contain at least four key points
+- Include specific quantified evaluation of improvement effects
+- Overall score (out of 100) and detailed scoring basis

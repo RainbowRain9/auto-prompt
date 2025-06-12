@@ -1,7 +1,7 @@
 ﻿{
   "schema": 1,
   "type": "completion",
-  "description": "提示词优化",
+  "description": "Image提示词优化",
   "execution_settings": {
     "default": {
       "max_tokens": 63000,

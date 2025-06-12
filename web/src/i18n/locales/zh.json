@@ -137,7 +137,18 @@
     "hideDeepReasoning": "隐藏深度推理",
     "showDeepReasoning": "显示深度推理",
     "copied": "已复制到剪贴板",
-    "usePrompt": "使用提示词"
+    "usePrompt": "使用提示词",
+    "evaluatingTitle": "正在评估提示词...",
+    "evaluatingDescription": "AI正在分析提示词的质量和效果，请稍候...",
+    "evaluatingProgress": "评估进度：",
+    "evaluating": "正在评估中...",
+    "threePanelDescription": "以下展示了完整的优化结果对比和详细评估：",
+    "originalPrompt": "原始提示词",
+    "evaluationResult": "提示词评估",
+    "noEvaluation": "暂无评估结果",
+    "waitingForEvaluation": "等待评估...",
+    "reasoningInProgress": "推理进行中...",
+    "cannotCloseWhileGenerating": "生成过程中不能关闭窗口"
   },
   "prompts": {
     "title": "提示词管理",

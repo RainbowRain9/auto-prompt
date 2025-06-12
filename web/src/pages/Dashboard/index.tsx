@@ -11,7 +11,8 @@ import {
   Pagination,
   Select,
   Space,
-  Avatar
+  Avatar,
+  Segmented
 } from 'antd';
 import {
   SearchOutlined,
@@ -31,7 +32,9 @@ import {
   StarFilled,
   MessageOutlined,
   SendOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  AppstoreOutlined,
+  UnorderedListOutlined
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
@@ -114,11 +117,12 @@ const ContentArea = styled.div`
 `;
 
 const LeftPanel = styled.div<{ showDetail?: boolean }>`
-  flex: ${props => props.showDetail ? '1' : '1'};
+  flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   transition: all 0.3s ease;
+  min-width: 0;
 `;
 
 const LeftPanelContent = styled.div`
@@ -156,6 +160,187 @@ const ListContainer = styled.div`
   border: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#e8e8e8'};
   height: calc(100vh - 280px);
   max-height: calc(100vh - 280px);
+`;
+
+const CardGrid = styled.div<{ showDetail?: boolean }>`
+  display: grid;
+  grid-template-columns: ${props => props.showDetail 
+    ? 'repeat(auto-fill, minmax(320px, 1fr))' 
+    : 'repeat(auto-fill, minmax(400px, 1fr))'
+  };
+  gap: 20px;
+  padding: 20px;
+  overflow-y: auto;
+  height: calc(100vh - 280px);
+  max-height: calc(100vh - 280px);
+  background: ${props => props.theme === 'dark' ? '#0a0a0a' : '#f5f5f5'};
+  border-radius: 12px;
+
+  @media (max-width: 1400px) {
+    grid-template-columns: ${props => props.showDetail 
+      ? 'repeat(auto-fill, minmax(280px, 1fr))' 
+      : 'repeat(auto-fill, minmax(350px, 1fr))'
+    };
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+`;
+
+const PromptCard = styled.div<{ selected?: boolean }>`
+  background: ${props => props.theme === 'dark' ? '#1a1a1a' : '#ffffff'};
+  border: 1px solid ${props => props.selected 
+    ? '#1677ff' 
+    : (props.theme === 'dark' ? '#424242' : '#e8e8e8')
+  };
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: ${props => props.selected 
+    ? '0 4px 12px rgba(22, 119, 255, 0.15)' 
+    : '0 2px 8px rgba(0, 0, 0, 0.06)'
+  };
+  height: fit-content;
+  max-height: 520px;
+  display: flex;
+  flex-direction: column;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border-color: ${props => props.theme === 'dark' ? '#5a5a5a' : '#d0d0d0'};
+  }
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+`;
+
+const CardTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  margin-right: 12px;
+  
+  .title-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+`;
+
+const CardActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  
+  .action-btn {
+    padding: 6px;
+    border: none;
+    background: transparent;
+    color: ${props => props.theme === 'dark' ? '#ffffff73' : '#00000073'};
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
+      background: ${props => props.theme === 'dark' ? '#424242' : '#f0f0f0'};
+    }
+  }
+`;
+
+const CardMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: ${props => props.theme === 'dark' ? '#ffffff73' : '#00000073'};
+  font-size: 12px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+`;
+
+const CardDescription = styled.div`
+  color: ${props => props.theme === 'dark' ? '#ffffff73' : '#00000073'};
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  flex-shrink: 0;
+`;
+
+const CardContent = styled.div`
+  background: ${props => props.theme === 'dark' ? '#262626' : '#f8f9fa'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#424242' : '#e8e8e8'};
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: ${props => props.theme === 'dark' ? '#ffffffd9' : '#000000d9'};
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 16px;
+  max-height: 220px;
+  overflow-y: auto;
+  
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: ${props => props.theme === 'dark' ? '#1a1a1a' : '#f0f0f0'};
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${props => props.theme === 'dark' ? '#424242' : '#d0d0d0'};
+    border-radius: 3px;
+    
+    &:hover {
+      background: ${props => props.theme === 'dark' ? '#5a5a5a' : '#b0b0b0'};
+    }
+  }
+`;
+
+const CardFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  
+  .tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+    margin-right: 12px;
+  }
+  
+  .stats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: ${props => props.theme === 'dark' ? '#ffffff73' : '#00000073'};
+    font-size: 12px;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
 `;
 
 const PromptListItem = styled.div<{ selected?: boolean }>`
@@ -484,6 +669,8 @@ const CommentsSection = styled.div`
   }
 `;
 
+type ViewMode = 'list' | 'card';
+
 const DashboardPage: React.FC = () => {
   const { theme } = useThemeStore();
   const { t } = useTranslation();
@@ -499,6 +686,7 @@ const DashboardPage: React.FC = () => {
   });
   const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsPagination, setCommentsPagination] = useState({
@@ -809,6 +997,92 @@ const DashboardPage: React.FC = () => {
     loadSharedPrompts(pagination.current, searchText, sortBy, sortOrder);
   };
 
+  // 渲染卡片项
+  const renderCardItem = (prompt: PromptTemplate) => (
+    <PromptCard
+      key={prompt.id}
+      theme={theme}
+      selected={selectedPrompt?.id === prompt.id}
+      onClick={() => handleSelectPrompt(prompt)}
+    >
+      <CardHeader>
+        <CardTitle theme={theme}>
+          <span className="title-text">{prompt.title}</span>
+          {isHotPrompt(prompt) && (
+            <HotBadge>
+              <FireOutlined />
+              {t('promptSquare.hotBadge')}
+            </HotBadge>
+          )}
+        </CardTitle>
+        <CardActions theme={theme}>
+          <Tooltip title={t('promptSquare.actions.copy')}>
+            <Button
+              type="text"
+              size="small"
+              className="action-btn"
+              icon={<CopyOutlined />}
+              onClick={(e) => handleCopyPrompt(prompt, e)}
+            />
+          </Tooltip>
+          <Tooltip title={prompt.isFavoritedByCurrentUser ? t('promptSquare.actions.unfavorite') : t('promptSquare.actions.favorite')}>
+            <Button
+              type="text"
+              size="small"
+              className="action-btn"
+              icon={prompt.isFavoritedByCurrentUser ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+              onClick={(e) => handleToggleFavorite(prompt, e)}
+            />
+          </Tooltip>
+          <Tooltip title={prompt.isLikedByCurrentUser ? t('promptSquare.actions.unlike') : t('promptSquare.actions.like')}>
+            <Button
+              type="text"
+              size="small"
+              className="action-btn"
+              icon={prompt.isLikedByCurrentUser ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+              onClick={(e) => handleToggleLike(prompt, e)}
+            />
+          </Tooltip>
+        </CardActions>
+      </CardHeader>
+      
+      <CardMeta theme={theme}>
+        <span><UserOutlined /> {prompt.creatorName || t('promptDetail.anonymousUser')}</span>
+        <span><CalendarOutlined /> {new Date(prompt.shareTime || prompt.createdTime).toLocaleDateString()}</span>
+      </CardMeta>
+      
+      {prompt.description && (
+        <CardDescription theme={theme}>
+          {prompt.description}
+        </CardDescription>
+      )}
+      
+      <CardContent theme={theme}>
+        {prompt.content}
+      </CardContent>
+      
+      <CardFooter theme={theme}>
+        <div className="tags">
+          {prompt.tags.slice(0, 4).map(tag => (
+            <Tag key={tag} color="blue" style={{ margin: '2px 0' }}>
+              {tag}
+            </Tag>
+          ))}
+          {prompt.tags.length > 4 && (
+            <Tag color="default" style={{ margin: '2px 0' }}>
+              {t('promptSquare.tags.more', { count: prompt.tags.length - 4 })}
+            </Tag>
+          )}
+        </div>
+        <div className="stats">
+          <span><EyeOutlined /> {prompt.viewCount}</span>
+          <span><HeartOutlined /> {prompt.likeCount}</span>
+          <span><MessageOutlined /> {prompt.commentCount}</span>
+        </div>
+      </CardFooter>
+    </PromptCard>
+  );
+
   // 渲染列表项
   const renderListItem = (prompt: PromptTemplate) => (
     <PromptListItem
@@ -868,8 +1142,8 @@ const DashboardPage: React.FC = () => {
           <div className="description">{prompt.description}</div>
         )}
         <div className="content-preview">
-          {prompt.content.length > 150 
-            ? `${prompt.content.substring(0, 150)}...` 
+          {prompt.content.length > 200 
+            ? `${prompt.content.substring(0, 200)}...` 
             : prompt.content
           }
         </div>
@@ -922,6 +1196,29 @@ const DashboardPage: React.FC = () => {
         </div>
         
         <div className="sort-section">
+          <Segmented
+            value={viewMode}
+            onChange={setViewMode}
+            options={[
+              { 
+                label: (
+                  <Tooltip title={t('promptSquare.view.list')}>
+                    <UnorderedListOutlined />
+                  </Tooltip>
+                ), 
+                value: 'list' 
+              },
+              { 
+                label: (
+                  <Tooltip title={t('promptSquare.view.card')}>
+                    <AppstoreOutlined />
+                  </Tooltip>
+                ), 
+                value: 'card' 
+              }
+            ]}
+          />
+          
           <Text type="secondary">{t('promptSquare.sortBy')}</Text>
           <Select
             value={sortBy}
@@ -965,9 +1262,15 @@ const DashboardPage: React.FC = () => {
               ) : (
                 <>
                   <SpinContainer>
-                    <ListContainer theme={theme}>
-                      {prompts.map(renderListItem)}
-                    </ListContainer>
+                    {viewMode === 'card' ? (
+                      <CardGrid theme={theme} showDetail={showDetail}>
+                        {prompts.map(renderCardItem)}
+                      </CardGrid>
+                    ) : (
+                      <ListContainer theme={theme}>
+                        {prompts.map(renderListItem)}
+                      </ListContainer>
+                    )}
                   </SpinContainer>
 
                   {pagination.total > pagination.pageSize && (

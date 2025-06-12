@@ -257,7 +257,7 @@ export async function* generateFunctionCallingPrompt(
  * /v1/prompt/generateprompttemplateparameters
  * 生成提示词模板参数（标题、描述、标签）
  */
-export const GeneratePromptTemplateParameters = async (prompt: string): Promise<PromptTemplateParameterDto> => {
+export const GeneratePromptTemplateParameters = async (prompt: string, language: string = 'zh-CN'): Promise<PromptTemplateParameterDto> => {
     const llmConfig = getCurrentLLMConfig();
     if (!llmConfig) {
         throw new Error('没有可用的LLM配置');
@@ -274,7 +274,8 @@ export const GeneratePromptTemplateParameters = async (prompt: string): Promise<
             'api-key': llmConfig.apiKey,
         },
         body: JSON.stringify({
-            prompt: prompt
+            prompt: prompt,
+            language: language
         })
     });
 

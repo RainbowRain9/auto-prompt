@@ -1,7 +1,7 @@
 ﻿{
   "schema": 1,
   "type": "completion",
-  "description": "Function提示词优化",
+  "description": "提示词评估",
   "execution_settings": {
     "default": {
       "max_tokens": 63000,
@@ -10,13 +10,13 @@
   },
   "input_variables": [
     {
-      "name": "function_call",
-      "description": "需要优化的提示词",
+      "name": "prompt",
+      "description": "原始提示词",
       "required": true
     },
     {
-      "name": "requirement",
-      "description": "用户的需求",
+      "name": "newPrompt",
+      "description": "优化过的提示词",
       "required": false
     }
   ]

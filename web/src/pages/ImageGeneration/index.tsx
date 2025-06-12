@@ -108,7 +108,7 @@ interface GeneratedImage {
 }
 
 const ImageGeneration: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuthStore();
 
   // 使用模型 store
@@ -591,7 +591,8 @@ const ImageGeneration: React.FC = () => {
     try {
       let optimizedPrompt = '';
       const data = {
-        Prompt: promptValue + (optimizeRequirement.trim() ? `\n\n优化要求：${optimizeRequirement}` : '')
+        Prompt: promptValue + (optimizeRequirement.trim() ? `\n\n优化要求：${optimizeRequirement}` : ''),
+        language: i18n.language || 'zh-CN'
       };
 
       for await (const event of generateImagePrompt(data)) {

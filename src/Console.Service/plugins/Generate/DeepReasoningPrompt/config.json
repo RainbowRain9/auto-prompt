@@ -1,7 +1,7 @@
 ﻿{
   "schema": 1,
   "type": "completion",
-  "description": "提示词优化",
+  "description": "深入推理提示词生成",
   "execution_settings": {
     "default": {
       "max_tokens": 63000,

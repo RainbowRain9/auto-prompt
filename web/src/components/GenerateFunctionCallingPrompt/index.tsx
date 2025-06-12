@@ -25,7 +25,7 @@ export default function GenerateFunctionCallingPrompt({
     onCancel,
     onOk,
 }: GenerateFunctionCallingPromptProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { selectedModel } = useChatStore();
     const { getChatModelOptions, fetchModels } = useModelStore();
 
@@ -101,6 +101,11 @@ export default function GenerateFunctionCallingPrompt({
 
     // 处理Modal关闭
     const handleCancel = () => {
+        // 如果正在生成中，不允许关闭
+        if (step === 1) {
+            message.warning(t('generatePrompt.cannotCloseWhileGenerating'));
+            return;
+        }
         // 如果正在生成中，取消请求
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -166,7 +171,8 @@ export default function GenerateFunctionCallingPrompt({
             prompt: input.prompt.trim(),
             requirements: input.requirements.trim(),
             enableDeepReasoning: input.enableDeepReasoning,
-            chatModel: input.chatModel
+            chatModel: input.chatModel,
+            language: i18n.language || 'zh-CN'
         }
 
         if (value.prompt === '') {
@@ -189,7 +195,8 @@ export default function GenerateFunctionCallingPrompt({
                 prompt: value.prompt,
                 requirements: value.requirements,
                 enableDeepReasoning: value.enableDeepReasoning,
-                chatModel: value.chatModel
+                chatModel: value.chatModel,
+                language: value.language
             })) {
                 // 检查是否已被取消
                 if (abortControllerRef.current?.signal.aborted) {

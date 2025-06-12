@@ -137,7 +137,18 @@
     "hideDeepReasoning": "Hide Deep Reasoning",
     "showDeepReasoning": "Show Deep Reasoning",
     "copied": "Copied to clipboard",
-    "usePrompt": "Use Prompt"
+    "usePrompt": "Use Prompt",
+    "evaluatingTitle": "Evaluating Prompt...",
+    "evaluatingDescription": "AI is analyzing the quality and effectiveness of the prompt, please wait...",
+    "evaluatingProgress": "Evaluation Progress:",
+    "evaluating": "Evaluating...",
+    "threePanelDescription": "Below shows the complete optimization result comparison and detailed evaluation:",
+    "originalPrompt": "Original Prompt",
+    "evaluationResult": "Prompt Evaluation",
+    "noEvaluation": "No evaluation result available",
+    "waitingForEvaluation": "Waiting for evaluation...",
+    "reasoningInProgress": "Reasoning in progress...",
+    "cannotCloseWhileGenerating": "Cannot close window while generating"
   },
   "prompts": {
     "title": "Prompt Management",

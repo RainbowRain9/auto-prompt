@@ -54,8 +54,7 @@ else
     {
         info.Directory.Create();
     }
-
-
+    
     // 注册SQLite数据库上下文
     builder.Services.AddSqlite(builder.Configuration.GetConnectionString("Default"));
 }

@@ -1,7 +1,7 @@
 ﻿{
   "schema": 1,
   "type": "completion",
-  "description": "提示词优化",
+  "description": "生成提示词参数描述",
   "execution_settings": {
     "default": {
       "max_tokens": 63000,
@@ -11,7 +11,7 @@
   "input_variables": [
     {
       "name": "prompt",
-      "description": "需要优化的提示词",
+      "description": "需要生成描述的提示词",
       "required": true
     }
   ]

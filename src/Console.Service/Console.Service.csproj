@@ -67,6 +67,9 @@
       <None Update="plugins\Generate\OptimizeImagePrompt\skprompt.txt">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="plugins\Generate\PromptWordEvaluation\skprompt.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>
@@ -101,6 +104,9 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <Content Update="plugins\Generate\OptimizeImagePrompt\config.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Update="plugins\Generate\PromptWordEvaluation\config.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
     </ItemGroup>

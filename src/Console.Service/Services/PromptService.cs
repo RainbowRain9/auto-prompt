@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Console.Core;
+using Console.Service.AI;
 using Console.Service.Dto;
 using Console.Service.Entities;
 using Console.Service.Options;
@@ -29,10 +30,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             throw new UnauthorizedAccessException("未授权访问，请提供有效的API令牌。");
         }
 
-        var kernelBuilder = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(ConsoleOptions.GenerationChatModel, new Uri(ConsoleOptions.OpenAIEndpoint), token);
-
-        var kernel = kernelBuilder.Build();
+        var kernel = KernelFactory.CreateKernel(ConsoleOptions.DefaultChatModel, ConsoleOptions.OpenAIEndpoint, token);
 
         var plugins = await kernel.InvokeAsync(kernel.CreatePluginFromPromptDirectory(
                 Path.Combine(AppContext.BaseDirectory, "plugins", "Generate"),
@@ -112,20 +110,13 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         {
             bool isFirst = true;
 
-            var kernelBuilder = Kernel.CreateBuilder()
-                .AddOpenAIChatCompletion(input.ChatModel, new Uri(ConsoleOptions.OpenAIEndpoint),
-                    token);
-
-
-            var kernel = kernelBuilder.Build();
-
-            var plugins = kernel.CreatePluginFromPromptDirectory(
-                Path.Combine(AppContext.BaseDirectory, "plugins", "Generate"),
-                "Generate");
+            var kernel =
+                KernelFactory.CreateKernel(input.ChatModel, ConsoleOptions.OpenAIEndpoint, token, input.Language);
 
             var result = new StringBuilder();
 
-            await foreach (var item in kernel.InvokeStreamingAsync(plugins["OptimizeInitialFunctionCallingPrompt"],
+            await foreach (var item in kernel.InvokeStreamingAsync(
+                               kernel.Plugins["Generate"]["OptimizeInitialFunctionCallingPrompt"],
                                new KernelArguments(
                                    new OpenAIPromptExecutionSettings()
                                    {
@@ -165,6 +156,27 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                 }
             }
 
+            // 开始生成评估
+            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            {
+                type = "evaluate-start",
+            }, JsonSerializerOptions.Web)}\n\n");
+
+            await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
+                               ConsoleOptions.OpenAIEndpoint))
+            {
+                await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                {
+                    message = i,
+                    type = "evaluate",
+                }, JsonSerializerOptions.Web)}\n\n");
+            }
+
+            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            {
+                type = "evaluate-end",
+            }, JsonSerializerOptions.Web)}\n\n");
+
             await context.Response.WriteAsync("data: [DONE]\n\n");
             await context.Response.Body.FlushAsync();
 
@@ -187,7 +199,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                     .ExecuteUpdateAsync(x => x.SetProperty(a => a.UsageCount, a => a.UsageCount + 1)
                         .SetProperty(a => a.LastUsedTime, a => DateTime.Now));
             }
-            
+
             await dbContext.SaveChangesAsync();
         }
     }
@@ -227,17 +239,13 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
         bool isFirst = true;
 
-        var kernelBuilder = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(ConsoleOptions.DefaultImageGenerationModel, new Uri(ConsoleOptions.OpenAIEndpoint),
-                token);
-        var kernel = kernelBuilder.Build();
-        var plugins = kernel.CreatePluginFromPromptDirectory(
-            Path.Combine(AppContext.BaseDirectory, "plugins", "Generate"),
-            "Generate");
+        var kernel = KernelFactory.CreateKernel(ConsoleOptions.DefaultImageGenerationModel,
+            ConsoleOptions.OpenAIEndpoint, token);
+
 
         var result = new StringBuilder();
 
-        await foreach (var item in kernel.InvokeStreamingAsync(plugins["OptimizeImagePrompt"],
+        await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["OptimizeImagePrompt"],
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
@@ -308,14 +316,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         string token,
         string apiUrl)
     {
-        var kernelBuilder = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(input.ChatModel, new Uri(apiUrl), token);
-
-        var kernel = kernelBuilder.Build();
-
-        var plugins = kernel.CreatePluginFromPromptDirectory(
-            Path.Combine(AppContext.BaseDirectory, "plugins", "Generate"),
-            "Generate");
+        var kernel = KernelFactory.CreateKernel(input.ChatModel, apiUrl, token, input.Language);
 
         var isFirst = true;
 
@@ -331,7 +332,8 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
         var deepReasoning = new StringBuilder();
 
-        await foreach (var item in kernel.InvokeStreamingAsync(plugins["DeepReasoningFunctionCalling"],
+        await foreach (var item in kernel.InvokeStreamingAsync(
+                           kernel.Plugins["Generate"]["DeepReasoningFunctionCalling"],
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
@@ -370,7 +372,8 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
         var result = new StringBuilder();
 
-        await foreach (var item in kernel.InvokeStreamingAsync(plugins["DeepReasoningFunctionCallingPrompt"],
+        await foreach (var item in kernel.InvokeStreamingAsync(
+                           kernel.Plugins["Generate"]["DeepReasoningFunctionCallingPrompt"],
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
@@ -402,6 +405,27 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             }
         }
 
+        // 开始生成评估
+        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+        {
+            type = "evaluate-start",
+        }, JsonSerializerOptions.Web)}\n\n");
+
+        await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
+                           ConsoleOptions.OpenAIEndpoint))
+        {
+            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            {
+                message = i,
+                type = "evaluate",
+            }, JsonSerializerOptions.Web)}\n\n");
+        }
+
+        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+        {
+            type = "evaluate-end",
+        }, JsonSerializerOptions.Web)}\n\n");
+
         await context.Response.WriteAsync("data: [DONE]\n\n");
         await context.Response.Body.FlushAsync();
 
@@ -424,6 +448,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                 .ExecuteUpdateAsync(x => x.SetProperty(a => a.UsageCount, a => a.UsageCount + 1)
                     .SetProperty(a => a.LastUsedTime, a => DateTime.Now));
         }
+
         await dbContext.SaveChangesAsync();
     }
 
@@ -467,20 +492,13 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         {
             bool isFirst = true;
 
-            var kernelBuilder = Kernel.CreateBuilder()
-                .AddOpenAIChatCompletion(input.ChatModel, new Uri(ConsoleOptions.OpenAIEndpoint),
-                    token);
+            var kernel =
+                KernelFactory.CreateKernel(input.ChatModel, ConsoleOptions.OpenAIEndpoint, token, input.Language);
 
-
-            var kernel = kernelBuilder.Build();
-
-            var plugins = kernel.CreatePluginFromPromptDirectory(
-                Path.Combine(AppContext.BaseDirectory, "plugins", "Generate"),
-                "Generate");
 
             var result = new StringBuilder();
 
-            await foreach (var item in kernel.InvokeStreamingAsync(plugins["OptimizeInitialPrompt"],
+            await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["OptimizeInitialPrompt"],
                                new KernelArguments(
                                    new OpenAIPromptExecutionSettings()
                                    {
@@ -520,6 +538,28 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                 }
             }
 
+            // 开始生成评估
+            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            {
+                type = "evaluate-start",
+            }, JsonSerializerOptions.Web)}\n\n");
+
+            await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
+                               ConsoleOptions.OpenAIEndpoint))
+            {
+                await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                {
+                    message = i,
+                    type = "evaluate",
+                }, JsonSerializerOptions.Web)}\n\n");
+            }
+
+
+            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            {
+                type = "evaluate-end",
+            }, JsonSerializerOptions.Web)}\n\n");
+
             await context.Response.WriteAsync("data: [DONE]\n\n");
             await context.Response.Body.FlushAsync();
 
@@ -549,14 +589,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
     private async Task DeepReasoningAsync(GeneratePromptInput input, HttpContext context, string token, string apiUrl)
     {
-        var kernelBuilder = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(input.ChatModel, new Uri(apiUrl), token);
-
-        var kernel = kernelBuilder.Build();
-
-        var plugins = kernel.CreatePluginFromPromptDirectory(
-            Path.Combine(AppContext.BaseDirectory, "plugins", "Generate"),
-            "Generate");
+        var kernel = KernelFactory.CreateKernel(input.ChatModel, apiUrl, token, input.Language);
 
         var isFirst = true;
 
@@ -572,38 +605,51 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
         var deepReasoning = new StringBuilder();
 
-        await foreach (var item in kernel.InvokeStreamingAsync(plugins["DeepReasoning"],
-                           new KernelArguments(
-                               new OpenAIPromptExecutionSettings()
-                               {
-                                   MaxTokens = 32000,
-                                   Temperature = 0.7f,
-                               })
-                           {
-                               { "date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") },
-                               { "prompt", input.Prompt },
-                               { "requirement", input.Requirements }
-                           }))
+        try
         {
-            if (item is OpenAIStreamingChatMessageContent chatMessageContent)
+            await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["DeepReasoning"],
+                               new KernelArguments(
+                                   new OpenAIPromptExecutionSettings()
+                                   {
+                                       MaxTokens = 32000,
+                                       Temperature = 0.7f,
+                                   })
+                               {
+                                   { "date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") },
+                                   { "prompt", input.Prompt },
+                                   { "requirement", input.Requirements }
+                               }))
             {
-                if (chatMessageContent.Content == null)
+                if (item is OpenAIStreamingChatMessageContent chatMessageContent)
                 {
-                    continue;
+                    if (chatMessageContent.Content == null)
+                    {
+                        continue;
+                    }
+
+                    deepReasoning.Append(chatMessageContent.Content);
+
+                    await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                    {
+                        message = chatMessageContent.Content,
+                        type = "deep-reasoning",
+                    }, JsonSerializerOptions.Web)}\n\n");
+
+                    await context.Response.Body.FlushAsync();
                 }
-
-                deepReasoning.Append(chatMessageContent.Content);
-
-                await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
-                {
-                    message = chatMessageContent.Content,
-                    type = "deep-reasoning",
-                }, JsonSerializerOptions.Web)}\n\n");
-
-                await context.Response.Body.FlushAsync();
             }
         }
-
+        catch (Exception e)
+        {
+            logger.LogError(e, "Deep reasoning failed for prompt: {Prompt}", input.Prompt);
+            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            {
+                error = e.Message,
+                type = "error",
+            }, JsonSerializerOptions.Web)}\n\n");
+            await context.Response.Body.FlushAsync();
+            return;
+        }
 
         await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
         {
@@ -612,7 +658,24 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
         var result = new StringBuilder();
 
-        await foreach (var item in kernel.InvokeStreamingAsync(plugins["DeepReasoningPrompt"],
+        // 正则表达式匹配<output>
+        var regex = new Regex(@"<output>(.*?)<\/output>",
+            RegexOptions.Singleline);
+
+        var deepReasoningResult = deepReasoning.ToString();
+        
+        // 删除thought内容
+        deepReasoningResult = Regex.Replace(deepReasoningResult, @"<thought>.*?<\/thought>", "", RegexOptions.Singleline);
+        var match = regex.Match(deepReasoningResult);
+        if (match.Success)
+        {
+            var outputContent = match.Groups[1].Value.Trim();
+            deepReasoning.Clear();
+            deepReasoning.Append(outputContent);
+        }
+        
+
+        await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["DeepReasoningPrompt"],
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
@@ -646,6 +709,27 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             }
         }
 
+        // 开始生成评估
+        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+        {
+            type = "evaluate-start",
+        }, JsonSerializerOptions.Web)}\n\n");
+
+        await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
+                           ConsoleOptions.OpenAIEndpoint))
+        {
+            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            {
+                message = i,
+                type = "evaluate",
+            }, JsonSerializerOptions.Web)}\n\n");
+        }
+
+        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+        {
+            type = "evaluate-end",
+        }, JsonSerializerOptions.Web)}\n\n");
+
         await context.Response.WriteAsync("data: [DONE]\n\n");
         await context.Response.Body.FlushAsync();
 
@@ -662,5 +746,38 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         await dbContext.PromptHistory.AddAsync(entity);
 
         await dbContext.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// PromptWordEvaluation
+    /// </summary>
+    /// <returns></returns>
+    private async IAsyncEnumerable<string> EvaluatePromptWordAsync(string prompt, string newPrompt, string token,
+        string apiUrl)
+    {
+        var kernel = KernelFactory.CreateKernel(ConsoleOptions.DefaultChatModel, apiUrl, token);
+
+        await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["PromptWordEvaluation"],
+                           new KernelArguments(
+                               new OpenAIPromptExecutionSettings()
+                               {
+                                   MaxTokens = 32000,
+                                   Temperature = 0.7f,
+                               })
+                           {
+                               { "prompt", prompt },
+                               { "newPrompt", newPrompt }
+                           }))
+        {
+            if (item is OpenAIStreamingChatMessageContent chatMessageContent)
+            {
+                if (chatMessageContent.Content == null)
+                {
+                    continue;
+                }
+
+                yield return chatMessageContent.Content;
+            }
+        }
     }
 }
