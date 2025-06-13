@@ -49,7 +49,9 @@ export const useModelStore = create<ModelState>((set, get) => ({
     if (isLoading || (now - lastFetched < CACHE_DURATION && lastFetched > 0)) {
       return {
         defaultChatModel,
-        defaultImageGenerationModel
+        defaultImageGenerationModel,
+        imageModels: [],
+        chatModels: [],
       };
     }
 
@@ -107,7 +109,9 @@ export const useModelStore = create<ModelState>((set, get) => ({
 
       return {
         defaultChatModel: defaultChatModels[0].id,
-        defaultImageGenerationModel: defaultImageModels[0].id
+        defaultImageGenerationModel: defaultImageModels[0].id,
+        imageModels: defaultImageModels,
+        chatModels: defaultChatModels,
       };
     }
   },

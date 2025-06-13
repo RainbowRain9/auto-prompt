@@ -36,7 +36,6 @@ export default function GenerateFunctionCallingPrompt({
     const [generatedPrompt, setGeneratedPrompt] = useState('');
     const [deepReasoningContent, setDeepReasoningContent] = useState('');
     const [isDeepReasoning, setIsDeepReasoning] = useState(false);
-    const [showDeepReasoning, setShowDeepReasoning] = useState(false);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     // 保存为模板相关状态
@@ -93,7 +92,6 @@ export default function GenerateFunctionCallingPrompt({
             setGeneratedPrompt('');
             setDeepReasoningContent('');
             setIsDeepReasoning(false);
-            setShowDeepReasoning(false);
             setEvaluationContent('');
             setIsEvaluating(false);
             setSaveTemplateModalVisible(false);
@@ -192,7 +190,6 @@ export default function GenerateFunctionCallingPrompt({
         setGeneratedPrompt('');
         setDeepReasoningContent('');
         setIsDeepReasoning(false);
-        setShowDeepReasoning(false);
         setEvaluationContent('');
         setIsEvaluating(false);
 
@@ -726,7 +723,6 @@ export default function GenerateFunctionCallingPrompt({
                                         setEvaluationContent('');
                                         setIsDeepReasoning(false);
                                         setIsEvaluating(false);
-                                        setShowDeepReasoning(false);
                                     }}
                                 >
                                     {t('generatePrompt.regenerate')}
