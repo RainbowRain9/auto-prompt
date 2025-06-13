@@ -7,7 +7,8 @@
     "image": "Image Generation",
     "code": "Code Generation",
     "documentation": "Documentation",
-    "settings": "Settings"
+    "settings": "Settings",
+    "apikeys": "API Key Management"
   },
   "common": {
     "generate": "Generate",
@@ -534,6 +535,99 @@
       "historyLoadFailed": "Failed to load historical images",
       "saveCloudFailed": "Some images could not be saved to cloud due to large file size, but can still be used normally",
       "modelsLoadFailed": "Failed to fetch model list, using default models"
+    }
+  },
+  "apiKeys": {
+    "title": "API Key Management",
+    "pageTitle": "API Key Management",
+    "pageDescription": "Manage your API keys, control access permissions and usage",
+    "createApiKey": "Create API Key",
+    "searchPlaceholder": "Search name or description",
+    "statusFilter": "Status Filter",
+    "expiredFilter": "Expiry Filter",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "expired": "Expired",
+    "notExpired": "Not Expired",
+    "reset": "Reset",
+    "table": {
+      "name": "Name",
+      "apiKey": "API Key",
+      "status": "Status",
+      "usageCount": "Usage Count",
+      "lastUsedTime": "Last Used",
+      "createdTime": "Created Time",
+      "actions": "Actions",
+      "noData": "-"
+    },
+    "actions": {
+      "edit": "Edit",
+      "enable": "Enable",
+      "disable": "Disable",
+      "regenerate": "Regenerate",
+      "delete": "Delete",
+      "copy": "Copy",
+      "showKey": "Show Key",
+      "hideKey": "Hide Key"
+    },
+    "modal": {
+      "createTitle": "Create API Key",
+      "editTitle": "Edit API Key",
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter API Key name",
+      "nameRequired": "Please enter name",
+      "nameMaxLength": "Name cannot exceed 100 characters",
+      "openAiApiKeyLabel": "OpenAI API Key",
+      "openAiApiKeyPlaceholder": "Enter OpenAI API Key to bind",
+      "openAiApiKeyRequired": "Please enter OpenAI API Key",
+      "openAiApiKeyMaxLength": "API Key cannot exceed 200 characters",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Enter description (optional)",
+      "descriptionMaxLength": "Description cannot exceed 500 characters",
+      "isEnabledLabel": "Enable Status",
+      "enabledText": "Enabled",
+      "disabledText": "Disabled",
+      "expiresAtLabel": "Expiry Time",
+      "expiresAtPlaceholder": "Select expiry time (optional)",
+      "create": "Create",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "viewModal": {
+      "title": "API Key Created Successfully",
+      "securityWarning": "Please save your API Key securely",
+      "securityDescription": "For security reasons, this API Key will only be displayed once. Please copy and save it immediately.",
+      "nameLabel": "Name:",
+      "apiKeyLabel": "API Key:",
+      "descriptionLabel": "Description:",
+      "copyApiKey": "Copy API Key",
+      "close": "Close"
+    },
+    "confirm": {
+      "regenerateTitle": "Are you sure you want to regenerate this API Key?",
+      "regenerateDescription": "After regeneration, the original API Key will no longer be usable.",
+      "deleteTitle": "Are you sure you want to delete this API Key?",
+      "deleteDescription": "This action cannot be undone, please proceed with caution.",
+      "ok": "OK",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "createSuccess": "Created successfully",
+      "createFailed": "Creation failed",
+      "updateSuccess": "Updated successfully",
+      "updateFailed": "Update failed",
+      "deleteSuccess": "Deleted successfully",
+      "deleteFailed": "Deletion failed",
+      "operationSuccess": "Operation successful",
+      "operationFailed": "Operation failed",
+      "regenerateSuccess": "Regenerated successfully",
+      "regenerateFailed": "Regeneration failed",
+      "copySuccess": "Copied to clipboard",
+      "copyFailed": "Copy failed",
+      "loadFailed": "Loading failed"
+    },
+    "pagination": {
+      "total": "Total {{total}} items"
     }
   }
 } 

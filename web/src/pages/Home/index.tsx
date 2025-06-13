@@ -414,6 +414,15 @@ const HomePage: React.FC = () => {
           >
             {t('nav.dashboard')}
           </Button>
+          <Button 
+            size="large" 
+            icon={<TrophyOutlined />}
+            onClick={() => navigate('/scores')}
+            className="hover-lift"
+            style={{ height: 44, padding: '0 24px', fontSize: 16 }}
+          >
+            模型评分
+          </Button>
         </Space>
         
         {/* 统计数据（动态动画） */}

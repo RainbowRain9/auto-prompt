@@ -7,7 +7,9 @@
     "image": "图片生成",
     "code": "代码生成",
     "documentation": "文档",
-    "settings": "设置"
+    "settings": "设置",
+    "apikeys": "API Key 管理",
+    "scores": "模型评分"
   },
   "common": {
     "generate": "生成",
@@ -549,6 +551,99 @@
       "historyLoadFailed": "加载历史图片失败",
       "saveCloudFailed": "部分图片因文件过大未能保存到云端，但仍可正常使用",
       "modelsLoadFailed": "模型列表获取失败，使用默认模型"
+    }
+  },
+  "apiKeys": {
+    "title": "API Key 管理",
+    "pageTitle": "API Key 管理",
+    "pageDescription": "管理您的API密钥，控制访问权限和使用情况",
+    "createApiKey": "创建 API Key",
+    "searchPlaceholder": "搜索名称或描述",
+    "statusFilter": "状态筛选",
+    "expiredFilter": "过期筛选",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "expired": "已过期",
+    "notExpired": "未过期",
+    "reset": "重置",
+    "table": {
+      "name": "名称",
+      "apiKey": "API Key",
+      "status": "状态",
+      "usageCount": "使用次数",
+      "lastUsedTime": "最后使用",
+      "createdTime": "创建时间",
+      "actions": "操作",
+      "noData": "-"
+    },
+    "actions": {
+      "edit": "编辑",
+      "enable": "启用",
+      "disable": "禁用",
+      "regenerate": "重新生成",
+      "delete": "删除",
+      "copy": "复制",
+      "showKey": "显示密钥",
+      "hideKey": "隐藏密钥"
+    },
+    "modal": {
+      "createTitle": "创建 API Key",
+      "editTitle": "编辑 API Key",
+      "nameLabel": "名称",
+      "namePlaceholder": "请输入API Key名称",
+      "nameRequired": "请输入名称",
+      "nameMaxLength": "名称长度不能超过100个字符",
+      "openAiApiKeyLabel": "OpenAI API Key",
+      "openAiApiKeyPlaceholder": "请输入要绑定的OpenAI API Key",
+      "openAiApiKeyRequired": "请输入OpenAI API Key",
+      "openAiApiKeyMaxLength": "API Key长度不能超过200个字符",
+      "descriptionLabel": "描述",
+      "descriptionPlaceholder": "请输入描述信息（可选）",
+      "descriptionMaxLength": "描述长度不能超过500个字符",
+      "isEnabledLabel": "启用状态",
+      "enabledText": "启用",
+      "disabledText": "禁用",
+      "expiresAtLabel": "过期时间",
+      "expiresAtPlaceholder": "选择过期时间（可选）",
+      "create": "创建",
+      "save": "保存",
+      "cancel": "取消"
+    },
+    "viewModal": {
+      "title": "API Key 创建成功",
+      "securityWarning": "请妥善保存您的API Key",
+      "securityDescription": "出于安全考虑，此API Key只会显示一次，请立即复制并妥善保存。",
+      "nameLabel": "名称：",
+      "apiKeyLabel": "API Key：",
+      "descriptionLabel": "描述：",
+      "copyApiKey": "复制 API Key",
+      "close": "关闭"
+    },
+    "confirm": {
+      "regenerateTitle": "确定要重新生成此API Key吗？",
+      "regenerateDescription": "重新生成后，原有的API Key将无法使用。",
+      "deleteTitle": "确定要删除此API Key吗？",
+      "deleteDescription": "删除后无法恢复，请谨慎操作。",
+      "ok": "确定",
+      "cancel": "取消"
+    },
+    "messages": {
+      "createSuccess": "创建成功",
+      "createFailed": "创建失败",
+      "updateSuccess": "更新成功",
+      "updateFailed": "更新失败",
+      "deleteSuccess": "删除成功",
+      "deleteFailed": "删除失败",
+      "operationSuccess": "操作成功",
+      "operationFailed": "操作失败",
+      "regenerateSuccess": "重新生成成功",
+      "regenerateFailed": "重新生成失败",
+      "copySuccess": "已复制到剪贴板",
+      "copyFailed": "复制失败",
+      "loadFailed": "加载失败"
+    },
+    "pagination": {
+      "total": "共 {{total}} 条"
     }
   }
 } 

@@ -13,7 +13,7 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
 
 
-var logger = new LoggerConfiguration()
+Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console(
         outputTemplate: "TokenAI-工作台日志({Level:u3}) => {Timestamp:HH:mm:ss} {Message:lj}{NewLine}{Exception}")
@@ -26,7 +26,7 @@ await InitializeConsole.Initialize();
 ConsoleOptions.Initialize(builder.Configuration);
 
 builder.Services.AddMcp();
-builder.Services.AddSerilog(logger);
+builder.Services.AddSerilog(Log.Logger);
 builder.Services.AddOpenApi();
 builder.Services.AddFastApis();
 builder.Services.AddResponseCompression();

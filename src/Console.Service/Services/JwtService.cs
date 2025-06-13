@@ -47,6 +47,33 @@ public class JwtService
         }
     }
 
+    public string? GetUserRoleFromTokenOrDefault(string token)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(token))
+                return null;
+
+            var handler = new JwtSecurityTokenHandler();
+
+            // 验证token格式
+            if (!handler.CanReadToken(token))
+                return null;
+
+            var jsonToken = handler.ReadJwtToken(token);
+
+            // 尝试从不同的claim中获取用户ID
+            var userRole = jsonToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
+
+            return userRole ?? string.Empty;
+        }
+        catch (Exception)
+        {
+            // 如果解析失���，返回空字符串
+            return string.Empty;
+        }
+    }
+
     public string GetUserNameFromToken(string token)
     {
         try

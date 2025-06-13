@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { Home, Dashboard, Prompts, Workbench, ImageGeneration } from '../pages';
+import { Home, Dashboard, Prompts, Workbench, ImageGeneration, ModelScores } from '../pages';
 import ApiKeysPage from '../pages/ApiKeys';
 
 export interface RouteConfig {
@@ -51,6 +51,7 @@ export const mainRoutes: RouteConfig[] = [
     showInSidebar: true,
     requireAuth: false,
   },
+
   {
     path: '/apikeys',
     element: <ApiKeysPage />,
@@ -103,6 +104,14 @@ export const standaloneRoutes: RouteConfig[] = [
     element: <Home />,
     key: 'home',
     title: '首页',
+    showInSidebar: false,
+    requireAuth: false,
+  },
+  {
+    path: '/scores',
+    element: <ModelScores />,
+    key: 'scores',
+    title: '模型评分',
     showInSidebar: false,
     requireAuth: false,
   },

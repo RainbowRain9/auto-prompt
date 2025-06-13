@@ -1,0 +1,33 @@
+﻿{
+  "schema": 1,
+  "type": "completion",
+  "description": "提示词评估",
+  "execution_settings": {
+    "default": {
+      "max_tokens": 63000,
+      "temperature": 1
+    }
+  },
+  "input_variables": [
+    {
+      "name": "prompt",
+      "description": "原始提示词",
+      "required": true
+    },
+    {
+      "name": "prompt_output",
+      "description": "原始提示词优化结果",
+      "required": false
+    },
+    {
+      "name": "OptimizePromptWords",
+      "description": "优化提示词",
+      "required": false
+    },
+    {
+      "name": "OptimizePromptWords_output",
+      "description": "优化后的提示词输出结果",
+      "required": false
+    }
+  ]
+}

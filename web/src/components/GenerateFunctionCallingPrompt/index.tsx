@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Modal, Form, Input, Button, Space, Typography, message, Checkbox, Select } from 'antd';
+import { Modal, Form, Input, Button, Space, Typography, message, Checkbox, Select, theme } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '../../stores/chatStore';
 import GeneratePromptButton from '../GeneratePromptButton';
@@ -8,6 +8,7 @@ import { generateFunctionCallingPrompt } from '../../api/promptApi';
 import { createPromptTemplate } from '../../api/promptTemplateApi';
 import type { CreatePromptTemplateInput } from '../../api/promptTemplateApi';
 import { useModelStore } from '../../stores/modelStore';
+import ReactMarkdown from 'react-markdown';
 
 interface GenerateFunctionCallingPromptProps {
     open: boolean;
@@ -28,6 +29,8 @@ export default function GenerateFunctionCallingPrompt({
     const { t, i18n } = useTranslation();
     const { selectedModel } = useChatStore();
     const { getChatModelOptions, fetchModels } = useModelStore();
+    const [templateForm] = Form.useForm();
+    const { token } = theme.useToken();
 
     const [step, setStep] = useState(0);
     const [generatedPrompt, setGeneratedPrompt] = useState('');
@@ -39,7 +42,10 @@ export default function GenerateFunctionCallingPrompt({
     // 保存为模板相关状态
     const [saveTemplateModalVisible, setSaveTemplateModalVisible] = useState(false);
     const [savingTemplate, setSavingTemplate] = useState(false);
-    const [templateForm] = Form.useForm();
+
+    // 评估相关状态
+    const [evaluationContent, setEvaluationContent] = useState('');
+    const [isEvaluating, setIsEvaluating] = useState(false);
 
     // 获取聊天模型选项
     const modelOptions = getChatModelOptions();
@@ -88,6 +94,8 @@ export default function GenerateFunctionCallingPrompt({
             setDeepReasoningContent('');
             setIsDeepReasoning(false);
             setShowDeepReasoning(false);
+            setEvaluationContent('');
+            setIsEvaluating(false);
             setSaveTemplateModalVisible(false);
             setSavingTemplate(false);
             templateForm.resetFields();
@@ -185,6 +193,8 @@ export default function GenerateFunctionCallingPrompt({
         setDeepReasoningContent('');
         setIsDeepReasoning(false);
         setShowDeepReasoning(false);
+        setEvaluationContent('');
+        setIsEvaluating(false);
 
         // 创建新的AbortController
         abortControllerRef.current = new AbortController();
@@ -216,6 +226,20 @@ export default function GenerateFunctionCallingPrompt({
                             if (data.message) {
                                 setDeepReasoningContent(prev => prev + data.message);
                             }
+                        } else if (data.type === "evaluate-start") {
+                            setIsEvaluating(true);
+                        } else if (data.type === "evaluate-end") {
+                            setIsEvaluating(false);
+                        } else if (data.type === "evaluate") {
+                            if (data.message) {
+                                setEvaluationContent(prev => prev + data.message);
+                            }
+                        } else if (data.type === "error") {
+                            // 处理错误类型
+                            console.error('生成Function Calling提示词过程中发生错误:', data.message || data.error);
+                            message.error(data.message || data.error || t('generatePrompt.generateFailed'));
+                            setStep(0);
+                            break;
                         } else if (data.type === "message") {
                             if (data.message) {
                                 setGeneratedPrompt(prev => prev + data.message);
@@ -232,6 +256,8 @@ export default function GenerateFunctionCallingPrompt({
                         if (event.data !== '[DONE]') {
                             if (isDeepReasoning) {
                                 setDeepReasoningContent(prev => prev + event.data);
+                            } else if (isEvaluating) {
+                                setEvaluationContent(prev => prev + event.data);
                             } else {
                                 setGeneratedPrompt(prev => prev + event.data);
                             }
@@ -413,114 +439,6 @@ export default function GenerateFunctionCallingPrompt({
                     </div>
                 </>
             case 1:
-                return <>
-                    {isDeepReasoning ? (
-                        // 深度推理阶段
-                        <>
-                            <span style={{
-                                fontSize: 24,
-                                fontWeight: 500,
-                                textAlign: 'center',
-                                display: 'block',
-                                marginBottom: 16
-                            }}>
-                                <Brain size={24} style={{ marginRight: 8, color: '#1890ff' }} />
-                                {t('generatePrompt.deepReasoningTitle')}
-                            </span>
-
-                            <Paragraph style={{
-                                textAlign: 'center',
-                                display: 'block',
-                                marginBottom: 16
-                            }}>
-                                {t('generatePrompt.deepReasoningDescription2')}
-                            </Paragraph>
-
-                            <div>
-                                <span>
-                                    {t('generatePrompt.reasoningProcess')}
-                                </span>
-                                <TextArea
-                                    value={deepReasoningContent || t('generatePrompt.deepReasoningInProgress')}
-                                    style={{
-                                        border: 'none',
-                                        resize: 'none',
-                                        width: '100%',
-                                        marginTop: 16,
-                                        marginBottom: 16,
-                                    }}
-                                    rows={20}
-                                    readOnly
-                                />
-                            </div>
-                        </>
-                    ) : (
-                        // 生成提示词阶段
-                        <>
-                            <span style={{
-                                fontSize: 24,
-                                fontWeight: 500,
-                                textAlign: 'center',
-                                display: 'block',
-                                marginBottom: 16
-                            }}>
-                                {t('generatePrompt.optimizingTitle')}
-                            </span>
-
-                            <Paragraph style={{
-                                textAlign: 'center',
-                                display: 'block',
-                                marginBottom: 16
-                            }}>
-                                {input.enableDeepReasoning && deepReasoningContent ?
-                                    t('generatePrompt.optimizingWithReasoning') :
-                                    t('generatePrompt.optimizingDescription')
-                                }
-                            </Paragraph>
-
-                            {/* 如果启用了深度推理且有推理内容，显示推理结果摘要 */}
-                            {input.enableDeepReasoning && deepReasoningContent && (
-                                <div style={{ marginBottom: 16 }}>
-                                    <span style={{ fontSize: 12, color: '#8c8c8c' }}>
-                                        {t('generatePrompt.deepAnalysisComplete')}
-                                    </span>
-                                </div>
-                            )}
-
-                            <div>
-                                <span>
-                                    {t('generatePrompt.generatingProgress')}
-                                </span>
-                                <TextArea
-                                    value={generatedPrompt || t('generatePrompt.generating')}
-                                    style={{
-                                        border: 'none',
-                                        resize: 'none',
-                                        width: '100%',
-                                        marginTop: 16,
-                                        marginBottom: 16,
-                                    }}
-                                    rows={20}
-                                    readOnly
-                                />
-                            </div>
-                        </>
-                    )}
-
-                    <div style={{
-                        textAlign: 'center',
-                        gap: 8,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                    }}>
-                        <Button
-                            onClick={handleGenerationCancel}
-                        >
-                            {t('generatePrompt.cancel')}
-                        </Button>
-                    </div>
-                </>
             case 2:
                 return <>
                     <span style={{
@@ -530,7 +448,26 @@ export default function GenerateFunctionCallingPrompt({
                         display: 'block',
                         marginBottom: 16
                     }}>
-                        {showDeepReasoning ? t('generatePrompt.deepReasoningProcessTitle') : t('generatePrompt.optimizationComplete')}
+                        {step === 1 ? (
+                            isDeepReasoning ? (
+                                <>
+                                    <Brain size={24} style={{ marginRight: 8, color: '#1890ff' }} />
+                                    {t('generatePrompt.deepReasoningTitle')}
+                                </>
+                            ) : isEvaluating ? (
+                                <>
+                                    <Sparkles size={24} style={{ marginRight: 8, color: '#52c41a' }} />
+                                    {t('generatePrompt.evaluatingTitle')}
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles size={24} style={{ marginRight: 8, color: '#1890ff' }} />
+                                    {t('generatePrompt.optimizingTitle')}
+                                </>
+                            )
+                        ) : (
+                            t('generatePrompt.optimizationComplete')
+                        )}
                     </span>
 
                     <Paragraph style={{
@@ -538,44 +475,227 @@ export default function GenerateFunctionCallingPrompt({
                         display: 'block',
                         marginBottom: 16
                     }}>
-                        {showDeepReasoning ?
-                            t('generatePrompt.deepReasoningProcessDescription') :
-                            t('generatePrompt.optimizedPromptDescription')
-                        }
+                        {step === 1 ? (
+                            isDeepReasoning ? 
+                                t('generatePrompt.deepReasoningDescription2') :
+                            isEvaluating ? 
+                                t('generatePrompt.evaluatingDescription') :
+                                t('generatePrompt.optimizingDescription')
+                        ) : (
+                            t('generatePrompt.threePanelDescription')
+                        )}
                     </Paragraph>
 
-                    <div>
-                        <span>
-                            {showDeepReasoning ? t('generatePrompt.reasoningProcess') : t('generatePrompt.optimizedPromptLabel')}
-                        </span>
-                        <TextArea
-                            value={showDeepReasoning ? deepReasoningContent : generatedPrompt}
-                            style={{
-                                border: 'none',
-                                resize: 'none',
-                                width: '100%',
-                                marginTop: 16,
-                                marginBottom: 16,
-                            }}
-                            rows={20}
-                            readOnly
-                        />
+                    {/* 三个面板布局 */}
+                    <div style={{
+                        display: 'flex',
+                        gap: 16,
+                        height: '500px',
+                        marginBottom: 16
+                    }}>
+                        {/* 左侧面板 - 原始提示词 */}
+                        <div style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
+                            <div style={{
+                                fontSize: 16,
+                                fontWeight: 500,
+                                marginBottom: 8,
+                                color: '#1890ff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                            }}>
+                                <span>📝</span>
+                                {t('generatePrompt.originalPrompt')}
+                            </div>
+                            <TextArea
+                                value={input.prompt}
+                                style={{
+                                    border: '1px solid #d9d9d9',
+                                    borderRadius: 6,
+                                    resize: 'none',
+                                    flex: 1,
+                                }}
+                                readOnly
+                            />
+                        </div>
+
+                        {/* 中间面板 - 优化后的提示词 */}
+                        <div style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
+                            <div style={{
+                                fontSize: 16,
+                                fontWeight: 500,
+                                marginBottom: 8,
+                                color: '#52c41a',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                            }}>
+                                <Sparkles size={16} />
+                                {t('generatePrompt.optimizedPromptLabel')}
+                            </div>
+                            <TextArea
+                                value={generatedPrompt || (step === 1 ? t('generatePrompt.generating') : '')}
+                                style={{
+                                    border: '1px solid #d9d9d9',
+                                    borderRadius: 6,
+                                    resize: 'none',
+                                    flex: 1,
+                                }}
+                                readOnly
+                            />
+                        </div>
+
+                        {/* 右侧面板 - 评估结果 */}
+                        <div style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
+                            <div style={{
+                                fontSize: 16,
+                                fontWeight: 500,
+                                marginBottom: 8,
+                                color: '#722ed1',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                            }}>
+                                <span>📊</span>
+                                {t('generatePrompt.evaluationResult')}
+                            </div>
+                            <div
+                                style={{
+                                    border: `1px solid ${token.colorBorder}`,
+                                    borderRadius: token.borderRadius,
+                                    padding: 12,
+                                    flex: 1,
+                                    overflow: 'auto',
+                                    backgroundColor: token.colorBgContainer,
+                                }}
+                            >
+                                {evaluationContent ? (
+                                    <div style={{
+                                        fontSize: 14,
+                                        lineHeight: 1.6,
+                                        color: token.colorText,
+                                        margin: 0,
+                                    }}>
+                                        <ReactMarkdown
+                                            components={{
+                                                // 自定义组件样式
+                                                h1: ({ children }) => <h3 style={{ marginTop: 16, marginBottom: 8, fontSize: 16, fontWeight: 600, color: token.colorTextHeading }}>{children}</h3>,
+                                                h2: ({ children }) => <h4 style={{ marginTop: 12, marginBottom: 6, fontSize: 15, fontWeight: 600, color: token.colorTextHeading }}>{children}</h4>,
+                                                h3: ({ children }) => <h5 style={{ marginTop: 10, marginBottom: 4, fontSize: 14, fontWeight: 600, color: token.colorTextHeading }}>{children}</h5>,
+                                                p: ({ children }) => <p style={{ marginBottom: 8, lineHeight: 1.6, color: token.colorText }}>{children}</p>,
+                                                ul: ({ children }) => <ul style={{ marginBottom: 8, paddingLeft: 20 }}>{children}</ul>,
+                                                ol: ({ children }) => <ol style={{ marginBottom: 8, paddingLeft: 20 }}>{children}</ol>,
+                                                li: ({ children }) => <li style={{ marginBottom: 4, color: token.colorText }}>{children}</li>,
+                                                strong: ({ children }) => <strong style={{ fontWeight: 600, color: token.colorTextHeading }}>{children}</strong>,
+                                                em: ({ children }) => <em style={{ fontStyle: 'italic', color: token.colorTextSecondary }}>{children}</em>,
+                                                code: ({ children }) => <code style={{ backgroundColor: token.colorBgLayout, color: token.colorText, padding: '2px 4px', borderRadius: token.borderRadiusSM, fontFamily: token.fontFamilyCode, fontSize: 13 }}>{children}</code>,
+                                                // 表格组件
+                                                table: ({ children }) => (
+                                                    <table style={{ 
+                                                        width: '100%', 
+                                                        borderCollapse: 'collapse', 
+                                                        marginBottom: 16,
+                                                        border: `1px solid ${token.colorBorder}`
+                                                    }}>
+                                                        {children}
+                                                    </table>
+                                                ),
+                                                thead: ({ children }) => (
+                                                    <thead style={{ backgroundColor: token.colorBgLayout }}>
+                                                        {children}
+                                                    </thead>
+                                                ),
+                                                tbody: ({ children }) => <tbody>{children}</tbody>,
+                                                tr: ({ children }) => (
+                                                    <tr style={{ borderBottom: `1px solid ${token.colorBorder}` }}>
+                                                        {children}
+                                                    </tr>
+                                                ),
+                                                th: ({ children }) => (
+                                                    <th style={{ 
+                                                        padding: '8px 12px', 
+                                                        textAlign: 'left', 
+                                                        fontWeight: 600,
+                                                        color: token.colorTextHeading,
+                                                        border: `1px solid ${token.colorBorder}`,
+                                                        backgroundColor: token.colorBgLayout
+                                                    }}>
+                                                        {children}
+                                                    </th>
+                                                ),
+                                                td: ({ children }) => (
+                                                    <td style={{ 
+                                                        padding: '8px 12px', 
+                                                        border: `1px solid ${token.colorBorder}`,
+                                                        color: token.colorText
+                                                    }}>
+                                                        {children}
+                                                    </td>
+                                                ),
+                                            }}
+                                        >
+                                            {evaluationContent}
+                                        </ReactMarkdown>
+                                    </div>
+                                ) : (
+                                    <div style={{
+                                        color: token.colorTextSecondary,
+                                        fontSize: 14,
+                                        textAlign: 'center',
+                                        padding: '20px 0'
+                                    }}>
+                                        {step === 1 ? (isEvaluating ? t('generatePrompt.evaluating') : t('generatePrompt.waitingForEvaluation')) : t('generatePrompt.noEvaluation')}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
-                    {/* 切换按钮 */}
+                    {/* 深度推理内容 - 始终显示，不需要按钮切换 */}
                     {deepReasoningContent && (
                         <div style={{
                             marginBottom: 16,
-                            textAlign: 'center'
+                            border: '1px solid #e8f4fd',
+                            borderRadius: 6,
+                            padding: 16,
                         }}>
-                            <Button
-                                size="small"
-                                type="link"
-                                icon={showDeepReasoning ? undefined : <Brain size={14} />}
-                                onClick={() => setShowDeepReasoning(!showDeepReasoning)}
-                            >
-                                {showDeepReasoning ? t('generatePrompt.backToPrompt') : t('generatePrompt.viewReasoningProcess')}
-                            </Button>
+                            <div style={{
+                                fontSize: 14,
+                                fontWeight: 500,
+                                marginBottom: 8,
+                                color: '#1890ff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                            }}>
+                                <Brain size={16} />
+                                {step === 1 && isDeepReasoning ? 
+                                    t('generatePrompt.reasoningInProgress') : 
+                                    t('generatePrompt.reasoningProcess')
+                                }
+                            </div>
+                            <div style={{
+                                fontSize: 13,
+                                lineHeight: 1.6,
+                                color: '#ffffff',
+                                whiteSpace: 'pre-wrap',
+                                maxHeight: step === 1 ? 200 : 300,
+                                overflow: 'auto'
+                            }}>
+                                {deepReasoningContent}
+                            </div>
                         </div>
                     )}
 
@@ -587,31 +707,38 @@ export default function GenerateFunctionCallingPrompt({
                         alignItems: 'center',
                         flexWrap: 'wrap'
                     }}>
-                        <Button
-                            onClick={() => {
-                                setStep(0);
-                                setGeneratedPrompt('');
-                                setDeepReasoningContent('');
-                                setIsDeepReasoning(false);
-                                setShowDeepReasoning(false);
-                            }}
-                        >
-                            {t('generatePrompt.regenerate')}
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                const contentToCopy = showDeepReasoning ? deepReasoningContent : generatedPrompt;
-                                navigator.clipboard.writeText(contentToCopy);
-                                message.success(showDeepReasoning ? 
-                                    t('generatePrompt.copyReasoningSuccess') : 
-                                    t('generatePrompt.copyPromptSuccess')
-                                );
-                            }}
-                        >
-                            {showDeepReasoning ? t('generatePrompt.copyReasoning') : t('generatePrompt.copyPrompt')}
-                        </Button>
-                        {!showDeepReasoning && (
+                        {step === 1 ? (
+                            // 生成中的按钮
+                            <Button
+                                onClick={handleGenerationCancel}
+                                disabled={false}
+                            >
+                                {t('generatePrompt.cancel')}
+                            </Button>
+                        ) : (
+                            // 完成后的按钮
                             <>
+                                <Button
+                                    onClick={() => {
+                                        setStep(0);
+                                        setGeneratedPrompt('');
+                                        setDeepReasoningContent('');
+                                        setEvaluationContent('');
+                                        setIsDeepReasoning(false);
+                                        setIsEvaluating(false);
+                                        setShowDeepReasoning(false);
+                                    }}
+                                >
+                                    {t('generatePrompt.regenerate')}
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(generatedPrompt);
+                                        message.success(t('generatePrompt.copyPromptSuccess'));
+                                    }}
+                                >
+                                    {t('generatePrompt.copyPrompt')}
+                                </Button>
                                 <Button
                                     icon={<Save size={16} />}
                                     onClick={handleSaveAsTemplate}
@@ -644,11 +771,12 @@ export default function GenerateFunctionCallingPrompt({
             <Modal
                 open={open}
                 onCancel={handleCancel}
-                width={740}
+                width={'95%'}
                 height={740}
                 footer={null}
                 style={{
-                    minWidth: 740,
+                    minWidth: 1200,
+                    maxWidth: '95vw'
                 }}
                 destroyOnClose
             >

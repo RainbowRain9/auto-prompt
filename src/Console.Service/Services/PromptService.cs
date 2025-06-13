@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using OpenAI;
 
 namespace Console.Service.Services;
 
@@ -111,7 +112,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             bool isFirst = true;
 
             var kernel =
-                KernelFactory.CreateKernel(input.ChatModel, ConsoleOptions.OpenAIEndpoint, token, input.Language);
+                KernelFactory.CreateKernel(input.ChatModel, ConsoleOptions.OpenAIEndpoint, token);
 
             var result = new StringBuilder();
 
@@ -120,7 +121,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                                new KernelArguments(
                                    new OpenAIPromptExecutionSettings()
                                    {
-                                       MaxTokens = 32000,
+                                       MaxTokens = MaxToken(input.ChatModel),
                                        Temperature = 0.7f,
                                    })
                                {
@@ -249,7 +250,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
-                                   MaxTokens = 32000,
+                                   MaxTokens = MaxToken(ConsoleOptions.DefaultImageGenerationModel),
                                    Temperature = 0.7f,
                                })
                            {
@@ -316,7 +317,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         string token,
         string apiUrl)
     {
-        var kernel = KernelFactory.CreateKernel(input.ChatModel, apiUrl, token, input.Language);
+        var kernel = KernelFactory.CreateKernel(input.ChatModel, apiUrl, token);
 
         var isFirst = true;
 
@@ -337,7 +338,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
-                                   MaxTokens = 32000,
+                                   MaxTokens = MaxToken(input.ChatModel),
                                    Temperature = 0.7f,
                                })
                            {
@@ -377,7 +378,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
-                                   MaxTokens = 32000,
+                                   MaxTokens = MaxToken(input.ChatModel),
                                    Temperature = 0.7f,
                                })
                            {
@@ -486,29 +487,127 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
         if (input.EnableDeepReasoning)
         {
-            await DeepReasoningAsync(input, context, token, ConsoleOptions.OpenAIEndpoint);
+            var isFirst = true;
+            // 推理结束
+            var deepReasoningEnd = false;
+
+            context.Response.Headers.ContentType = "text/event-stream";
+            context.Response.Headers.CacheControl = "no-cache";
+            context.Response.Headers.Connection = "keep-alive";
+
+
+            var deepReasoning = new StringBuilder();
+            var result = new StringBuilder();
+
+            try
+            {
+                await foreach (var (deep, value) in GenerateDeepReasoningPromptAsync(input.ChatModel, input.Prompt,
+                                   input.Requirements, token))
+                {
+                    if (isFirst && deep)
+                    {
+                        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                        {
+                            type = "deep-reasoning-start",
+                        }, JsonSerializerOptions.Web)}\n\n");
+
+                        isFirst = false;
+                    }
+
+                    if (deep)
+                    {
+                        deepReasoning.Append(value);
+
+                        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                        {
+                            message = value,
+                            type = "deep-reasoning",
+                        }, JsonSerializerOptions.Web)}\n\n");
+
+                        await context.Response.Body.FlushAsync();
+                    }
+                    else if (deepReasoningEnd == false)
+                    {
+                        deepReasoningEnd = true;
+                        
+                        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                        {
+                            type = "deep-reasoning-end",
+                        }, JsonSerializerOptions.Web)}\n\n");
+                    }
+                    else
+                    {
+                        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                        {
+                            message = value,
+                            type = "message",
+                        }, JsonSerializerOptions.Web)}\n\n");
+
+                        result.Append(value);
+
+                        await context.Response.Body.FlushAsync();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Deep reasoning failed for prompt: {Prompt}", input.Prompt);
+                await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                {
+                    error = e.Message,
+                    type = "error",
+                }, JsonSerializerOptions.Web)}\n\n");
+                await context.Response.Body.FlushAsync();
+                return;
+            }
+
+            // 开始生成评估
+            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            {
+                type = "evaluate-start",
+            }, JsonSerializerOptions.Web)}\n\n");
+
+            await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
+                               ConsoleOptions.OpenAIEndpoint))
+            {
+                await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                {
+                    message = i,
+                    type = "evaluate",
+                }, JsonSerializerOptions.Web)}\n\n");
+            }
+
+            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            {
+                type = "evaluate-end",
+            }, JsonSerializerOptions.Web)}\n\n");
+
+            await context.Response.WriteAsync("data: [DONE]\n\n");
+            await context.Response.Body.FlushAsync();
+
+            var entity = new PromptHistory()
+            {
+                Id = Guid.NewGuid(),
+                Requirement = input.Requirements ?? "",
+                Result = result.ToString(),
+                CreatedTime = DateTime.Now,
+                DeepReasoning = deepReasoning.ToString(),
+                Prompt = input.Prompt
+            };
+
+            await dbContext.PromptHistory.AddAsync(entity);
+
+            await dbContext.SaveChangesAsync();
         }
         else
         {
             bool isFirst = true;
 
-            var kernel =
-                KernelFactory.CreateKernel(input.ChatModel, ConsoleOptions.OpenAIEndpoint, token, input.Language);
-
-
             var result = new StringBuilder();
 
-            await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["OptimizeInitialPrompt"],
-                               new KernelArguments(
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       MaxTokens = 32000,
-                                       Temperature = 0.7f,
-                                   })
-                               {
-                                   { "prompt", input.Prompt },
-                                   { "requirement", input.Requirements }
-                               }))
+            await foreach (var chatMessageContent in OptimizeInitialPromptAsync(input.ChatModel, input.Prompt,
+                               input.Requirements, token,
+                               ConsoleOptions.OpenAIEndpoint))
             {
                 if (isFirst)
                 {
@@ -519,23 +618,20 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                     isFirst = false;
                 }
 
-                if (item is OpenAIStreamingChatMessageContent chatMessageContent)
+                if (chatMessageContent.Content == null)
                 {
-                    if (chatMessageContent.Content == null)
-                    {
-                        continue;
-                    }
-
-                    await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
-                    {
-                        message = chatMessageContent.Content,
-                        type = "message",
-                    }, JsonSerializerOptions.Web)}\n\n");
-
-                    result.Append(chatMessageContent.Content);
-
-                    await context.Response.Body.FlushAsync();
+                    continue;
                 }
+
+                await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+                {
+                    message = chatMessageContent.Content,
+                    type = "message",
+                }, JsonSerializerOptions.Web)}\n\n");
+
+                result.Append(chatMessageContent.Content);
+
+                await context.Response.Body.FlushAsync();
             }
 
             // 开始生成评估
@@ -587,74 +683,41 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         }
     }
 
-    private async Task DeepReasoningAsync(GeneratePromptInput input, HttpContext context, string token, string apiUrl)
+    [IgnoreRoute]
+    public async IAsyncEnumerable<(bool, string)> GenerateDeepReasoningPromptAsync(
+        string model,
+        string prompt,
+        string requirements, string token)
     {
-        var kernel = KernelFactory.CreateKernel(input.ChatModel, apiUrl, token, input.Language);
-
-        var isFirst = true;
-
-        context.Response.Headers.ContentType = "text/event-stream";
-        context.Response.Headers.CacheControl = "no-cache";
-        context.Response.Headers.Connection = "keep-alive";
-
-
-        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
-        {
-            type = "deep-reasoning-start",
-        }, JsonSerializerOptions.Web)}\n\n");
+        var kernel = KernelFactory.CreateKernel(model, ConsoleOptions.OpenAIEndpoint, token);
 
         var deepReasoning = new StringBuilder();
 
-        try
-        {
-            await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["DeepReasoning"],
-                               new KernelArguments(
-                                   new OpenAIPromptExecutionSettings()
-                                   {
-                                       MaxTokens = 32000,
-                                       Temperature = 0.7f,
-                                   })
+        await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["DeepReasoning"],
+                           new KernelArguments(
+                               new OpenAIPromptExecutionSettings()
                                {
-                                   { "date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") },
-                                   { "prompt", input.Prompt },
-                                   { "requirement", input.Requirements }
-                               }))
+                                   MaxTokens = MaxToken(model),
+                                   Temperature = 0.7f,
+                               })
+                           {
+                               { "date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") },
+                               { "prompt", prompt },
+                               { "requirement", requirements }
+                           }))
+        {
+            if (item is OpenAIStreamingChatMessageContent chatMessageContent)
             {
-                if (item is OpenAIStreamingChatMessageContent chatMessageContent)
+                if (chatMessageContent.Content == null)
                 {
-                    if (chatMessageContent.Content == null)
-                    {
-                        continue;
-                    }
-
-                    deepReasoning.Append(chatMessageContent.Content);
-
-                    await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
-                    {
-                        message = chatMessageContent.Content,
-                        type = "deep-reasoning",
-                    }, JsonSerializerOptions.Web)}\n\n");
-
-                    await context.Response.Body.FlushAsync();
+                    continue;
                 }
+
+                deepReasoning.Append(chatMessageContent.Content);
+
+                yield return (true, chatMessageContent.Content);
             }
         }
-        catch (Exception e)
-        {
-            logger.LogError(e, "Deep reasoning failed for prompt: {Prompt}", input.Prompt);
-            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
-            {
-                error = e.Message,
-                type = "error",
-            }, JsonSerializerOptions.Web)}\n\n");
-            await context.Response.Body.FlushAsync();
-            return;
-        }
-
-        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
-        {
-            type = "deep-reasoning-end",
-        }, JsonSerializerOptions.Web)}\n\n");
 
         var result = new StringBuilder();
 
@@ -663,9 +726,10 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             RegexOptions.Singleline);
 
         var deepReasoningResult = deepReasoning.ToString();
-        
+
         // 删除thought内容
-        deepReasoningResult = Regex.Replace(deepReasoningResult, @"<thought>.*?<\/thought>", "", RegexOptions.Singleline);
+        deepReasoningResult =
+            Regex.Replace(deepReasoningResult, @"<thought>.*?<\/thought>", "", RegexOptions.Singleline);
         var match = regex.Match(deepReasoningResult);
         if (match.Success)
         {
@@ -673,18 +737,18 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             deepReasoning.Clear();
             deepReasoning.Append(outputContent);
         }
-        
+
 
         await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["DeepReasoningPrompt"],
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
-                                   MaxTokens = 32000,
+                                   MaxTokens = MaxToken(model),
                                    Temperature = 0.7f,
                                })
                            {
-                               { "prompt", input.Prompt },
-                               { "requirement", input.Requirements },
+                               { "prompt", prompt },
+                               { "requirement", requirements },
                                { "deepReasoning", deepReasoning.ToString() }
                            }))
         {
@@ -697,55 +761,44 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
                 deepReasoning.Append(chatMessageContent.Content);
 
-                await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
-                {
-                    message = chatMessageContent.Content,
-                    type = "message",
-                }, JsonSerializerOptions.Web)}\n\n");
+                yield return (false, chatMessageContent.Content);
 
                 result.Append(chatMessageContent.Content);
-
-                await context.Response.Body.FlushAsync();
             }
         }
+    }
 
-        // 开始生成评估
-        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
-        {
-            type = "evaluate-start",
-        }, JsonSerializerOptions.Web)}\n\n");
+    [IgnoreRoute]
+    public async IAsyncEnumerable<OpenAIStreamingChatMessageContent> OptimizeInitialPromptAsync(
+        string model,
+        string prompt,
+        string requirements,
+        string token, string apiUrl)
+    {
+        var kernel = KernelFactory.CreateKernel(model, apiUrl, token);
 
-        await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
-                           ConsoleOptions.OpenAIEndpoint))
+        await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["OptimizeInitialPrompt"],
+                           new KernelArguments(
+                               new OpenAIPromptExecutionSettings()
+                               {
+                                   MaxTokens = MaxToken(model),
+                                   Temperature = 0.7f,
+                               })
+                           {
+                               { "prompt", prompt },
+                               { "requirement", requirements }
+                           }))
         {
-            await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
+            if (item is OpenAIStreamingChatMessageContent chatMessageContent)
             {
-                message = i,
-                type = "evaluate",
-            }, JsonSerializerOptions.Web)}\n\n");
+                if (chatMessageContent.Content == null)
+                {
+                    continue;
+                }
+
+                yield return chatMessageContent;
+            }
         }
-
-        await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
-        {
-            type = "evaluate-end",
-        }, JsonSerializerOptions.Web)}\n\n");
-
-        await context.Response.WriteAsync("data: [DONE]\n\n");
-        await context.Response.Body.FlushAsync();
-
-        var entity = new PromptHistory()
-        {
-            Id = Guid.NewGuid(),
-            Requirement = input.Requirements ?? "",
-            Result = result.ToString(),
-            CreatedTime = DateTime.Now,
-            DeepReasoning = deepReasoning.ToString(),
-            Prompt = input.Prompt
-        };
-
-        await dbContext.PromptHistory.AddAsync(entity);
-
-        await dbContext.SaveChangesAsync();
     }
 
     /// <summary>
@@ -761,7 +814,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
-                                   MaxTokens = 32000,
+                                   MaxTokens = MaxToken(ConsoleOptions.DefaultChatModel),
                                    Temperature = 0.7f,
                                })
                            {
@@ -779,5 +832,57 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                 yield return chatMessageContent.Content;
             }
         }
+    }
+
+
+    private static int MaxToken(string model)
+    {
+        if (model.StartsWith("gpt-4.1"))
+        {
+            return 128000;
+        }
+
+        if (model.StartsWith("o"))
+        {
+            return 100000; // OpenAI模型通常支持更高的Token限制
+        }
+
+        if (model.StartsWith("claude"))
+        {
+            return 100000; // Claude模型通常支持更高的Token限制
+        }
+
+        if (model.StartsWith("gemini"))
+        {
+            return 100000; // Gemini模型通常支持更高的Token限制
+        }
+
+        if (model.Equals("Qwen3-235B-A22B", StringComparison.OrdinalIgnoreCase))
+        {
+            return 8192; // Qwen3-235B-A22B模型通常支持更高的Token限制
+        }
+
+        if (model.Equals("Qwen3-30B-A3B", StringComparison.OrdinalIgnoreCase))
+        {
+            return 8192; // Qwen3-30B-A3B模型通常支持更高的Token限制
+        }
+
+        if (model.Equals("Qwen3-32B", StringComparison.OrdinalIgnoreCase))
+        {
+            return 4096;
+        }
+
+
+        // 根据模型返回最大Token数
+        return model switch
+        {
+            "gpt-3.5-turbo" => 4096,
+            "gpt-4o" => 8192,
+            "gpt-4" => 8192,
+            "gpt-4-32k" => 32768,
+            "gpt-4-1106-preview" => 8192,
+            "gpt-4-vision-preview" => 8192,
+            _ => 8192
+        };
     }
 }

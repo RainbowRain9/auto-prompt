@@ -27,7 +27,31 @@ public class UserContext(IHttpContextAccessor httpContextAccessor, JwtService jw
             return userId;
         }
     }
-    
+
+    public string[]? Roles
+    {
+        get
+        {
+            var token = httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return null;
+            }
+
+            token = token.Replace("Bearer ", "");
+
+            var roles = jwtService.GetUserRoleFromTokenOrDefault(token)?.Split(",");
+
+            if (roles == null || roles.Length == 0)
+            {
+                return null;
+            }
+
+            return roles;
+        }
+    }
+
     public bool IsAuthenticated
     {
         get

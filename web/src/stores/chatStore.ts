@@ -79,7 +79,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   isLoading: false,
   error: null,
   systemPrompt: '', // 初始化为空
-  selectedModel: 'gpt-4o', // 默认模型，会从DB加载覆盖
+  selectedModel: 'gpt-4.1', // 默认模型，会从DB加载覆盖
   workspaceId: DEFAULT_WORKSPACE_ID,
   streamingContent: '', // 初始化为空字符串
   streamingReasoningContent: null, // 初始化为null

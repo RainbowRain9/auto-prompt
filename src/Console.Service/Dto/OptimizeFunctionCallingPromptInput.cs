@@ -23,8 +23,4 @@ public class OptimizeFunctionCallingPromptInput
     /// </summary>
     public string ChatModel { get; set; } = "claude-sonnet-4-20250514";
     
-    /// <summary>
-    /// 回复语言
-    /// </summary>
-    public string Language { get; set; } = "zh-CN";
 }

@@ -17,6 +17,11 @@ public class ConsoleOptions
     /// </summary>
     public static string DefaultImageGenerationModel { get; set; }
 
+    /// <summary>
+    /// 用于评分模型的名称
+    /// </summary>
+    public static string ScoreModel { get; set; }
+
     public static void Initialize(IConfiguration configuration)
     {
         OpenAIEndpoint = configuration["OpenAIEndpoint"] ??
@@ -33,5 +38,7 @@ public class ConsoleOptions
         DefaultChatModel = configuration["DEFAULT_CHAT_MODEL"] ?? "gpt-4.1-mini";
 
         DefaultImageGenerationModel = configuration["DEFAULT_IMAGE_GENERATION_MODEL"] ?? "o4-mini";
+
+        ScoreModel = configuration["SCORE_MODEL"] ?? "gpt-4.1";
     }
 }

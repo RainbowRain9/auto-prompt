@@ -31,6 +31,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import {
   searchApiKeys,
   createApiKey,
@@ -50,6 +51,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 const ApiKeysPage: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [apiKeys, setApiKeys] = useState<ApiKeyListDto[]>([]);
   const [total, setTotal] = useState(0);
@@ -90,10 +92,10 @@ const ApiKeysPage: React.FC = () => {
         setApiKeys(response.data.items);
         setTotal(response.data.total);
       } else {
-        message.error(response.message || '加载失败');
+        message.error(response.message || t('apiKeys.messages.loadFailed'));
       }
     } catch (error) {
-      message.error('加载失败: ' + (error as Error).message);
+      message.error(t('apiKeys.messages.loadFailed') + ': ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -122,17 +124,17 @@ const ApiKeysPage: React.FC = () => {
     try {
       const response = await createApiKey(values);
       if (response.success) {
-        message.success('创建成功');
+        message.success(t('apiKeys.messages.createSuccess'));
         setCreateModalVisible(false);
         setNewApiKeyData(response.data);
         setViewModalVisible(true);
         form.resetFields();
         loadData();
       } else {
-        message.error(response.message || '创建失败');
+        message.error(response.message || t('apiKeys.messages.createFailed'));
       }
     } catch (error) {
-      message.error('创建失败: ' + (error as Error).message);
+      message.error(t('apiKeys.messages.createFailed') + ': ' + (error as Error).message);
     }
   };
 
@@ -141,15 +143,15 @@ const ApiKeysPage: React.FC = () => {
     try {
       const response = await updateApiKey(values);
       if (response.success) {
-        message.success('更新成功');
+        message.success(t('apiKeys.messages.updateSuccess'));
         setEditModalVisible(false);
         editForm.resetFields();
         loadData();
       } else {
-        message.error(response.message || '更新失败');
+        message.error(response.message || t('apiKeys.messages.updateFailed'));
       }
     } catch (error) {
-      message.error('更新失败: ' + (error as Error).message);
+      message.error(t('apiKeys.messages.updateFailed') + ': ' + (error as Error).message);
     }
   };
 
@@ -158,13 +160,13 @@ const ApiKeysPage: React.FC = () => {
     try {
       const response = await deleteApiKey(id);
       if (response.success) {
-        message.success('删除成功');
+        message.success(t('apiKeys.messages.deleteSuccess'));
         loadData();
       } else {
-        message.error(response.message || '删除失败');
+        message.error(response.message || t('apiKeys.messages.deleteFailed'));
       }
     } catch (error) {
-      message.error('删除失败: ' + (error as Error).message);
+      message.error(t('apiKeys.messages.deleteFailed') + ': ' + (error as Error).message);
     }
   };
 
@@ -173,13 +175,13 @@ const ApiKeysPage: React.FC = () => {
     try {
       const response = await toggleApiKeyEnabled(id);
       if (response.success) {
-        message.success(response.message || '操作成功');
+        message.success(response.message || t('apiKeys.messages.operationSuccess'));
         loadData();
       } else {
-        message.error(response.message || '操作失败');
+        message.error(response.message || t('apiKeys.messages.operationFailed'));
       }
     } catch (error) {
-      message.error('操作失败: ' + (error as Error).message);
+      message.error(t('apiKeys.messages.operationFailed') + ': ' + (error as Error).message);
     }
   };
 
@@ -188,15 +190,15 @@ const ApiKeysPage: React.FC = () => {
     try {
       const response = await regenerateApiKey(id);
       if (response.success) {
-        message.success('重新生成成功');
+        message.success(t('apiKeys.messages.regenerateSuccess'));
         setNewApiKeyData(response.data);
         setViewModalVisible(true);
         loadData();
       } else {
-        message.error(response.message || '重新生成失败');
+        message.error(response.message || t('apiKeys.messages.regenerateFailed'));
       }
     } catch (error) {
-      message.error('重新生成失败: ' + (error as Error).message);
+      message.error(t('apiKeys.messages.regenerateFailed') + ': ' + (error as Error).message);
     }
   };
 
@@ -204,9 +206,9 @@ const ApiKeysPage: React.FC = () => {
   const handleCopy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      message.success('已复制到剪贴板');
+      message.success(t('apiKeys.messages.copySuccess'));
     } catch (error) {
-      message.error('复制失败');
+      message.error(t('apiKeys.messages.copyFailed'));
     }
   };
 
@@ -235,13 +237,13 @@ const ApiKeysPage: React.FC = () => {
 
   const columns: ColumnsType<ApiKeyListDto> = [
     {
-      title: '名称',
+      title: t('apiKeys.table.name'),
       dataIndex: 'name',
       key: 'name',
       ellipsis: true,
     },
     {
-      title: 'API Key',
+      title: t('apiKeys.table.apiKey'),
       dataIndex: 'key',
       key: 'key',
       width: 200,
@@ -266,49 +268,49 @@ const ApiKeysPage: React.FC = () => {
       ),
     },
     {
-      title: '状态',
+      title: t('apiKeys.table.status'),
       dataIndex: 'isEnabled',
       key: 'isEnabled',
       width: 100,
       render: (enabled: boolean, record: ApiKeyListDto) => (
         <Space direction="vertical" size="small">
           <Tag color={enabled ? 'green' : 'red'}>
-            {enabled ? '已启用' : '已禁用'}
+            {enabled ? t('apiKeys.enabled') : t('apiKeys.disabled')}
           </Tag>
           {record.isExpired && (
-            <Tag color="orange">已过期</Tag>
+            <Tag color="orange">{t('apiKeys.expired')}</Tag>
           )}
         </Space>
       ),
     },
     {
-      title: '使用次数',
+      title: t('apiKeys.table.usageCount'),
       dataIndex: 'usageCount',
       key: 'usageCount',
       width: 100,
     },
     {
-      title: '最后使用',
+      title: t('apiKeys.table.lastUsedTime'),
       dataIndex: 'lastUsedTime',
       key: 'lastUsedTime',
       width: 150,
-      render: (time: string) => time ? dayjs(time).format('YYYY-MM-DD HH:mm') : '-',
+      render: (time: string) => time ? dayjs(time).format('YYYY-MM-DD HH:mm') : t('apiKeys.table.noData'),
     },
     {
-      title: '创建时间',
+      title: t('apiKeys.table.createdTime'),
       dataIndex: 'createdTime',
       key: 'createdTime',
       width: 150,
       render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm'),
     },
     {
-      title: '操作',
+      title: t('apiKeys.table.actions'),
       key: 'action',
       width: 200,
       fixed: 'right',
       render: (_, record: ApiKeyListDto) => (
         <Space>
-          <Tooltip title="编辑">
+          <Tooltip title={t('apiKeys.actions.edit')}>
             <Button
               type="text"
               size="small"
@@ -316,20 +318,20 @@ const ApiKeysPage: React.FC = () => {
               onClick={() => openEditModal(record)}
             />
           </Tooltip>
-          <Tooltip title={record.isEnabled ? '禁用' : '启用'}>
+          <Tooltip title={record.isEnabled ? t('apiKeys.actions.disable') : t('apiKeys.actions.enable')}>
             <Switch
               size="small"
               checked={record.isEnabled}
               onChange={() => handleToggleEnabled(record.id)}
             />
           </Tooltip>
-          <Tooltip title="重新生成">
+          <Tooltip title={t('apiKeys.actions.regenerate')}>
             <Popconfirm
-              title="确定要重新生成此API Key吗？"
-              description="重新生成后，原有的API Key将无法使用。"
+              title={t('apiKeys.confirm.regenerateTitle')}
+              description={t('apiKeys.confirm.regenerateDescription')}
               onConfirm={() => handleRegenerate(record.id)}
-              okText="确定"
-              cancelText="取消"
+              okText={t('apiKeys.confirm.ok')}
+              cancelText={t('apiKeys.confirm.cancel')}
             >
               <Button
                 type="text"
@@ -338,13 +340,13 @@ const ApiKeysPage: React.FC = () => {
               />
             </Popconfirm>
           </Tooltip>
-          <Tooltip title="删除">
+          <Tooltip title={t('apiKeys.actions.delete')}>
             <Popconfirm
-              title="确定要删除此API Key吗？"
-              description="删除后无法恢复，请谨慎操作。"
+              title={t('apiKeys.confirm.deleteTitle')}
+              description={t('apiKeys.confirm.deleteDescription')}
               onConfirm={() => handleDelete(record.id)}
-              okText="确定"
-              cancelText="取消"
+              okText={t('apiKeys.confirm.ok')}
+              cancelText={t('apiKeys.confirm.cancel')}
             >
               <Button
                 type="text"
@@ -367,7 +369,7 @@ const ApiKeysPage: React.FC = () => {
             <Col>
               <Title level={3} style={{ margin: 0 }}>
                 <KeyOutlined style={{ marginRight: '8px' }} />
-                API Key 管理
+                {t('apiKeys.title')}
               </Title>
             </Col>
             <Col>
@@ -376,7 +378,7 @@ const ApiKeysPage: React.FC = () => {
                 icon={<PlusOutlined />}
                 onClick={() => setCreateModalVisible(true)}
               >
-                创建 API Key
+                {t('apiKeys.createApiKey')}
               </Button>
             </Col>
           </Row>
@@ -386,7 +388,7 @@ const ApiKeysPage: React.FC = () => {
           <Row gutter={16}>
             <Col span={8}>
               <Search
-                placeholder="搜索名称或描述"
+                placeholder={t('apiKeys.searchPlaceholder')}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 onSearch={handleSearch}
@@ -395,30 +397,30 @@ const ApiKeysPage: React.FC = () => {
             </Col>
             <Col span={4}>
               <Select
-                placeholder="状态筛选"
+                placeholder={t('apiKeys.statusFilter')}
                 value={enabledFilter}
                 onChange={setEnabledFilter}
                 allowClear
                 style={{ width: '100%' }}
               >
-                <Option value={true}>已启用</Option>
-                <Option value={false}>已禁用</Option>
+                <Option value={true}>{t('apiKeys.enabled')}</Option>
+                <Option value={false}>{t('apiKeys.disabled')}</Option>
               </Select>
             </Col>
             <Col span={4}>
               <Select
-                placeholder="过期筛选"
+                placeholder={t('apiKeys.expiredFilter')}
                 value={expiredFilter}
                 onChange={setExpiredFilter}
                 allowClear
                 style={{ width: '100%' }}
               >
-                <Option value={false}>未过期</Option>
-                <Option value={true}>已过期</Option>
+                <Option value={false}>{t('apiKeys.notExpired')}</Option>
+                <Option value={true}>{t('apiKeys.expired')}</Option>
               </Select>
             </Col>
             <Col span={4}>
-              <Button onClick={handleReset}>重置</Button>
+              <Button onClick={handleReset}>{t('apiKeys.reset')}</Button>
             </Col>
           </Row>
         </div>
@@ -435,7 +437,7 @@ const ApiKeysPage: React.FC = () => {
             total,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条`,
+            showTotal: (total) => t('apiKeys.pagination.total', { total }),
             onChange: (page, size) => {
               setPage(page);
               setPageSize(size);
@@ -446,7 +448,7 @@ const ApiKeysPage: React.FC = () => {
 
       {/* 创建模态框 */}
       <Modal
-        title="创建 API Key"
+        title={t('apiKeys.modal.createTitle')}
         open={createModalVisible}
         onCancel={() => {
           setCreateModalVisible(false);
@@ -462,47 +464,47 @@ const ApiKeysPage: React.FC = () => {
         >
           <Form.Item
             name="name"
-            label="名称"
+            label={t('apiKeys.modal.nameLabel')}
             rules={[
-              { required: true, message: '请输入名称' },
-              { max: 100, message: '名称长度不能超过100个字符' },
+              { required: true, message: t('apiKeys.modal.nameRequired') },
+              { max: 100, message: t('apiKeys.modal.nameMaxLength') },
             ]}
           >
-            <Input placeholder="请输入API Key名称" />
+            <Input placeholder={t('apiKeys.modal.namePlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="openAiApiKey"
-            label="OpenAI API Key"
+            label={t('apiKeys.modal.openAiApiKeyLabel')}
             rules={[
-              { required: true, message: '请输入OpenAI API Key' },
-              { max: 200, message: 'API Key长度不能超过200个字符' },
+              { required: true, message: t('apiKeys.modal.openAiApiKeyRequired') },
+              { max: 200, message: t('apiKeys.modal.openAiApiKeyMaxLength') },
             ]}
           >
-            <Input.Password placeholder="请输入要绑定的OpenAI API Key" />
+            <Input.Password placeholder={t('apiKeys.modal.openAiApiKeyPlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label="描述"
+            label={t('apiKeys.modal.descriptionLabel')}
             rules={[
-              { max: 500, message: '描述长度不能超过500个字符' },
+              { max: 500, message: t('apiKeys.modal.descriptionMaxLength') },
             ]}
           >
             <TextArea 
               rows={3} 
-              placeholder="请输入描述信息（可选）" 
+              placeholder={t('apiKeys.modal.descriptionPlaceholder')} 
             />
           </Form.Item>
 
           <Form.Item
             name="expiresAt"
-            label="过期时间"
+            label={t('apiKeys.modal.expiresAtLabel')}
           >
             <DatePicker
               showTime
               style={{ width: '100%' }}
-              placeholder="选择过期时间（可选）"
+              placeholder={t('apiKeys.modal.expiresAtPlaceholder')}
               disabledDate={(current) => current && current < dayjs().startOf('day')}
             />
           </Form.Item>
@@ -515,10 +517,10 @@ const ApiKeysPage: React.FC = () => {
                   form.resetFields();
                 }}
               >
-                取消
+                {t('apiKeys.modal.cancel')}
               </Button>
               <Button type="primary" htmlType="submit">
-                创建
+                {t('apiKeys.modal.create')}
               </Button>
             </Space>
           </Form.Item>
@@ -527,7 +529,7 @@ const ApiKeysPage: React.FC = () => {
 
       {/* 编辑模态框 */}
       <Modal
-        title="编辑 API Key"
+        title={t('apiKeys.modal.editTitle')}
         open={editModalVisible}
         onCancel={() => {
           setEditModalVisible(false);
@@ -547,55 +549,55 @@ const ApiKeysPage: React.FC = () => {
 
           <Form.Item
             name="name"
-            label="名称"
+            label={t('apiKeys.modal.nameLabel')}
             rules={[
-              { required: true, message: '请输入名称' },
-              { max: 100, message: '名称长度不能超过100个字符' },
+              { required: true, message: t('apiKeys.modal.nameRequired') },
+              { max: 100, message: t('apiKeys.modal.nameMaxLength') },
             ]}
           >
-            <Input placeholder="请输入API Key名称" />
+            <Input placeholder={t('apiKeys.modal.namePlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="openAiApiKey"
-            label="OpenAI API Key"
+            label={t('apiKeys.modal.openAiApiKeyLabel')}
             rules={[
-              { required: true, message: '请输入OpenAI API Key' },
-              { max: 200, message: 'API Key长度不能超过200个字符' },
+              { required: true, message: t('apiKeys.modal.openAiApiKeyRequired') },
+              { max: 200, message: t('apiKeys.modal.openAiApiKeyMaxLength') },
             ]}
           >
-            <Input.Password placeholder="请输入要绑定的OpenAI API Key" />
+            <Input.Password placeholder={t('apiKeys.modal.openAiApiKeyPlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label="描述"
+            label={t('apiKeys.modal.descriptionLabel')}
             rules={[
-              { max: 500, message: '描述长度不能超过500个字符' },
+              { max: 500, message: t('apiKeys.modal.descriptionMaxLength') },
             ]}
           >
             <TextArea 
               rows={3} 
-              placeholder="请输入描述信息（可选）" 
+              placeholder={t('apiKeys.modal.descriptionPlaceholder')} 
             />
           </Form.Item>
 
           <Form.Item
             name="isEnabled"
-            label="启用状态"
+            label={t('apiKeys.modal.isEnabledLabel')}
             valuePropName="checked"
           >
-            <Switch checkedChildren="启用" unCheckedChildren="禁用" />
+            <Switch checkedChildren={t('apiKeys.modal.enabledText')} unCheckedChildren={t('apiKeys.modal.disabledText')} />
           </Form.Item>
 
           <Form.Item
             name="expiresAt"
-            label="过期时间"
+            label={t('apiKeys.modal.expiresAtLabel')}
           >
             <DatePicker
               showTime
               style={{ width: '100%' }}
-              placeholder="选择过期时间（可选）"
+              placeholder={t('apiKeys.modal.expiresAtPlaceholder')}
               disabledDate={(current) => current && current < dayjs().startOf('day')}
             />
           </Form.Item>
@@ -608,10 +610,10 @@ const ApiKeysPage: React.FC = () => {
                   editForm.resetFields();
                 }}
               >
-                取消
+                {t('apiKeys.modal.cancel')}
               </Button>
               <Button type="primary" htmlType="submit">
-                保存
+                {t('apiKeys.modal.save')}
               </Button>
             </Space>
           </Form.Item>
@@ -620,7 +622,7 @@ const ApiKeysPage: React.FC = () => {
 
       {/* 查看新创建的API Key模态框 */}
       <Modal
-        title="API Key 创建成功"
+        title={t('apiKeys.viewModal.title')}
         open={viewModalVisible}
         onCancel={() => {
           setViewModalVisible(false);
@@ -632,7 +634,7 @@ const ApiKeysPage: React.FC = () => {
             icon={<CopyOutlined />}
             onClick={() => handleCopy(newApiKeyData?.key || '')}
           >
-            复制 API Key
+            {t('apiKeys.viewModal.copyApiKey')}
           </Button>,
           <Button
             key="close"
@@ -642,7 +644,7 @@ const ApiKeysPage: React.FC = () => {
               setNewApiKeyData(null);
             }}
           >
-            关闭
+            {t('apiKeys.viewModal.close')}
           </Button>,
         ]}
         width={600}
@@ -650,20 +652,20 @@ const ApiKeysPage: React.FC = () => {
         {newApiKeyData && (
           <div>
             <Alert
-              message="请妥善保存您的API Key"
-              description="出于安全考虑，此API Key只会显示一次，请立即复制并妥善保存。"
+              message={t('apiKeys.viewModal.securityWarning')}
+              description={t('apiKeys.viewModal.securityDescription')}
               type="warning"
               showIcon
               style={{ marginBottom: '16px' }}
             />
             
             <div style={{ marginBottom: '16px' }}>
-              <Text strong>名称：</Text>
+              <Text strong>{t('apiKeys.viewModal.nameLabel')}</Text>
               <Text>{newApiKeyData.name}</Text>
             </div>
             
             <div style={{ marginBottom: '16px' }}>
-              <Text strong>API Key：</Text>
+              <Text strong>{t('apiKeys.viewModal.apiKeyLabel')}</Text>
               <div style={{ 
                 padding: '12px', 
                 borderRadius: '6px',
@@ -676,7 +678,7 @@ const ApiKeysPage: React.FC = () => {
             
             {newApiKeyData.description && (
               <div style={{ marginBottom: '16px' }}>
-                <Text strong>描述：</Text>
+                <Text strong>{t('apiKeys.viewModal.descriptionLabel')}</Text>
                 <Text>{newApiKeyData.description}</Text>
               </div>
             )}

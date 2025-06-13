@@ -19,15 +19,20 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'zh', // 默认语言
-    fallbackLng: 'zh',
+    // 不设置lng，让LanguageDetector自动检测浏览器语言
+    fallbackLng: 'zh', // 如果检测不到支持的语言，则使用中文作为后备语言
     interpolation: {
       escapeValue: false,
     },
     detection: {
-      order: ['localStorage', 'navigator'],
+      // 检测顺序：本地存储 -> 浏览器语言 -> HTML标签
+      order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
     },
+    // 支持的语言白名单
+    supportedLngs: ['zh', 'en'],
+    // 当检测到的语言不在支持列表中时，使用后备语言
+    nonExplicitSupportedLngs: true,
   });
 
 export default i18n; 

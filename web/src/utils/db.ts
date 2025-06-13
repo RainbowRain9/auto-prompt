@@ -186,7 +186,7 @@ export const initializeDefaultData = async () => {
   if (!defaultConfig) {
     await db.put(CONFIG_STORE_NAME, {
       workspaceId: DEFAULT_WORKSPACE_ID,
-      selectedModel: 'gpt-4o', // 默认模型
+      selectedModel: 'gpt-4.1', // 默认模型
       systemPrompt: '',       // 默认系统提示
     });
   }

@@ -219,8 +219,8 @@ const ImageGeneration: React.FC = () => {
     const initializeModels = async () => {
       const response = await fetchModels();
       // 如果表单还没有设置模型值，使用默认图片模型
-      if (response.defaultImageGenerationModel && !form.getFieldValue('model')) {
-        form.setFieldValue('model', response.defaultImageGenerationModel);
+      if (response.imageModels && !form.getFieldValue('model')) {
+        form.setFieldValue('model', response.imageModels[0].id);
       }
     };
     initializeModels();

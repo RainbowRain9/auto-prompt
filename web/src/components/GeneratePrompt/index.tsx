@@ -233,6 +233,12 @@ export default function GeneratePrompt({
                             if (data.message) {
                                 setEvaluationContent(prev => prev + data.message);
                             }
+                        } else if (data.type === "error") {
+                            // 处理错误类型
+                            console.error('生成过程中发生错误:', data.message || data.error);
+                            message.error(data.message || data.error || t('generatePrompt.generateFailed'));
+                            setStep(0);
+                            break;
                         } else if (data.type === "message") {
                             if (data.message) {
                                 setGeneratedPrompt(prev => prev + data.message);

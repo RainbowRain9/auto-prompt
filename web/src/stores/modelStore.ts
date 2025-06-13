@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { getModels } from '../api/modelApi';
 
 export interface Model {
@@ -24,6 +23,8 @@ interface ModelState {
   fetchModels: () => Promise<{
     defaultChatModel: string;
     defaultImageGenerationModel: string;
+    imageModels: Model[];
+    chatModels: Model[];
   }>;
   getChatModelOptions: () => { value: string; label: string }[];
   getImageModelOptions: () => { value: string; label: string }[];
@@ -32,109 +33,98 @@ interface ModelState {
 // 缓存时间（毫秒）- 5分钟
 const CACHE_DURATION = 5 * 60 * 1000;
 
-export const useModelStore = create<ModelState>()(
-  persist(
-    (set, get) => ({
-      chatModels: [],
-      imageModels: [],
-      isLoading: false,
-      error: null,
-      lastFetched: 0,
-      defaultImageGenerationModel: '',
-      defaultChatModel: '',
-      fetchModels: async () => {
-        const { lastFetched, isLoading, defaultChatModel, defaultImageGenerationModel } = get();
-        const now = Date.now();
+export const useModelStore = create<ModelState>((set, get) => ({
+  chatModels: [],
+  imageModels: [],
+  isLoading: false,
+  error: null,
+  lastFetched: 0,
+  defaultImageGenerationModel: '',
+  defaultChatModel: '',
+  fetchModels: async () => {
+    const { lastFetched, isLoading, defaultChatModel, defaultImageGenerationModel } = get();
+    const now = Date.now();
 
-        // 如果正在加载或缓存未过期，则返回当前默认值
-        if (isLoading || (now - lastFetched < CACHE_DURATION && lastFetched > 0)) {
-          return {
-            defaultChatModel,
-            defaultImageGenerationModel
-          };
-        }
-
-        set({ isLoading: true, error: null });
-
-        try {
-          const response = await getModels();
-
-          if (response && response.chatModels && response.imageModels) {
-            set({
-              chatModels: response.chatModels,
-              imageModels: response.imageModels,
-              defaultChatModel: response.defaultChatModel,
-              defaultImageGenerationModel: response.defaultImageGenerationModel,
-              lastFetched: now,
-              isLoading: false,
-              error: null,
-            });
-
-            return {
-              defaultChatModel: response.defaultChatModel,
-              defaultImageGenerationModel: response.defaultImageGenerationModel
-            };
-          } else {
-            throw new Error('Invalid response format');
-          }
-        } catch (error) {
-          console.error('获取模型列表失败:', error);
-          set({
-            error: error instanceof Error ? error.message : '获取模型列表失败',
-            isLoading: false,
-          });
-
-          const defaultChatModels: Model[] = [
-            { id: 'gpt-4o', objectType: 'model', created: Date.now() },
-            { id: 'gpt-4o-mini', objectType: 'model', created: Date.now() },
-            { id: 'gpt-4-turbo', objectType: 'model', created: Date.now() },
-          ];
-
-          const defaultImageModels: Model[] = [
-            { id: 'gpt-image-1', objectType: 'model', created: Date.now() },
-            { id: 'dall-e-3', objectType: 'model', created: Date.now() },
-            { id: 'gpt-image-1', objectType: 'model', created: Date.now() },
-          ];
-
-          set({
-            chatModels: defaultChatModels,
-            imageModels: defaultImageModels,
-            defaultChatModel: defaultChatModels[0].id,
-            defaultImageGenerationModel: defaultImageModels[0].id,
-            lastFetched: now,
-          });
-
-          return {
-            defaultChatModel: defaultChatModels[0].id,
-            defaultImageGenerationModel: defaultImageModels[0].id
-          };
-        }
-      },
-
-      getChatModelOptions: () => {
-        const { chatModels } = get();
-        return chatModels.map(model => ({
-          value: model.id,
-          label: model.id,
-        }));
-      },
-
-      getImageModelOptions: () => {
-        const { imageModels } = get();
-        return imageModels.map(model => ({
-          value: model.id,
-          label: model.id,
-        }));
-      },
-    }),
-    {
-      name: 'model-storage',
-      // 只持久化模型数据，不持久化 loading 和 error 状态
-      partialize: (state) => ({
-        chatModels: state.chatModels,
-        imageModels: state.imageModels,
-        lastFetched: state.lastFetched,
-      }),
+    // 如果正在加载或缓存未过期，则返回当前默认值
+    if (isLoading || (now - lastFetched < CACHE_DURATION && lastFetched > 0)) {
+      return {
+        defaultChatModel,
+        defaultImageGenerationModel
+      };
     }
-  )
-); 
+
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await getModels();
+
+      if (response && response.chatModels && response.imageModels) {
+        set({
+          chatModels: response.chatModels,
+          imageModels: response.imageModels,
+          defaultChatModel: response.defaultChatModel,
+          defaultImageGenerationModel: response.defaultImageGenerationModel,
+          lastFetched: now,
+          isLoading: false,
+          error: null,
+        });
+
+        return {
+          defaultChatModel: response.defaultChatModel,
+          defaultImageGenerationModel: response.defaultImageGenerationModel,
+          imageModels: response.imageModels,
+          chatModels: response.chatModels
+        };
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('获取模型列表失败:', error);
+      set({
+        error: error instanceof Error ? error.message : '获取模型列表失败',
+        isLoading: false,
+      });
+
+      const defaultChatModels: Model[] = [
+        { id: 'gpt-4o', objectType: 'model', created: Date.now() },
+        { id: 'gpt-4o-mini', objectType: 'model', created: Date.now() },
+        { id: 'gpt-4-turbo', objectType: 'model', created: Date.now() },
+      ];
+
+      const defaultImageModels: Model[] = [
+        { id: 'gpt-image-1', objectType: 'model', created: Date.now() },
+        { id: 'dall-e-3', objectType: 'model', created: Date.now() },
+        { id: 'gpt-image-1', objectType: 'model', created: Date.now() },
+      ];
+
+      set({
+        chatModels: defaultChatModels,
+        imageModels: defaultImageModels,
+        defaultChatModel: defaultChatModels[0].id,
+        defaultImageGenerationModel: defaultImageModels[0].id,
+        lastFetched: now,
+      });
+
+      return {
+        defaultChatModel: defaultChatModels[0].id,
+        defaultImageGenerationModel: defaultImageModels[0].id
+      };
+    }
+  },
+
+  getChatModelOptions: () => {
+    const { chatModels } = get();
+    return chatModels.map(model => ({
+      value: model.id,
+      label: model.id,
+    }));
+  },
+
+  getImageModelOptions: () => {
+    const { imageModels } = get();
+    return imageModels.map(model => ({
+      value: model.id,
+      label: model.id,
+    }));
+  },
+})); 

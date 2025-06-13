@@ -12,6 +12,7 @@ import {
   SettingOutlined,
   PictureOutlined,
   KeyOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -260,9 +261,15 @@ const Sidebar: React.FC<SidebarProps> = ({
       label: t('nav.image'),
     },
     {
+      key: 'scores',
+      icon: <TrophyOutlined />,
+      label: t('nav.scores'),
+      onClick: () => window.open('/scores', '_blank'),
+    },
+    {
       key: 'apikeys',
       icon: <KeyOutlined />,
-      label: 'API Key 管理',
+      label: t('nav.apikeys'),
     }
   ];
 
@@ -317,7 +324,13 @@ const Sidebar: React.FC<SidebarProps> = ({
               ...item,
               label: null,
             }))}
-            onSelect={({ key }) => onMenuSelect?.(key)}
+            onSelect={({ key }) => {
+              if (key === 'scores') {
+                window.open('/scores', '_blank');
+              } else {
+                onMenuSelect?.(key);
+              }
+            }}
           />
         </MenuSection>
       </StyledSider>
@@ -348,7 +361,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           mode="inline"
           selectedKeys={[selectedKey]}
           items={menuItems}
-          onSelect={({ key }) => onMenuSelect?.(key)}
+          onSelect={({ key }) => {
+            if (key === 'scores') {
+              window.open('/scores', '_blank');
+            } else {
+              onMenuSelect?.(key);
+            }
+          }}
         />
       </MenuSection>
 
