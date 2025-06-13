@@ -41,7 +41,7 @@ services:
       # 数据库配置
       # SQLite配置（默认）
       - ConnectionStrings:Type=sqlite
-      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
+      - ConnectionStrings:Default=Data Source=/app/data/ConsoleService.db
       
       # PostgreSQL配置（取消注释以使用PostgreSQL）
       # - ConnectionStrings:Type=postgresql
