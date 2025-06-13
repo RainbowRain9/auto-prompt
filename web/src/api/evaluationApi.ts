@@ -7,10 +7,11 @@ const getApiBaseUrl = () => {
 
 // 获取认证头
 const getAuthHeaders = () => {
-  const { token } = useAuthStore.getState();
+  const { apiKey, token } = useAuthStore.getState();
   return {
     'Content-Type': 'application/json',
-    'api-key': token || '',
+    'api-key': apiKey || '',
+    'Authorization': `Bearer ${token}`,
   };
 };
 

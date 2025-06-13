@@ -3,8 +3,8 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Console.Core;
+using Console.Core.Entities;
 using Console.Service.Dto;
-using Console.Service.Entities;
 using Console.Service.Infrastructure;
 using FastService;
 

@@ -50,7 +50,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getModels } from '../../api/modelApi';
 import { streamEvaluateModels, getEvaluationExamples } from '../../api/evaluationApi';
-import { evaluationDB, type EvaluationRecord } from '../../utils/indexedDB';
+import { evaluationDB, type EvaluationRecord } from '../../api/evaluationHistoryApi';
 import EvaluationCharts from '../../components/EvaluationCharts';
 import EvaluationHistory from '../../components/EvaluationHistory';
 import type {
@@ -79,9 +79,9 @@ interface ModelEvaluationState {
 
 const ModelEvaluationPage: React.FC = () => {
   const { theme } = useThemeStore();
-  const { token } = useAuthStore();
+  const { apiKey } = useAuthStore();
   const [form] = Form.useForm();
-  
+
   // 状态管理
   const [models, setModels] = useState<string[]>([]);
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
@@ -92,7 +92,7 @@ const ModelEvaluationPage: React.FC = () => {
   const [completedModels, setCompletedModels] = useState(0);
   const [startTime, setStartTime] = useState<number>(0);
   const [isLoadingModels, setIsLoadingModels] = useState(true);
-  
+
   // 示例数据相关状态
   const [examples, setExamples] = useState<EvaluationExample[]>([]);
   const [selectedExampleId, setSelectedExampleId] = useState<string>('');
@@ -116,7 +116,7 @@ const ModelEvaluationPage: React.FC = () => {
         const chatModels = response.chatModels || [];
         const modelList = chatModels.map((model: any) => model.id);
         setModels(modelList);
-        
+
         // 默认选择前3个模型
         if (modelList.length > 0) {
           setSelectedModels(modelList.slice(0, Math.min(3, modelList.length)));
@@ -138,7 +138,7 @@ const ModelEvaluationPage: React.FC = () => {
         setIsLoadingExamples(true);
         const examplesData = await getEvaluationExamples();
         setExamples(examplesData);
-        
+
         // 默认选择第一个示例
         if (examplesData.length > 0) {
           const firstExample = examplesData[0];
@@ -195,87 +195,131 @@ const ModelEvaluationPage: React.FC = () => {
     loadHistory();
   }, []);
 
-  // 保存评估结果到数据库
-  const saveEvaluationToDatabase = async (evaluationStates: ModelEvaluationState) => {
+  // 重新加载评估历史列表的函数
+  const reloadEvaluationHistory = async () => {
     try {
-      const completedResults: { [model: string]: any } = {};
-      const statistics = getStatistics();
-      
-      // 处理评估结果
-      Object.entries(evaluationStates).forEach(([model, state]) => {
-        if (state.status === 'completed' && state.result) {
-          completedResults[model] = {
-            score: state.result.score,
-            description: state.result.description,
-            comment: state.result.comment,
-            tags: state.result.tags || [],
-            executionCount: state.result.executionCount || 1,
-            startTime: state.startTime || 0,
-            endTime: state.endTime || 0,
-            duration: (state.endTime || 0) - (state.startTime || 0)
-          };
-        }
-      });
-
-      if (Object.keys(completedResults).length === 0) {
-        return;
-      }
-
-      // 创建评估记录
-      const selectedExample = examples.find(ex => ex.id === selectedExampleId);
-      const currentFormValues = form.getFieldsValue();
-      
-      const evaluationRecord: EvaluationRecord = {
-        id: `eval_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        title: selectedExample ? `${selectedExample.title} - ${new Date().toLocaleString()}` : `评估 - ${new Date().toLocaleString()}`,
-        config: {
-          models: selectedModels,
-          prompt: currentFormValues.prompt,
-          request: currentFormValues.request,
-          executionCount: currentFormValues.executionCount || 1,
-          enableOptimization: currentFormValues.enableOptimization !== false,
-          exampleId: selectedExampleId,
-          exampleTitle: selectedExample?.title,
-          exampleCategory: selectedExample?.category
-        },
-        results: completedResults,
-        statistics: {
-          totalModels: totalModels,
-          completedModels: completedModels,
-          avgScore: statistics.avgScore,
-          totalTime: statistics.totalTime,
-          scoreDistribution: {},
-          tagDistribution: {}
-        }
-      };
-
-      // 计算评分分布和标签分布
-      Object.values(completedResults).forEach(result => {
-        if (result.score >= 90) evaluationRecord.statistics.scoreDistribution['90-100'] = (evaluationRecord.statistics.scoreDistribution['90-100'] || 0) + 1;
-        else if (result.score >= 80) evaluationRecord.statistics.scoreDistribution['80-89'] = (evaluationRecord.statistics.scoreDistribution['80-89'] || 0) + 1;
-        else if (result.score >= 70) evaluationRecord.statistics.scoreDistribution['70-79'] = (evaluationRecord.statistics.scoreDistribution['70-79'] || 0) + 1;
-        else if (result.score >= 60) evaluationRecord.statistics.scoreDistribution['60-69'] = (evaluationRecord.statistics.scoreDistribution['60-69'] || 0) + 1;
-        else evaluationRecord.statistics.scoreDistribution['0-59'] = (evaluationRecord.statistics.scoreDistribution['0-59'] || 0) + 1;
-
-        result.tags.forEach((tag: string) => {
-          evaluationRecord.statistics.tagDistribution[tag] = (evaluationRecord.statistics.tagDistribution[tag] || 0) + 1;
-        });
-      });
-
-      await evaluationDB.saveEvaluation(evaluationRecord);
-      setCurrentEvaluationRecord(evaluationRecord);
-      
+      setIsLoadingHistory(true);
       const history = await evaluationDB.getAllEvaluations();
       setEvaluationHistory(history);
-      
-      message.success('评估结果已保存到本地数据库');
     } catch (error) {
-      console.error('保存评估结果失败:', error);
-      message.error('保存评估结果失败');
+      console.error('重新加载历史记录失败:', error);
+      message.error('重新加载历史记录失败');
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
+
+  // 处理SSE事件
+  const handleSSEEvent = useCallback((eventData: SSEEventData) => {
+    const { eventType, data } = eventData;
+
+    switch (eventType) {
+      case 'start':
+        setTotalModels(data.totalModels);
+        setCompletedModels(0);
+        setStartTime(Date.now());
+        // 初始化所有模型状态
+        const initialStates: ModelEvaluationState = {};
+        selectedModels.forEach(model => {
+          initialStates[model] = {
+            status: 'pending',
+            step: '等待开始',
+            startTime: Date.now()
+          };
+        });
+        setEvaluationStates(initialStates);
+        break;
+
+      case 'model-start':
+        setEvaluationStates(prev => ({
+          ...prev,
+          [data.model]: {
+            ...prev[data.model],
+            status: 'processing',
+            step: '开始处理',
+            startTime: Date.now()
+          }
+        }));
+        break;
+
+      case 'optimize-start':
+        setEvaluationStates(prev => ({
+          ...prev,
+          [data.model]: { ...prev[data.model], step: '🔧 优化提示词' }
+        }));
+        break;
+
+      case 'optimize-complete':
+        setEvaluationStates(prev => ({
+          ...prev,
+          [data.model]: { ...prev[data.model], step: '✅ 提示词优化完成' }
+        }));
+        break;
+
+      case 'execute-original':
+        setEvaluationStates(prev => ({
+          ...prev,
+          [data.model]: { ...prev[data.model], step: data.execution ? `🚀 执行原始提示词 (第${data.execution}次)` : '🚀 执行原始提示词' }
+        }));
+        break;
+
+      case 'execute-optimized':
+        setEvaluationStates(prev => ({
+          ...prev,
+          [data.model]: { ...prev[data.model], step: data.execution ? `⚡ 执行优化提示词 (第${data.execution}次)` : '⚡ 执行优化提示词' }
+        }));
+        break;
+
+      case 'scoring':
+        setEvaluationStates(prev => ({
+          ...prev,
+          [data.model]: { ...prev[data.model], step: data.execution ? `📊 智能评分中 (第${data.execution}次)` : '📊 智能评分中' }
+        }));
+        break;
+
+      case 'model-complete':
+        setEvaluationStates(prev => ({
+          ...prev,
+          [data.model]: {
+            ...prev[data.model],
+            status: 'completed',
+            step: data.result?.executionCount > 1 ? `🎉 评估完成 (${data.result.executionCount}次执行)` : '🎉 评估完成',
+            result: data.result,
+            endTime: Date.now()
+          }
+        }));
+        setCompletedModels(prev => prev + 1);
+        break;
+
+      case 'model-error':
+        setEvaluationStates(prev => ({
+          ...prev,
+          [data.model]: {
+            ...prev[data.model],
+            status: 'error',
+            step: '❌ 评估失败',
+            error: data.error || '未知错误',
+            result: data.result,
+            endTime: Date.now()
+          }
+        }));
+        setCompletedModels(prev => prev + 1);
+        break;
+
+      case 'complete':
+        setIsRunning(false);
+        setStreamController(null);
+        message.success('🎊 所有模型评估完成！');
+        // 后端已自动保存评估记录，这里只需要重新加载历史记录
+        reloadEvaluationHistory().then(() => {
+          message.success('评估记录已自动保存');
+        }).catch((error) => {
+          console.error('重新加载历史记录失败:', error);
+          message.warning('评估完成，但重新加载历史记录失败');
+        });
+        break;
+    }
+  }, [selectedModels, reloadEvaluationHistory]);
 
   // 历史记录管理函数
   const handleViewHistoryEvaluation = (evaluation: EvaluationRecord) => {
@@ -286,8 +330,7 @@ const ModelEvaluationPage: React.FC = () => {
   const handleDeleteEvaluation = async (id: string) => {
     try {
       await evaluationDB.deleteEvaluation(id);
-      const history = await evaluationDB.getAllEvaluations();
-      setEvaluationHistory(history);
+      await reloadEvaluationHistory();
       message.success('记录已删除');
     } catch (error) {
       console.error('删除记录失败:', error);
@@ -307,113 +350,6 @@ const ModelEvaluationPage: React.FC = () => {
     }
   };
 
-  // 处理SSE事件
-  const handleSSEEvent = useCallback((eventData: SSEEventData) => {
-    const { eventType, data } = eventData;
-    
-    switch (eventType) {
-      case 'start':
-        setTotalModels(data.totalModels);
-        setCompletedModels(0);
-        setStartTime(Date.now());
-        // 初始化所有模型状态
-        const initialStates: ModelEvaluationState = {};
-        selectedModels.forEach(model => {
-          initialStates[model] = { 
-            status: 'pending', 
-            step: '等待开始',
-            startTime: Date.now()
-          };
-        });
-        setEvaluationStates(initialStates);
-        break;
-        
-      case 'model-start':
-        setEvaluationStates(prev => ({
-          ...prev,
-          [data.model]: { 
-            ...prev[data.model], 
-            status: 'processing', 
-            step: '开始处理',
-            startTime: Date.now()
-          }
-        }));
-        break;
-        
-      case 'optimize-start':
-        setEvaluationStates(prev => ({
-          ...prev,
-          [data.model]: { ...prev[data.model], step: '🔧 优化提示词' }
-        }));
-        break;
-        
-      case 'optimize-complete':
-        setEvaluationStates(prev => ({
-          ...prev,
-          [data.model]: { ...prev[data.model], step: '✅ 提示词优化完成' }
-        }));
-        break;
-        
-      case 'execute-original':
-        setEvaluationStates(prev => ({
-          ...prev,
-          [data.model]: { ...prev[data.model], step: data.execution ? `🚀 执行原始提示词 (第${data.execution}次)` : '🚀 执行原始提示词' }
-        }));
-        break;
-        
-      case 'execute-optimized':
-        setEvaluationStates(prev => ({
-          ...prev,
-          [data.model]: { ...prev[data.model], step: data.execution ? `⚡ 执行优化提示词 (第${data.execution}次)` : '⚡ 执行优化提示词' }
-        }));
-        break;
-        
-      case 'scoring':
-        setEvaluationStates(prev => ({
-          ...prev,
-          [data.model]: { ...prev[data.model], step: data.execution ? `📊 智能评分中 (第${data.execution}次)` : '📊 智能评分中' }
-        }));
-        break;
-        
-      case 'model-complete':
-        setEvaluationStates(prev => ({
-          ...prev,
-          [data.model]: {
-            ...prev[data.model],
-            status: 'completed',
-            step: data.result?.executionCount > 1 ? `🎉 评估完成 (${data.result.executionCount}次执行)` : '🎉 评估完成',
-            result: data.result,
-            endTime: Date.now()
-          }
-        }));
-        setCompletedModels(prev => prev + 1);
-        break;
-        
-      case 'model-error':
-        setEvaluationStates(prev => ({
-          ...prev,
-          [data.model]: {
-            ...prev[data.model],
-            status: 'error',
-            step: '❌ 评估失败',
-            error: data.error || '未知错误',
-            result: data.result,
-            endTime: Date.now()
-          }
-        }));
-        setCompletedModels(prev => prev + 1);
-        break;
-        
-      case 'complete':
-        setIsRunning(false);
-        setStreamController(null);
-        message.success('🎊 所有模型评估完成！');
-        // 保存评估结果到数据库
-        saveEvaluationToDatabase(evaluationStates);
-        break;
-    }
-  }, [selectedModels]);
-
   // 处理示例选择
   const handleExampleChange = (exampleId: string) => {
     const selectedExample = examples.find(ex => ex.id === exampleId);
@@ -431,7 +367,7 @@ const ModelEvaluationPage: React.FC = () => {
   const handleStartEvaluation = async () => {
     try {
       const values = await form.validateFields();
-      
+
       if (!selectedModels.length) {
         message.error('请至少选择一个模型进行评估');
         return;
@@ -448,11 +384,17 @@ const ModelEvaluationPage: React.FC = () => {
         models: selectedModels,
         prompt: values.prompt,
         request: values.request,
-        apiKey: token || '',
+        apiKey: apiKey || '',
         executionCount: values.executionCount || 1,
         enableOptimization: values.enableOptimization !== false,
         requirements: values.requirements
       };
+
+      // 如果token为空，则提示用户输入token
+      if (!apiKey) {
+        message.error('请先填写API Key');
+        return;
+      }
 
       const controller = streamEvaluateModels(
         input,
@@ -520,13 +462,13 @@ const ModelEvaluationPage: React.FC = () => {
   // 计算统计信息
   const getStatistics = () => {
     const completed = Object.values(evaluationStates).filter(s => s.status === 'completed');
-    const avgScore = completed.length > 0 
-      ? completed.reduce((sum, s) => sum + (s.result?.score || 0), 0) / completed.length 
+    const avgScore = completed.length > 0
+      ? completed.reduce((sum, s) => sum + (s.result?.score || 0), 0) / completed.length
       : 0;
-    const totalTime = startTime > 0 && completedModels === totalModels 
-      ? Date.now() - startTime 
+    const totalTime = startTime > 0 && completedModels === totalModels
+      ? Date.now() - startTime
       : 0;
-    
+
     return { avgScore, totalTime, completed: completed.length };
   };
 
@@ -549,8 +491,8 @@ const ModelEvaluationPage: React.FC = () => {
   const statistics = getStatistics();
 
   return (
-    <div style={{ 
-      height: '100vh', 
+    <div style={{
+      height: '100vh',
       overflow: 'hidden',
       background: theme === 'dark' ? '#141414' : '#f5f5f5'
     }}>
@@ -570,8 +512,8 @@ const ModelEvaluationPage: React.FC = () => {
             children: (
               <Row style={{ height: 'calc(100vh - 46px)' }} gutter={0}>
                 {/* 左侧配置区域 */}
-                <Col span={10} style={{ 
-                  height: '100%', 
+                <Col span={10} style={{
+                  height: '100%',
                   borderRight: `1px solid ${theme === 'dark' ? '#434343' : '#f0f0f0'}`,
                   background: theme === 'dark' ? '#1f1f1f' : '#ffffff'
                 }}>
@@ -582,7 +524,7 @@ const ModelEvaluationPage: React.FC = () => {
                         模型评估工作台
                       </Title>
                     </div>
-                    
+
                     <Form
                       form={form}
                       layout="vertical"
@@ -613,43 +555,43 @@ const ModelEvaluationPage: React.FC = () => {
                               const label = option.label?.toString().toLowerCase() || '';
                               const children = option.children as any;
                               if (!children || !children.props) return false;
-                              
-                              const title = children.props.children?.find((child: any) => 
+
+                              const title = children.props.children?.find((child: any) =>
                                 child?.props?.style?.fontWeight === 'bold'
                               )?.props?.children || '';
-                              
-                              const description = children.props.children?.find((child: any) => 
+
+                              const description = children.props.children?.find((child: any) =>
                                 child?.props?.style?.fontSize === '12px'
                               )?.props?.children || '';
-                              
+
                               return label.toLowerCase().includes(input.toLowerCase()) ||
-                                     title.toLowerCase().includes(input.toLowerCase()) ||
-                                     description.toLowerCase().includes(input.toLowerCase());
+                                title.toLowerCase().includes(input.toLowerCase()) ||
+                                description.toLowerCase().includes(input.toLowerCase());
                             }}
                           >
                             {examples.map(example => (
-                              <Option 
-                                key={example.id} 
+                              <Option
+                                key={example.id}
                                 value={example.id}
                                 label={`${example.title} - ${example.category}`}
                               >
-                                <div style={{ 
-                                  display: 'flex', 
-                                  alignItems: 'flex-start', 
+                                <div style={{
+                                  display: 'flex',
+                                  alignItems: 'flex-start',
                                   justifyContent: 'space-between',
                                   padding: '4px 0',
                                   minHeight: '44px'
                                 }}>
                                   <div style={{ flex: 1, marginRight: '12px' }}>
-                                    <div style={{ 
-                                      fontWeight: 'bold', 
+                                    <div style={{
+                                      fontWeight: 'bold',
                                       marginBottom: '2px',
                                       color: theme === 'dark' ? '#ffffff' : '#000000'
                                     }}>
                                       {example.title}
                                     </div>
-                                    <div style={{ 
-                                      fontSize: '12px', 
+                                    <div style={{
+                                      fontSize: '12px',
                                       color: theme === 'dark' ? '#999999' : '#666666',
                                       lineHeight: '1.4',
                                       wordBreak: 'break-all'
@@ -657,9 +599,9 @@ const ModelEvaluationPage: React.FC = () => {
                                       {example.description}
                                     </div>
                                   </div>
-                                  <Tag 
+                                  <Tag
                                     color={getCategoryColor(example.category)}
-                                    style={{ 
+                                    style={{
                                       marginTop: '2px',
                                       fontSize: '11px',
                                       flexShrink: 0
@@ -672,13 +614,13 @@ const ModelEvaluationPage: React.FC = () => {
                             ))}
                           </Select>
                         </Form.Item>
-                        
+
                         {/* 显示当前选择的示例信息 */}
                         {selectedExampleId && (
-                          <div style={{ 
-                            marginTop: '12px', 
-                            padding: '12px', 
-                            background: theme === 'dark' ? '#262626' : '#f6f6f6', 
+                          <div style={{
+                            marginTop: '12px',
+                            padding: '12px',
+                            background: theme === 'dark' ? '#262626' : '#f6f6f6',
                             borderRadius: '6px',
                             border: `1px solid ${theme === 'dark' ? '#404040' : '#e6e6e6'}`
                           }}>
@@ -693,9 +635,9 @@ const ModelEvaluationPage: React.FC = () => {
                                       {selectedExample.category}
                                     </Tag>
                                   </div>
-                                  <Text 
-                                    type="secondary" 
-                                    style={{ 
+                                  <Text
+                                    type="secondary"
+                                    style={{
                                       fontSize: '13px',
                                       display: 'block',
                                       lineHeight: '1.5'
@@ -848,7 +790,7 @@ const ModelEvaluationPage: React.FC = () => {
                             </Form.Item>
                           </Col>
                         </Row>
-                        
+
                         {/* 优化需求参数输入框 - 只在启用优化时显示 */}
                         <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.enableOptimization !== currentValues.enableOptimization}>
                           {({ getFieldValue }) => {
@@ -891,7 +833,7 @@ const ModelEvaluationPage: React.FC = () => {
                           >
                             开始评估
                           </Button>
-                          
+
                           {isRunning && (
                             <Button
                               danger
@@ -902,7 +844,7 @@ const ModelEvaluationPage: React.FC = () => {
                               停止评估
                             </Button>
                           )}
-                          
+
                           <Button
                             size="large"
                             icon={<ReloadOutlined />}
@@ -938,7 +880,7 @@ const ModelEvaluationPage: React.FC = () => {
                               />
                             </Col>
                           </Row>
-                          
+
                           {/* 显示当前配置 */}
                           <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                             <Tag color="processing">
@@ -949,8 +891,8 @@ const ModelEvaluationPage: React.FC = () => {
                             </Tag>
                           </div>
                         </div>
-                        <Progress 
-                          percent={Math.round(overallProgress)} 
+                        <Progress
+                          percent={Math.round(overallProgress)}
                           status={isRunning ? 'active' : 'normal'}
                           strokeColor={getScoreInfo(statistics.avgScore).color}
                           trailColor={theme === 'dark' ? '#434343' : '#f5f5f5'}
@@ -966,7 +908,7 @@ const ModelEvaluationPage: React.FC = () => {
                 </Col>
 
                 {/* 右侧结果区域 */}
-                <Col span={14} style={{ 
+                <Col span={14} style={{
                   height: '100%',
                   background: theme === 'dark' ? '#141414' : '#fafafa'
                 }}>
@@ -977,8 +919,8 @@ const ModelEvaluationPage: React.FC = () => {
                           评估结果
                         </Title>
                         {Object.keys(evaluationStates).length > 0 && (
-                          <Badge 
-                            count={completedModels} 
+                          <Badge
+                            count={completedModels}
                             style={{ marginLeft: '12px' }}
                             showZero
                           />
@@ -992,7 +934,7 @@ const ModelEvaluationPage: React.FC = () => {
                     </div>
 
                     {Object.keys(evaluationStates).length === 0 ? (
-                      <Empty 
+                      <Empty
                         description={
                           <div>
                             <Text>请配置评估参数并开始模型评估</Text>
@@ -1007,7 +949,7 @@ const ModelEvaluationPage: React.FC = () => {
                         dataSource={Object.entries(evaluationStates)}
                         renderItem={([model, state]) => (
                           <List.Item key={model} style={{ padding: 0, marginBottom: '16px' }}>
-                            <Card 
+                            <Card
                               style={{ width: '100%' }}
                               title={
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1018,8 +960,8 @@ const ModelEvaluationPage: React.FC = () => {
                                   <Space>
                                     <Tag color={
                                       state.status === 'completed' ? 'success' :
-                                      state.status === 'error' ? 'error' :
-                                      state.status === 'processing' ? 'processing' : 'default'
+                                        state.status === 'error' ? 'error' :
+                                          state.status === 'processing' ? 'processing' : 'default'
                                     }>
                                       {state.step}
                                     </Tag>
@@ -1041,7 +983,7 @@ const ModelEvaluationPage: React.FC = () => {
                                   </div>
                                 </div>
                               )}
-                              
+
                               {state.result && (
                                 <div>
                                   <Row gutter={16} style={{ marginBottom: '16px' }}>
@@ -1053,7 +995,7 @@ const ModelEvaluationPage: React.FC = () => {
                                         <Statistic
                                           value={state.result.score}
                                           suffix="分"
-                                          valueStyle={{ 
+                                          valueStyle={{
                                             color: getScoreInfo(state.result.score).color,
                                             fontSize: '24px'
                                           }}
@@ -1069,16 +1011,16 @@ const ModelEvaluationPage: React.FC = () => {
                                         <div style={{ marginTop: '4px', marginBottom: '12px' }}>
                                           <Text>{state.result.description}</Text>
                                         </div>
-                                        
+
                                         {/* 显示标签 */}
                                         {state.result.tags && state.result.tags.length > 0 && (
                                           <div style={{ marginBottom: '12px' }}>
                                             <Text strong style={{ fontSize: '12px', color: '#666' }}>提示词分类:</Text>
                                             <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                                               {state.result.tags.map((tag, index) => (
-                                                <Tag 
-                                                  key={index} 
-                                                  color="blue" 
+                                                <Tag
+                                                  key={index}
+                                                  color="blue"
                                                   style={{ fontSize: '11px', padding: '2px 6px', lineHeight: '16px' }}
                                                 >
                                                   {tag}
@@ -1087,11 +1029,11 @@ const ModelEvaluationPage: React.FC = () => {
                                             </div>
                                           </div>
                                         )}
-                                        
+
                                         {state.result.comment && (
                                           <Collapse ghost size="small">
                                             <Panel header="详细评价" key="1">
-                                              <Paragraph 
+                                              <Paragraph
                                                 style={{ margin: 0, fontSize: '14px' }}
                                                 ellipsis={{ rows: 3, expandable: true, symbol: '展开' }}
                                               >
@@ -1103,7 +1045,7 @@ const ModelEvaluationPage: React.FC = () => {
                                       </div>
                                     </Col>
                                   </Row>
-                                  
+
                                   {/* 显示提示词和输出结果 */}
                                   <Collapse ghost size="small" style={{ marginTop: '16px' }}>
                                     <Panel header={
@@ -1142,7 +1084,7 @@ const ModelEvaluationPage: React.FC = () => {
                                               <Option key={index} value={index}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                   <span>第{index + 1}次执行</span>
-                                                  <Tag 
+                                                  <Tag
                                                     color={getScoreInfo(state.result?.executionResults?.[index]?.score || 0).color}
                                                     style={{ fontSize: '10px', lineHeight: '14px', margin: 0 }}
                                                   >
@@ -1154,13 +1096,13 @@ const ModelEvaluationPage: React.FC = () => {
                                           </Select>
                                         </div>
                                       )}
-                                      
+
                                       {(() => {
                                         // 获取当前显示的执行结果
                                         const currentExecutionIndex = selectedExecutionIndex[model] ?? -1;
                                         const isShowingAverage = currentExecutionIndex === -1;
                                         const currentExecution = state.result?.executionResults?.[currentExecutionIndex];
-                                        
+
                                         // 显示相应的结果信息
                                         if (!isShowingAverage && currentExecution) {
                                           return (
@@ -1184,9 +1126,9 @@ const ModelEvaluationPage: React.FC = () => {
                                                   <Text strong style={{ fontSize: '12px', color: '#666' }}>本次执行标签:</Text>
                                                   <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                                                     {currentExecution.tags.map((tag, tagIndex) => (
-                                                      <Tag 
-                                                        key={tagIndex} 
-                                                        color="cyan" 
+                                                      <Tag
+                                                        key={tagIndex}
+                                                        color="cyan"
                                                         style={{ fontSize: '10px', margin: '2px' }}
                                                       >
                                                         {tag}
@@ -1200,7 +1142,7 @@ const ModelEvaluationPage: React.FC = () => {
                                         }
                                         return null;
                                       })()}
-                                      
+
                                       <Row gutter={16}>
                                         <Col span={12}>
                                           <Card size="small" title={
@@ -1208,7 +1150,7 @@ const ModelEvaluationPage: React.FC = () => {
                                               <Text style={{ fontSize: '13px', color: '#666' }}>原始提示词</Text>
                                             </div>
                                           }>
-                                            <Paragraph 
+                                            <Paragraph
                                               style={{ margin: 0, fontSize: '12px', maxHeight: '200px', overflow: 'auto' }}
                                               ellipsis={{ rows: 6, expandable: true, symbol: '展开' }}
                                             >
@@ -1220,7 +1162,7 @@ const ModelEvaluationPage: React.FC = () => {
                                             </Paragraph>
                                             <div style={{ marginTop: '12px', padding: '8px', background: theme === 'dark' ? '#1a1a1a' : '#f5f5f5', borderRadius: '4px' }}>
                                               <Text style={{ fontSize: '11px', color: '#999' }}>输出结果:</Text>
-                                              <Paragraph 
+                                              <Paragraph
                                                 style={{ margin: '4px 0 0 0', fontSize: '12px' }}
                                                 ellipsis={{ rows: 4, expandable: true, symbol: '展开' }}
                                               >
@@ -1248,7 +1190,7 @@ const ModelEvaluationPage: React.FC = () => {
                                               </Text>
                                             </div>
                                           }>
-                                            <Paragraph 
+                                            <Paragraph
                                               style={{ margin: 0, fontSize: '12px', maxHeight: '200px', overflow: 'auto' }}
                                               ellipsis={{ rows: 6, expandable: true, symbol: '展开' }}
                                             >
@@ -1260,7 +1202,7 @@ const ModelEvaluationPage: React.FC = () => {
                                             </Paragraph>
                                             <div style={{ marginTop: '12px', padding: '8px', background: theme === 'dark' ? '#1a1a1a' : '#f5f5f5', borderRadius: '4px' }}>
                                               <Text style={{ fontSize: '11px', color: '#999' }}>输出结果:</Text>
-                                              <Paragraph 
+                                              <Paragraph
                                                 style={{ margin: '4px 0 0 0', fontSize: '12px' }}
                                                 ellipsis={{ rows: 4, expandable: true, symbol: '展开' }}
                                               >
@@ -1278,7 +1220,7 @@ const ModelEvaluationPage: React.FC = () => {
                                   </Collapse>
                                 </div>
                               )}
-                              
+
                               {state.error && (
                                 <Alert
                                   message="评估失败"
@@ -1296,7 +1238,7 @@ const ModelEvaluationPage: React.FC = () => {
 
                     {/* 评估完成后的总结 */}
                     {overallProgress === 100 && completedModels > 0 && (
-                      <Card 
+                      <Card
                         style={{ marginTop: '24px', background: theme === 'dark' ? '#262626' : '#f9f9f9' }}
                         title="📊 评估总结"
                       >
@@ -1335,24 +1277,24 @@ const ModelEvaluationPage: React.FC = () => {
                             />
                           </Col>
                         </Row>
-                        
+
                         {/* 标签统计 */}
                         {(() => {
                           const allTags = Object.values(evaluationStates)
                             .filter(state => state.result?.tags && state.result.tags.length > 0)
                             .flatMap(state => state.result?.tags || []);
-                          
+
                           if (allTags.length === 0) return null;
-                          
+
                           const tagCounts = allTags.reduce((acc, tag) => {
                             acc[tag] = (acc[tag] || 0) + 1;
                             return acc;
                           }, {} as Record<string, number>);
-                          
+
                           const sortedTags = Object.entries(tagCounts)
-                            .sort(([,a], [,b]) => b - a)
+                            .sort(([, a], [, b]) => b - a)
                             .slice(0, 10); // 只显示前10个最常见的标签
-                          
+
                           return (
                             <div style={{ marginTop: '16px' }}>
                               <Text strong style={{ marginBottom: '8px', display: 'block' }}>
@@ -1360,8 +1302,8 @@ const ModelEvaluationPage: React.FC = () => {
                               </Text>
                               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                                 {sortedTags.map(([tag, count]) => (
-                                  <Tag 
-                                    key={tag} 
+                                  <Tag
+                                    key={tag}
                                     color="processing"
                                     style={{ marginBottom: '4px' }}
                                   >
@@ -1390,7 +1332,7 @@ const ModelEvaluationPage: React.FC = () => {
             ),
             children: (
               <div style={{ padding: '24px', height: 'calc(100vh - 46px)', overflow: 'auto' }}>
-                <EvaluationCharts 
+                <EvaluationCharts
                   evaluations={evaluationHistory}
                   currentEvaluation={currentEvaluationRecord || undefined}
                 />

@@ -1,4 +1,4 @@
-﻿using Console.Service.Entities;
+﻿using Console.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Console.Core;
@@ -21,6 +21,8 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
     public DbSet<GeneratedImage> GeneratedImages { get; set; } = null!;
 
     public DbSet<ApiKey> ApiKeys { get; set; } = null!;
+    
+    public DbSet<EvaluationRecord> EvaluationRecords { get; set; }
 
     public Task SaveChangesAsync()
     {

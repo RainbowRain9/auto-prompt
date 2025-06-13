@@ -2,9 +2,9 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Console.Core;
+using Console.Core.Entities;
 using Console.Service.AI;
 using Console.Service.Dto;
-using Console.Service.Entities;
 using Console.Service.Options;
 using FastService;
 using Microsoft.AspNetCore.Mvc;

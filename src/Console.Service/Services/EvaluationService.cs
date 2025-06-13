@@ -14,6 +14,7 @@ using Serilog;
 using CircuitBreakerPolicy = Console.Service.AI.CircuitBreakerPolicy;
 using System.Threading;
 using System.Linq;
+using Console.Core.Entities;
 
 namespace Console.Service.Services;
 
@@ -578,13 +579,17 @@ public class EvaluationService(PromptService promptService) : FastApi
         // 计算总任务数：模型数量 * 执行次数
         var totalTasks = (input.Models?.Length ?? 0) * input.ExecutionCount;
 
+        // 记录开始时间
+        var evaluationStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
         // 发送开始事件
         await WriteSSEAsync(context, "start", new
         {
             totalModels = input.Models?.Length ?? 0,
             executionCount = input.ExecutionCount,
             enableOptimization = input.EnableOptimization,
-            totalTasks = totalTasks
+            totalTasks = totalTasks,
+            startTime = evaluationStartTime
         }, semaphore);
 
         // 获取评分内核实例
@@ -592,7 +597,7 @@ public class EvaluationService(PromptService promptService) : FastApi
         var kernel = KernelFactory.CreateKernel(ConsoleOptions.ScoreModel, ConsoleOptions.OpenAIEndpoint, input.ApiKey);
 
         // 处理每个模型
-        var tasks = input.Models.Select(async model =>
+        var tasks = input.Models.Select<string, Task<(string, object)>>(async model =>
         {
             try
             {
@@ -645,7 +650,13 @@ public class EvaluationService(PromptService promptService) : FastApi
                             Log.Error("模型 {Model} 的提示词优化请求被熔断器阻止: {Error}", model, bcex.Message);
                             await WriteSSEAsync(context, "model-error", new { model, error = $"熔断器触发: {bcex.Message}" },
                                 semaphore);
-                            return;
+                            var errorResult = new ScorePrompt
+                            {
+                                Description = $"模型暂时不可用 - 熔断器触发",
+                                Score = 0,
+                                Comment = $"由于连续多次失败，熔断器已触发。错误: {bcex.Message}"
+                            };
+                            return (model, (object)errorResult);
                         }
 
                         Log.Logger.Debug("提示词优化完成，优化后长度: {Length}", sb.Length);
@@ -776,42 +787,60 @@ public class EvaluationService(PromptService promptService) : FastApi
 
                 // 发送模型完成事件
                 await WriteSSEAsync(context, "model-complete", new { model, result = finalResultData }, semaphore);
+
+                return (model, (object)finalResultData);
             }
             catch (BrokenCircuitException bcex)
             {
                 Log.Error("模型 {Model} 处理被熔断器阻止: {Error}", model, bcex.Message);
-                await WriteSSEAsync(context, "model-error", new
+                var errorResult = new ScorePrompt
                 {
-                    model,
-                    result = new ScorePrompt
-                    {
-                        Description = $"模型暂时不可用 - 熔断器触发",
-                        Score = 0,
-                        Comment = $"由于连续多次失败，熔断器已触发。错误: {bcex.Message}"
-                    }
-                }, semaphore);
+                    Description = $"模型暂时不可用 - 熔断器触发",
+                    Score = 0,
+                    Comment = $"由于连续多次失败，熔断器已触发。错误: {bcex.Message}"
+                };
+                await WriteSSEAsync(context, "model-error", new { model, result = errorResult }, semaphore);
+                return (model, (object)errorResult);
             }
             catch (Exception e)
             {
                 Log.Logger.Error(e, "处理模型 {Model} 时发生错误", model);
-                await WriteSSEAsync(context, "model-error", new
+                var errorResult = new ScorePrompt
                 {
-                    model,
-                    result = new ScorePrompt
-                    {
-                        Description = "处理失败",
-                        Score = 0,
-                        Comment = $"错误: {e.Message}"
-                    }
-                }, semaphore);
+                    Description = "处理失败",
+                    Score = 0,
+                    Comment = $"错误: {e.Message}"
+                };
+                await WriteSSEAsync(context, "model-error", new { model, result = errorResult }, semaphore);
+                return (model, (object)errorResult);
             }
         }).ToArray();
 
         // 等待所有任务完成
-        await Task.WhenAll(tasks);
+        var results = await Task.WhenAll(tasks);
+
+        // 记录结束时间并计算总耗时
+        var evaluationEndTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var totalEvaluationTime = evaluationEndTime - evaluationStartTime;
 
         // 发送完成事件
-        await WriteSSEAsync(context, "complete", new { message = "所有模型评估完成" }, semaphore);
+        await WriteSSEAsync(context, "complete", new { 
+            message = "所有模型评估完成",
+            endTime = evaluationEndTime,
+            totalTime = totalEvaluationTime
+        }, semaphore);
+
+        // 自动保存评估记录到数据库
+        try
+        {
+            var evaluationResults = results.ToDictionary(r => r.Item1, r => (object)r.Item2);
+            await SaveEvaluationRecordAsync(input, evaluationResults, context, evaluationStartTime, evaluationEndTime, totalEvaluationTime);
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Error(ex, "自动保存评估记录失败");
+            // 不影响主流程，只记录错误
+        }
 
         Log.Logger.Information("流式测试任务完成");
     }
@@ -838,6 +867,242 @@ public class EvaluationService(PromptService promptService) : FastApi
         finally
         {
             semaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// 自动保存评估记录到数据库
+    /// </summary>
+    private async Task SaveEvaluationRecordAsync(ExecuteTestInput input, Dictionary<string, object> evaluationResults, HttpContext context, long evaluationStartTime, long evaluationEndTime, long totalEvaluationTime)
+    {
+        try
+        {
+            // 验证用户身份
+            var token = context.Request.Headers["Authorization"].ToString().Trim().Replace("Bearer ", "");
+            if (string.IsNullOrEmpty(token))
+                return;
+
+            var jwtService = context.RequestServices.GetService<Console.Service.Services.JwtService>();
+            if (jwtService == null)
+                return;
+
+            var userId = jwtService.GetUserIdFromToken(token);
+            var userName = jwtService.GetUserNameFromToken(token);
+            if (string.IsNullOrEmpty(userId) || !jwtService.IsTokenValid(token))
+                return;
+
+            var dbContext = context.RequestServices.GetService<Console.Core.IDbContext>();
+            if (dbContext == null)
+                return;
+
+            // 构建评估记录
+            var config = new
+            {
+                models = input.Models ?? [],
+                prompt = input.Prompt,
+                request = input.Request,
+                executionCount = input.ExecutionCount,
+                enableOptimization = input.EnableOptimization,
+                requirements = input.Requirements ?? "",
+                exampleId = "",
+                exampleTitle = "",
+                exampleCategory = ""
+            };
+
+            var results = new Dictionary<string, object>();
+            var totalModels = input.Models?.Length ?? 0;
+            var completedModels = 0;
+            var totalScore = 0.0;
+            var scoreDistribution = new Dictionary<string, int>
+            {
+                ["90-100"] = 0,
+                ["80-89"] = 0,
+                ["70-79"] = 0,
+                ["60-69"] = 0,
+                ["0-59"] = 0
+            };
+            var tagDistribution = new Dictionary<string, int>();
+
+            foreach (var (model, result) in evaluationResults)
+            {
+                // 处理不同类型的结果对象
+                int score = 0;
+                string description = "";
+                string comment = "";
+                string[] tags = [];
+                string originalPrompt = "";
+                string originalPromptOutput = "";
+                string prompt = "";
+                string promptOutput = "";
+                int executionCount = input.ExecutionCount;
+                long startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                long endTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                long duration = 0;
+                object? executionResults = null;
+                
+                if (result is ScorePrompt scorePrompt)
+                {
+                    // 异常情况下返回的ScorePrompt对象
+                    score = scorePrompt.Score;
+                    description = scorePrompt.Description ?? "";
+                    comment = scorePrompt.Comment ?? "";
+                    tags = scorePrompt.Tags ?? [];
+                    prompt = input.Prompt;
+                    originalPrompt = input.Prompt;
+                }
+                else
+                {
+                    // 正常情况下返回的匿名对象，使用动态类型访问
+                    try
+                    {
+                        dynamic dynamicResult = result;
+                        score = (int)(dynamicResult.Score ?? 0);
+                        description = (string)(dynamicResult.Description ?? "");
+                        comment = (string)(dynamicResult.Comment ?? "");
+                        originalPrompt = (string)(dynamicResult.originalPrompt ?? input.Prompt);
+                        originalPromptOutput = (string)(dynamicResult.originalPromptOutput ?? "");
+                        prompt = (string)(dynamicResult.prompt ?? input.Prompt);
+                        promptOutput = (string)(dynamicResult.promptOutput ?? "");
+                        executionCount = (int)(dynamicResult.executionCount ?? input.ExecutionCount);
+                        
+                        // 处理Tags数组
+                        if (dynamicResult.Tags != null)
+                        {
+                            var tagsList = new List<string>();
+                            foreach (var tag in dynamicResult.Tags)
+                            {
+                                tagsList.Add(tag.ToString());
+                            }
+                            tags = tagsList.ToArray();
+                        }
+
+                        // 处理多次执行结果
+                        if (dynamicResult.executionResults != null)
+                        {
+                            executionResults = dynamicResult.executionResults;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Logger.Warning("解析评估结果时出错: {Error}, 模型: {Model}", ex.Message, model);
+                        // 使用默认值
+                        score = 0;
+                        description = "解析结果失败";
+                        comment = ex.Message;
+                        tags = [];
+                        prompt = input.Prompt;
+                        originalPrompt = input.Prompt;
+                    }
+                }
+
+                // 创建完整的结果记录
+                var modelResult = new
+                {
+                    score = score,
+                    description = description,
+                    comment = comment,
+                    tags = tags,
+                    executionCount = executionCount,
+                    startTime = startTime,
+                    endTime = endTime,
+                    duration = duration,
+                    originalPrompt = originalPrompt,
+                    originalPromptOutput = originalPromptOutput,
+                    prompt = prompt,
+                    promptOutput = promptOutput
+                };
+
+                // 如果有多次执行结果，也保存进去
+                if (executionResults != null)
+                {
+                    var resultWithExecutions = new
+                    {
+                        score = score,
+                        description = description,
+                        comment = comment,
+                        tags = tags,
+                        executionCount = executionCount,
+                        startTime = startTime,
+                        endTime = endTime,
+                        duration = duration,
+                        originalPrompt = originalPrompt,
+                        originalPromptOutput = originalPromptOutput,
+                        prompt = prompt,
+                        promptOutput = promptOutput,
+                        executionResults = executionResults
+                    };
+                    results[model] = resultWithExecutions;
+                }
+                else
+                {
+                    results[model] = modelResult;
+                }
+
+                if (score > 0)
+                {
+                    completedModels++;
+                    totalScore += score;
+
+                    // 统计评分分布
+                    if (score >= 90) scoreDistribution["90-100"]++;
+                    else if (score >= 80) scoreDistribution["80-89"]++;
+                    else if (score >= 70) scoreDistribution["70-79"]++;
+                    else if (score >= 60) scoreDistribution["60-69"]++;
+                    else scoreDistribution["0-59"]++;
+
+                    // 统计标签分布
+                    foreach (var tag in tags)
+                    {
+                        tagDistribution[tag] = tagDistribution.GetValueOrDefault(tag, 0) + 1;
+                    }
+                }
+            }
+
+            var statistics = new
+            {
+                totalModels = totalModels,
+                completedModels = completedModels,
+                avgScore = completedModels > 0 ? totalScore / completedModels : 0.0,
+                totalTime = totalEvaluationTime,
+                scoreDistribution = scoreDistribution,
+                tagDistribution = tagDistribution
+            };
+
+            // 生成更好的标题
+            var title = $"模型评估 - {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}";
+            if (input.ExecutionCount > 1)
+            {
+                title += $" ({input.ExecutionCount}次执行)";
+            }
+            if (input.EnableOptimization)
+            {
+                title += " (优化提示词)";
+            }
+
+            var record = new EvaluationRecord
+            {
+                Id = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                Date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                Title = title,
+                Config = JsonSerializer.Serialize(config, JsonSerializerOptions.Web),
+                Results = JsonSerializer.Serialize(results, JsonSerializerOptions.Web),
+                Statistics = JsonSerializer.Serialize(statistics, JsonSerializerOptions.Web),
+                CreatedTime = DateTime.UtcNow,
+                UpdatedTime = DateTime.UtcNow,
+                UserId = userId,
+                CreatorName = userName
+            };
+
+            dbContext.EvaluationRecords.Add(record);
+            await dbContext.SaveChangesAsync();
+
+            Log.Logger.Information("评估记录已自动保存，记录ID: {RecordId}, 标题: {Title}", record.Id, title);
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Error(ex, "保存评估记录时发生异常");
+            throw;
         }
     }
 

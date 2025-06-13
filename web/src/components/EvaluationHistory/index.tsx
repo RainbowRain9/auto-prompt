@@ -25,7 +25,7 @@ import {
   BarChartOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
-import type { EvaluationRecord } from '../../utils/indexedDB';
+import type { EvaluationRecord } from '../../api/evaluationHistoryApi';
 
 const { Title, Text, Paragraph } = Typography;
 const { Panel } = Collapse;

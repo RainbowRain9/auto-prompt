@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Console.Core;
+using Console.Core.Entities;
 using Console.Service.Dto;
-using Console.Service.Entities;
 using Console.Service.Infrastructure;
 using FastService;
 using Microsoft.AspNetCore.Mvc;
