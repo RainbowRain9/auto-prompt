@@ -4,6 +4,7 @@
     "dashboard": "Dashboard",
     "prompts": "Prompts",
     "workbench": "Workbench",
+    "evaluation": "Model Evaluation",
     "image": "Image Generation",
     "code": "Code Generation",
     "documentation": "Documentation",

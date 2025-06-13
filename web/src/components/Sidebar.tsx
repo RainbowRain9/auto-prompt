@@ -13,11 +13,16 @@ import {
   PictureOutlined,
   KeyOutlined,
   TrophyOutlined,
+  BarChartOutlined,
+  CodeOutlined,
+  FileTextOutlined,
+  MessageOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useThemeStore } from '../stores/themeStore';
 import { useAuthStore } from '../stores/authStore';
+import { getSidebarRoutes } from '../config/routes';
 import ApiConfigModal from './GuestConfigModal';
 
 const { Sider } = Layout;
@@ -234,44 +239,30 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const [showApiConfig, setShowApiConfig] = useState(false);
 
-  const menuItems = [
-    {
-      key: 'home',
-      icon: <HomeOutlined />,
-      label: t('nav.home'),
-    },
-    {
-      key: 'workbench',
-      icon: <ExperimentOutlined />,
-      label: t('nav.workbench'),
-    },
-    {
-      key: 'dashboard',
-      icon: <DashboardOutlined />,
-      label: t('nav.dashboard'),
-    },
-    {
-      key: 'prompts',
-      icon: <BulbOutlined />,
-      label: t('nav.prompts'),
-    },
-    {
-      key: 'image',
-      icon: <PictureOutlined />,
-      label: t('nav.image'),
-    },
-    {
-      key: 'scores',
-      icon: <TrophyOutlined />,
-      label: t('nav.scores'),
-      onClick: () => window.open('/scores', '_blank'),
-    },
-    {
-      key: 'apikeys',
-      icon: <KeyOutlined />,
-      label: t('nav.apikeys'),
-    }
-  ];
+  // 图标映射
+  const iconMap = {
+    'HomeOutlined': <HomeOutlined />,
+    'ExperimentOutlined': <ExperimentOutlined />,
+    'CodeOutlined': <CodeOutlined />,
+    'DashboardOutlined': <DashboardOutlined />,
+    'MessageOutlined': <MessageOutlined />,
+    'BarChartOutlined': <BarChartOutlined />,
+    'PictureOutlined': <PictureOutlined />,
+    'KeyOutlined': <KeyOutlined />,
+    'TrophyOutlined': <TrophyOutlined />,
+    'FileTextOutlined': <FileTextOutlined />,
+    'SettingOutlined': <SettingOutlined />,
+    'BulbOutlined': <BulbOutlined />
+  };
+
+  // 从路由配置获取菜单项
+  const sidebarRoutes = getSidebarRoutes();
+  const menuItems = sidebarRoutes.map(route => ({
+    key: route.key,
+    icon: route.icon ? iconMap[route.icon as keyof typeof iconMap] : <HomeOutlined />,
+    label: t(`nav.${route.key}`),
+    onClick: route.key === 'scores' ? () => window.open('/scores', '_blank') : undefined,
+  }));
 
   const handleLogout = () => {
     logout();

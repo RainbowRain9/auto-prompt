@@ -35,6 +35,7 @@
     "react-markdown": "^9.0.1",
     "react-router-dom": "^7.6.1",
     "react-syntax-highlighter": "^5.8.0",
+    "recharts": "^2.15.3",
     "slate": "^0.114.0",
     "slate-history": "^0.113.1",
     "slate-react": "^0.114.2",

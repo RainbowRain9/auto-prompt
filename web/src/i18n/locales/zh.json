@@ -4,6 +4,7 @@
     "dashboard": "提示词广场",
     "prompts": "提示词管理",
     "workbench": "工作台",
+    "evaluation": "模型评估",
     "image": "图片生成",
     "code": "代码生成",
     "documentation": "文档",
