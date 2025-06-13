@@ -23,7 +23,7 @@ import {
 import { useThemeStore } from '../../stores/themeStore';
 import type { EvaluationRecord } from '../../utils/indexedDB';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 interface EvaluationChartsProps {
   evaluations: EvaluationRecord[];
@@ -90,7 +90,7 @@ const EvaluationCharts: React.FC<EvaluationChartsProps> = ({ evaluations, curren
     return subjects.map(subject => {
       const dataPoint: any = { subject };
       
-      models.forEach((model, index) => {
+      models.forEach((model) => {
         const result = currentEvaluation.results[model];
         let value = 0;
         
@@ -228,7 +228,7 @@ const EvaluationCharts: React.FC<EvaluationChartsProps> = ({ evaluations, curren
                       />
                       <YAxis tick={{ fontSize: 11, fill: secondaryTextColor }} />
                       <Tooltip 
-                        formatter={(value: any, name: string, props: any) => [
+                        formatter={(value: any, name: string) => [
                           name === 'score' ? `${value}分` : `${value}秒`,
                           name === 'score' ? '评分' : '耗时'
                         ]}

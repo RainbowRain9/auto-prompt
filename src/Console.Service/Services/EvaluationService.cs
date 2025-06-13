@@ -731,7 +731,7 @@ public class EvaluationService(PromptService promptService) : FastApi
                         Comment: scorePrompt?.Comment ?? "",
                         Description: scorePrompt?.Description ?? "",
                         Score: scorePrompt?.Score ?? 0,
-                        Tags: scorePrompt?.Tags ?? Array.Empty<string>(),
+                        Tags: scorePrompt?.Tags ?? [],
                         OriginalPrompt: input.EnableOptimization ? optimizedPrompt : input.Prompt,
                         OriginalPromptOutput: input.EnableOptimization ? optimizedOutput : originalOutput,
                         Prompt: input.Prompt,

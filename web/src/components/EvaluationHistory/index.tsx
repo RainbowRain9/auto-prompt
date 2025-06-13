@@ -25,7 +25,6 @@ import {
   BarChartOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
-import { useThemeStore } from '../../stores/themeStore';
 import type { EvaluationRecord } from '../../utils/indexedDB';
 
 const { Title, Text, Paragraph } = Typography;
@@ -46,7 +45,6 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({
   onClearAll,
   isLoading = false
 }) => {
-  const { theme } = useThemeStore();
   const [selectedEvaluation, setSelectedEvaluation] = useState<EvaluationRecord | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
 

@@ -65,7 +65,6 @@ const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 const { Panel } = Collapse;
-const { TabPane } = Tabs;
 
 interface ModelEvaluationState {
   [model: string]: {
