@@ -9,9 +9,9 @@ services:
       - TZ=Asia/Shanghai
       - OpenAIEndpoint=http://ollama:11434/v1
       - API_KEY=SK-1234567890
-      - SCORE_MODEL=qwen3:0.6b
-      - CHAT_MODEL=qwen3:0.6b
-      - DEFAULT_CHAT_MODEL=qwen3:0.6b
+      - SCORE_MODEL=qwen3:1.7b
+      - CHAT_MODEL=qwen3:1.7b,qwen3:0.6b,qwen3:4b,qwen3:8b,qwen3:14b
+      - DEFAULT_CHAT_MODEL=qwen3:1.7b
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/app/data/ConsoleService.db
     volumes:

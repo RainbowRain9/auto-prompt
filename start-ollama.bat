@@ -45,7 +45,7 @@ timeout /t 10 /nobreak >nul
 echo.
 echo 📦 拉取qwen3模型...
 echo （这可能需要几分钟时间，模型大小约5GB）
-docker exec ollama ollama pull qwen3:0.6b
+docker exec ollama ollama pull qwen3:1.7b
 
 if errorlevel 1 (
     echo ⚠️  qwen3模型拉取失败，尝试拉取轻量级模型...
