@@ -23,7 +23,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 await InitializeConsole.Initialize();
 
-ConsoleOptions.Initialize(builder.Configuration);
+await ConsoleOptions.Initialize(builder.Configuration);
 
 builder.Services.AddMcp();
 builder.Services.AddSerilog(Log.Logger);

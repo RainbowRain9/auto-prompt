@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    ports:
+      - "10426:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - OpenAIEndpoint=http://ollama:11434/v1
+      - API_KEY=SK-1234567890
+      - SCORE_MODEL=qwen3:0.6b
+      - CHAT_MODEL=qwen3:0.6b
+      - DEFAULT_CHAT_MODEL=qwen3:0.6b
+      - ConnectionStrings:Type=sqlite
+      - ConnectionStrings:Default=Data Source=/app/data/ConsoleService.db
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_SCHED_SPREAD=1
+      - OLLAMA_FLASH_ATTENTION=1
+    restart: unless-stopped
+    # GPU支持（如果有NVIDIA GPU）
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  ollama_data:

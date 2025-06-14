@@ -414,105 +414,50 @@ services:
 
 volumes:
   ollama_data:
-```
 
-#### Deployment Steps
+**🚀 One-Click Startup Scripts**:
 
-1. **Select Configuration Template**
-   
-   Choose one of the configuration templates above according to your needs and save it as `docker-compose.yaml`.
+To simplify the deployment process, we provide one-click startup scripts:
 
-2. **Modify Configuration Parameters**
-   
-   ```bash
-   # Modify the API endpoint
-   - OpenAIEndpoint=https://your-api-endpoint.com/v1
-   
-   # Modify the database password (if using PostgreSQL)
-   - POSTGRES_PASSWORD=your_secure_password
-   - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_secure_password
-   ```
-
-3. **Start the Service**
-   
-   ```bash
-   # Start all services
-   docker-compose up -d
-   
-   # Check the status of the services
-   docker-compose ps
-   
-   # View logs
-   docker-compose logs -f console-service
-   ```
-
-4. **Verify Deployment**
-   
-   ```bash
-   # Check the health status of the service
-   curl http://localhost:10426/health
-   
-   # Access the API documentation
-   curl http://localhost:10426/scalar/v1
-   ```
-
-#### Environment Variable Descriptions
-
-| Variable Name | Description | Default Value | Example |
-|---------------|-------------|---------------|---------|
-| `OpenAIEndpoint` | AI API endpoint address | `https://api.token-ai.cn/v1` | `https://api.openai.com/v1` |
-| `CHAT_MODEL` | Available chat models (comma-separated) | `gpt-4.1,o4-mini,claude-sonnet-4-20250514,claude-3-7-sonnet` | `gpt-4,gpt-3.5-turbo,claude-3-sonnet` |
-| `IMAGE_GENERATION_MODEL` | Available image generation models (comma-separated) | `gpt-image-1,dall-e-3,imagen4` | `dall-e-3,midjourney,stable-diffusion` |
-| `DEFAULT_CHAT_MODEL` | Default chat model | `gpt-4.1-mini` | `gpt-4` |
-| `DEFAULT_IMAGE_GENERATION_MODEL` | Default image generation model | `gpt-4.1` | `dall-e-3` |
-| `GenerationChatModel` | Chat model for prompt generation | `gpt-4.1-mini` | `gpt-4` |
-| `DEFAULT_USERNAME` | Default admin username | `admin` | `admin`, `root`, `administrator` |
-| `DEFAULT_PASSWORD` | Default admin password | `admin123` | `your_secure_password` |
-| `ConnectionStrings:Type` | Database type | `sqlite` | `postgresql`, `sqlite` |
-| `ConnectionStrings:Default` | Database connection string | `Data Source=/data/ConsoleService.db` | PostgreSQL: `Host=postgres;Database=auto_prompt;Username=postgres;Password=password` |
-| `TZ` | Time zone setting | `Asia/Shanghai` | `UTC`, `America/New_York` |
-
-#### Troubleshooting
-
-##### Common Issues
-
-1. **API Endpoint Connection Failure**
-   ```bash
-   # Check if the endpoint is accessible
-   curl -I https://your-api-endpoint.com/v1/models
-   
-   # Check the container network
-   docker-compose exec console-service curl -I http://ollama:11434/v1/models
-   ```
-
-2. **Database Connection Failure**
-   ```bash
-   # Check the PostgreSQL container status
-   docker-compose logs postgres
-   
-   # Test database connection
-   docker-compose exec postgres psql -U postgres -d auto_prompt -c "SELECT 1;"
-   ```
-
-3. **Permission Issues**
-   ```bash
-   # Ensure correct permissions for the data directory
-   sudo chown -R 1000:1000 ./data
-   chmod 755 ./data
-   ```
-
-##### Log Viewing
-
+**Linux/macOS Users**:
 ```bash
-# View application logs
-docker-compose logs -f console-service
+# Grant execute permissions to the script
+chmod +x start-ollama.sh
 
-# View database logs
-docker-compose logs -f postgres
-
-# View all service logs
-docker-compose logs -f
+# Run the one-click startup script
+./start-ollama.sh
 ```
+
+**Windows Users**:
+```bash
+# Run the batch script directly
+start-ollama.bat
+```
+
+**Script Features**:
+- 🚀 Automatically start ollama service and console service
+- ⏳ Wait for services to fully start
+- 📦 Automatically pull qwen3 model
+- ✅ Verify model installation status
+- 🎉 Display access URL after completion
+
+**After starting, you can pull additional models**:
+```bash
+# Pull recommended models
+docker exec ollama ollama pull qwen3
+docker exec ollama ollama pull qwen2.5:3b
+docker exec ollama ollama pull llama3.2:3b
+docker exec ollama ollama pull gemma2:9b
+
+# Verify models
+docker exec ollama ollama list
+```
+
+**Recommended Models**:
+- `qwen3` - Excellent Chinese conversational AI (~5GB)
+- `qwen2.5:3b` - Lightweight version (~2GB)
+- `llama3.2:3b` - Good English conversational AI (~2GB)
+- `gemma2:9b` - Google's open-source model (~5GB)
 
 ## 🎮 Usage Guide
 

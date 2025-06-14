@@ -1,4 +1,5 @@
 import { useAuthStore } from "../stores/authStore";
+import { authenticatedFetch } from '../utils/apiUtils';
 
 export interface ApiKeyDto {
   id: string;
@@ -67,27 +68,17 @@ export interface ApiResponse<T = any> {
 
 // 获取API基础URL
 const getApiBaseUrl = () => {
-  return '/v1/api-keys';
+  return '/v1/apikeys';
 };
 
-// 获取认证头
-const getAuthHeaders = () => {
-  const { token } = useAuthStore.getState();
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  };
-};
-
-// 获取API Key列表
+// 搜索API Key
 export const searchApiKeys = async (params: ApiKeySearchInput = {}): Promise<{
   success: boolean;
   data: ApiKeySearchResponse;
   message?: string;
 }> => {
-  const response = await fetch(`${getApiBaseUrl()}/search`, {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/search`, {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify({
       ...params,
       page: params.page || 1,
@@ -110,9 +101,8 @@ export const searchApiKeys = async (params: ApiKeySearchInput = {}): Promise<{
 
 // 创建API Key
 export const createApiKey = async (params: CreateApiKeyInput): Promise<ApiResponse<ApiKeyDto>> => {
-  const response = await fetch(`${getApiBaseUrl()}/create`, {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/create`, {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify(params),
   });
 
@@ -131,9 +121,8 @@ export const createApiKey = async (params: CreateApiKeyInput): Promise<ApiRespon
 
 // 更新API Key
 export const updateApiKey = async (params: UpdateApiKeyInput): Promise<ApiResponse<ApiKeyDto>> => {
-  const response = await fetch(`${getApiBaseUrl()}/update`, {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/update`, {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify(params),
   });
 
@@ -152,9 +141,8 @@ export const updateApiKey = async (params: UpdateApiKeyInput): Promise<ApiRespon
 
 // 删除API Key
 export const deleteApiKey = async (id: string): Promise<ApiResponse> => {
-  const response = await fetch(`${getApiBaseUrl()}/delete/${id}`, {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/delete/${id}`, {
     method: 'POST',
-    headers: getAuthHeaders(),
   });
 
   // 如果401，则提示请先登录
@@ -172,9 +160,8 @@ export const deleteApiKey = async (id: string): Promise<ApiResponse> => {
 
 // 获取单个API Key
 export const getApiKey = async (id: string): Promise<ApiResponse<ApiKeyDto>> => {
-  const response = await fetch(`${getApiBaseUrl()}/${id}`, {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/${id}`, {
     method: 'GET',
-    headers: getAuthHeaders(),
   });
 
   // 如果401，则提示请先登录
@@ -192,9 +179,8 @@ export const getApiKey = async (id: string): Promise<ApiResponse<ApiKeyDto>> => 
 
 // 切换API Key启用状态
 export const toggleApiKeyEnabled = async (id: string): Promise<ApiResponse<{ isEnabled: boolean }>> => {
-  const response = await fetch(`${getApiBaseUrl()}/toggle-enabled/${id}`, {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/toggle-enabled/${id}`, {
     method: 'POST',
-    headers: getAuthHeaders(),
   });
 
   // 如果401，则提示请先登录
@@ -212,9 +198,8 @@ export const toggleApiKeyEnabled = async (id: string): Promise<ApiResponse<{ isE
 
 // 重新生成API Key
 export const regenerateApiKey = async (id: string): Promise<ApiResponse<ApiKeyDto>> => {
-  const response = await fetch(`${getApiBaseUrl()}/regenerate/${id}`, {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/regenerate/${id}`, {
     method: 'POST',
-    headers: getAuthHeaders(),
   });
 
   // 如果401，则提示请先登录

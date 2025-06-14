@@ -38,21 +38,29 @@ export const getCurrentLLMConfig = (): LLMConfig | null => {
  */
 export const getLLMClient = (): OpenAI | null => {
   const config = getCurrentLLMConfig();
+  const { systemInfo } = useAuthStore.getState();
 
-  if (!config || !config.apiKey) {
-    return null;
+  let apiKey = config?.apiKey;
+
+  if (systemInfo?.builtInApiKey === true) {
+    apiKey = "sk-1234567890";
+  } else {
+    if (!config || !config.apiKey) {
+      return null;
+    }
   }
+
 
   // 如果配置没有变化，返回现有实例
   if (openaiInstance && currentConfig &&
-    currentConfig.apiKey === config.apiKey) {
+    currentConfig.apiKey === apiKey) {
     return openaiInstance;
   }
 
   // 创建新的客户端实例
   currentConfig = config;
   openaiInstance = new OpenAI({
-    apiKey: config.apiKey,
+    apiKey: apiKey,
     baseURL: `${window.location.origin}/openai`,
     dangerouslyAllowBrowser: true
   });
@@ -73,8 +81,14 @@ export const resetLLMClient = (): void => {
  * 检查是否有可用的LLM配置
  */
 export const hasValidLLMConfig = (): boolean => {
+  const { systemInfo } = useAuthStore.getState();
+
+  if (systemInfo?.builtInApiKey) {
+    return true;
+  }
+
   const config = getCurrentLLMConfig();
-  return !!(config && config.apiKey );
+  return !!(config && config.apiKey && config.apiKey.trim() !== '');
 };
 
 /**

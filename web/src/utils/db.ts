@@ -180,13 +180,13 @@ export const clearMessages = async (workspaceId: string = DEFAULT_WORKSPACE_ID):
 };
 
 // --- 初始化默认数据（如果不存在） ---
-export const initializeDefaultData = async () => {
+export const initializeDefaultData = async (defaultChatModel: string) => {
   const db = await initDB();
   const defaultConfig = await db.get(CONFIG_STORE_NAME, DEFAULT_WORKSPACE_ID);
   if (!defaultConfig) {
     await db.put(CONFIG_STORE_NAME, {
       workspaceId: DEFAULT_WORKSPACE_ID,
-      selectedModel: 'gpt-4.1', // 默认模型
+      selectedModel: defaultChatModel, // 默认模型
       systemPrompt: '',       // 默认系统提示
     });
   }
@@ -203,29 +203,3 @@ export const initializeDefaultData = async () => {
     // });
   }
 };
-
-// 在应用启动时调用一次初始化
-initializeDefaultData().catch(console.error);
-
-// 可选：提供一个清除特定工作空间数据的方法
-export const clearWorkspaceData = async (workspaceId: string = DEFAULT_WORKSPACE_ID): Promise<void> => {
-  const db = await initDB();
-  const tx = db.transaction([CONFIG_STORE_NAME, MESSAGES_STORE_NAME], 'readwrite');
-  
-  // 删除配置
-  await tx.objectStore(CONFIG_STORE_NAME).delete(workspaceId);
-  
-  // 删除消息
-  const index = tx.objectStore(MESSAGES_STORE_NAME).index('workspaceId');
-  let cursor = await index.openCursor(workspaceId);
-  
-  while (cursor) {
-    await cursor.delete();
-    cursor = await cursor.continue();
-  }
-  
-  await tx.done;
-  
-  // 删除后重新初始化默认数据，确保默认工作区始终存在基础配置
-  await initializeDefaultData();
-}; 

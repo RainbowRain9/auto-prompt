@@ -24,6 +24,7 @@ import { useThemeStore } from '../stores/themeStore';
 import { useAuthStore } from '../stores/authStore';
 import { getSidebarRoutes } from '../config/routes';
 import ApiConfigModal from './GuestConfigModal';
+import SystemStatus from './SystemStatus';
 
 const { Sider } = Layout;
 
@@ -201,12 +202,11 @@ const ActionButton = styled(Button)`
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin-bottom: 8px;
     
     &:hover {
       border-color: #1677ff;
       color: #1677ff;
-      background: ${props => props.theme === 'dark' ? '#000' : '#f8f9fa'};
+      background: ${props => props.theme === 'dark' ? '#0f1419' : '#f8f9fa'};
     }
     
     &.logout-btn:hover {
@@ -235,7 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCollapse
 }) => {
   const { theme } = useThemeStore();
-  const { logout, loginType, setApiConfig } = useAuthStore();
+  const { logout, loginType, setApiConfig, systemInfo } = useAuthStore();
   const { t } = useTranslation();
   const [showApiConfig, setShowApiConfig] = useState(false);
 
@@ -283,7 +283,17 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const getLoginTypeDisplay = () => {
+    if (systemInfo?.builtInApiKey) {
+      return '内置API Key';
+    }
     return loginType === 'thor' ? 'Thor 用户' : '本地用户';
+  };
+
+  const getUserStatusText = () => {
+    if (systemInfo?.builtInApiKey) {
+      return '系统模式';
+    }
+    return '已登录';
   };
 
   if (collapsed) {
@@ -364,28 +374,35 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <SidebarFooter theme={theme}>
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
+          {/* 系统状态指示器 */}
+          <SystemStatus />
+          
           <UserInfo theme={theme}>
             <StyledAvatar
               size={40}
               theme={theme}
               icon={<UserOutlined />}
             >
-              {loginType === 'thor' ? 'T' : 'U'}
+              {systemInfo?.builtInApiKey ? 'S' : (loginType === 'thor' ? 'T' : 'U')}
             </StyledAvatar>
             <div className="user-details">
               <div className="user-name">{getLoginTypeDisplay()}</div>
-              <div className="user-email">已登录</div>
+              <div className="user-email">{getUserStatusText()}</div>
             </div>
           </UserInfo>
           
-          <ActionButton
-            theme={theme}
-            icon={<SettingOutlined />}
-            onClick={() => setShowApiConfig(true)}
-          >
-            API设置
-          </ActionButton>
+          {/* 只在非内置API Key模式下显示API设置按钮 */}
+          {!systemInfo?.builtInApiKey && (
+            <ActionButton
+              theme={theme}
+              icon={<SettingOutlined />}
+              onClick={() => setShowApiConfig(true)}
+            >
+              API设置
+            </ActionButton>
+          )}
           
+          {/* 显示登出按钮 */}
           <ActionButton
             theme={theme}
             icon={<LogoutOutlined />}
@@ -397,12 +414,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         </Space>
       </SidebarFooter>
 
-      {/* API配置弹窗 */}
-      <ApiConfigModal
-        open={showApiConfig}
-        onCancel={handleApiConfigCancel}
-        onOk={handleApiConfigOk}
-      />
+      {/* API配置弹窗 - 仅在非内置API Key模式下显示 */}
+      {!systemInfo?.builtInApiKey && (
+        <ApiConfigModal
+          open={showApiConfig}
+          onCancel={handleApiConfigCancel}
+          onOk={handleApiConfigOk}
+        />
+      )}
     </StyledSider>
   );
 };

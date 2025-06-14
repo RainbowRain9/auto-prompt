@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Input, Button, message, Space, Typography, Alert } from 'antd';
 import { KeyOutlined, InfoCircleOutlined, LoginOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore, getLoginUrl } from '../stores/authStore';
 import type { LLMConfig } from '../utils/llmClient';
 
@@ -21,10 +22,16 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
   title,
   description
 }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [apiKeyValue, setApiKeyValue] = useState('');
   const [apiKeyError, setApiKeyError] = useState('');
-  const { apiKey, loginType, setApiConfig, isAuthenticated } = useAuthStore();
+  const { apiKey, loginType, setApiConfig, isAuthenticated, systemInfo } = useAuthStore();
+
+  // 如果是内置API Key模式，不显示这个弹窗
+  if (systemInfo?.builtInApiKey) {
+    return null;
+  }
 
   useEffect(() => {
     if (open) {
@@ -42,11 +49,11 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
 
   const validateApiKey = (value: string): boolean => {
     if (!value || value.trim() === '') {
-      setApiKeyError('请输入API密钥');
+      setApiKeyError(t('apiConfig.errors.apiKeyRequired'));
       return false;
     }
     if (value.trim().length < 10) {
-      setApiKeyError('API密钥长度不能少于10个字符');
+      setApiKeyError(t('apiConfig.errors.apiKeyTooShort'));
       return false;
     }
     setApiKeyError('');
@@ -80,7 +87,7 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
       // 保存到 authStore
       setApiConfig(config.apiKey);
       
-      message.success('API配置已保存');
+      message.success(t('apiConfig.messages.configSaved'));
       onOk(config);
     } catch (error) {
       console.error('保存配置失败:', error);
@@ -111,22 +118,18 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
 
   const getModalTitle = () => {
     if (title) return title;
-    if (!isAuthenticated) return '需要登录';
-    return loginType === 'password' ? '配置API密钥' : '修改API设置';
+    if (!isAuthenticated) return t('apiConfig.title.loginRequired');
+    return loginType === 'password' ? t('apiConfig.title.configApiKey') : t('apiConfig.title.modifyApiSettings');
   };
 
   const getDescription = () => {
     if (description) return description;
     
     if (!isAuthenticated) {
-      return "您需要先登录才能使用AI功能。请选择登录方式。";
+      return t('apiConfig.description.loginRequired');
     }
     
-    if (loginType === 'password') {
-      return "您需要配置API密钥才能使用AI功能。您的API密钥将安全地存储在本地浏览器中。";
-    } else {
-      return "您可以修改API配置来使用不同的AI服务。您的API密钥将安全地存储在本地浏览器中。";
-    }
+    return t('apiConfig.description.apiKeyRequired');
   };
 
   // 如果用户未登录，显示登录选项
@@ -140,13 +143,13 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
         width={500}
         footer={[
           <Button key="cancel" onClick={handleCancel}>
-            取消
+            {t('apiConfig.buttons.cancel')}
           </Button>,
         ]}
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <Alert
-            message="需要登录"
+            message={t('apiConfig.alerts.loginRequired.title')}
             description={getDescription()}
             type="warning"
             icon={<InfoCircleOutlined />}
@@ -161,7 +164,7 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
               block
               loading={loading}
             >
-              使用 Thor 平台登录
+              {t('apiConfig.buttons.thorLogin')}
             </Button>
             
             <Button
@@ -170,13 +173,13 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
               onClick={handleLogin}
               block
             >
-              使用账户密码登录
+              {t('apiConfig.buttons.passwordLogin')}
             </Button>
           </Space>
 
           <Alert
-            message="登录说明"
-            description="登录后您将能够使用所有AI功能，包括提示词优化、图片生成等。"
+            message={t('apiConfig.alerts.loginExplanation.title')}
+            description={t('apiConfig.alerts.loginExplanation.description')}
             type="info"
             showIcon
           />
@@ -194,13 +197,13 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
       width={600}
       footer={[
         <Button key="submit" type="primary" loading={loading} onClick={handleSubmit}>
-          保存配置
+          {t('apiConfig.buttons.saveConfig')}
         </Button>,
       ]}
     >
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Alert
-          message="API配置说明"
+          message={t('apiConfig.alerts.apiConfigInfo.title')}
           description={getDescription()}
           type="info"
           icon={<InfoCircleOutlined />}
@@ -211,14 +214,14 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
           <div style={{ marginBottom: 8 }}>
             <Space>
               <KeyOutlined />
-              <Text strong>API 密钥</Text>
+              <Text strong>{t('apiConfig.form.apiKeyLabel')}</Text>
             </Space>
           </div>
           
           <Input.Password
             value={apiKeyValue}
             onChange={handleApiKeyChange}
-            placeholder="sk-..."
+            placeholder={t('apiConfig.form.apiKeyPlaceholder')}
             prefix={<KeyOutlined />}
             status={apiKeyError ? 'error' : ''}
           />
@@ -231,17 +234,17 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
           
           <div style={{ marginTop: 8 }}>
             <Text type="secondary">
-              您的Token AI API密钥，以 sk- 开头。
+              {t('apiConfig.form.apiKeyDescription')}
               <Link href="https://api.token-ai.cn/token" target="_blank">
-                获取API密钥
+                {t('apiConfig.form.getApiKeyLink')}
               </Link>
             </Text>
           </div>
         </div>
 
         <Alert
-          message="隐私保护"
-          description="您的API密钥仅存储在本地浏览器中，我们不会收集或存储您的API密钥信息。"
+          message={t('apiConfig.alerts.privacyProtection.title')}
+          description={t('apiConfig.alerts.privacyProtection.description')}
           type="success"
           showIcon
         />

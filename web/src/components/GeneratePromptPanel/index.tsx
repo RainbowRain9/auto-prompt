@@ -12,26 +12,30 @@ export default function GeneratePromptPanel() {
     const [openFunctionCalling, setOpenFunctionCalling] = useState(false);
 
     return (<>
-        <GeneratePromptButton
-            icon={<Sparkles 
-                size={16}
-                />}
-            onClick={() => {
-                setOpenGenertae(true);
-            }}
-        >
-            {t('generatePrompt.optimizePrompt')}
-        </GeneratePromptButton>
-        <GeneratePromptButton
-            icon={<Code 
-                size={16}
-                />}
-            onClick={() => {
-                setOpenFunctionCalling(true);
-            }}
-        >
-            {t('generatePrompt.optimizeFunctionCalling')}
-        </GeneratePromptButton>
+        <div data-tour="prompt-optimize">
+            <GeneratePromptButton
+                icon={<Sparkles 
+                    size={16}
+                    />}
+                onClick={() => {
+                    setOpenGenertae(true);
+                }}
+            >
+                {t('generatePrompt.optimizePrompt')}
+            </GeneratePromptButton>
+        </div>
+        <div data-tour="function-calling">
+            <GeneratePromptButton
+                icon={<Code 
+                    size={16}
+                    />}
+                onClick={() => {
+                    setOpenFunctionCalling(true);
+                }}
+            >
+                {t('generatePrompt.optimizeFunctionCalling')}
+            </GeneratePromptButton>
+        </div>
         <GeneratePrompt
             open={openGenerate}
             onCancel={() => {

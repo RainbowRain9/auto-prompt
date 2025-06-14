@@ -490,6 +490,8 @@ public class EvaluationService(PromptService promptService) : FastApi
                 var avgScore = executionResults.Average(r => r.Score);
                 var bestResult = executionResults.OrderByDescending(r => r.Score).First();
 
+                bestResult.Tags = bestResult.Tags.Distinct().ToArray();
+
                 scorePrompts.TryAdd(model, new
                 {
                     Comment = input.ExecutionCount > 1
@@ -754,6 +756,8 @@ public class EvaluationService(PromptService promptService) : FastApi
                 var avgScore = executionResults.Average(r => r.Score);
                 var bestResult = executionResults.OrderByDescending(r => r.Score).First();
 
+                bestResult.Tags = bestResult.Tags.Distinct().ToArray();
+                
                 var finalResultData = new
                 {
                     Comment = input.ExecutionCount > 1
@@ -824,7 +828,8 @@ public class EvaluationService(PromptService promptService) : FastApi
         var totalEvaluationTime = evaluationEndTime - evaluationStartTime;
 
         // 发送完成事件
-        await WriteSSEAsync(context, "complete", new { 
+        await WriteSSEAsync(context, "complete", new
+        {
             message = "所有模型评估完成",
             endTime = evaluationEndTime,
             totalTime = totalEvaluationTime
@@ -834,7 +839,8 @@ public class EvaluationService(PromptService promptService) : FastApi
         try
         {
             var evaluationResults = results.ToDictionary(r => r.Item1, r => (object)r.Item2);
-            await SaveEvaluationRecordAsync(input, evaluationResults, context, evaluationStartTime, evaluationEndTime, totalEvaluationTime);
+            await SaveEvaluationRecordAsync(input, evaluationResults, context, evaluationStartTime, evaluationEndTime,
+                totalEvaluationTime);
         }
         catch (Exception ex)
         {
@@ -873,7 +879,8 @@ public class EvaluationService(PromptService promptService) : FastApi
     /// <summary>
     /// 自动保存评估记录到数据库
     /// </summary>
-    private async Task SaveEvaluationRecordAsync(ExecuteTestInput input, Dictionary<string, object> evaluationResults, HttpContext context, long evaluationStartTime, long evaluationEndTime, long totalEvaluationTime)
+    private async Task SaveEvaluationRecordAsync(ExecuteTestInput input, Dictionary<string, object> evaluationResults,
+        HttpContext context, long evaluationStartTime, long evaluationEndTime, long totalEvaluationTime)
     {
         try
         {
@@ -939,7 +946,7 @@ public class EvaluationService(PromptService promptService) : FastApi
                 long endTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 long duration = 0;
                 object? executionResults = null;
-                
+
                 if (result is ScorePrompt scorePrompt)
                 {
                     // 异常情况下返回的ScorePrompt对象
@@ -964,7 +971,8 @@ public class EvaluationService(PromptService promptService) : FastApi
                         prompt = (string)(dynamicResult.prompt ?? input.Prompt);
                         promptOutput = (string)(dynamicResult.promptOutput ?? "");
                         executionCount = (int)(dynamicResult.executionCount ?? input.ExecutionCount);
-                        
+
+                        dynamicResult.Tags = dynamicResult.Tags.Distinct().ToArray();
                         // 处理Tags数组
                         if (dynamicResult.Tags != null)
                         {
@@ -973,6 +981,7 @@ public class EvaluationService(PromptService promptService) : FastApi
                             {
                                 tagsList.Add(tag.ToString());
                             }
+
                             tags = tagsList.ToArray();
                         }
 
@@ -1074,6 +1083,7 @@ public class EvaluationService(PromptService promptService) : FastApi
             {
                 title += $" ({input.ExecutionCount}次执行)";
             }
+
             if (input.EnableOptimization)
             {
                 title += " (优化提示词)";

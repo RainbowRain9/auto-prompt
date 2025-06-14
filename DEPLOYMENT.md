@@ -62,7 +62,45 @@ brew install docker docker-compose
 
 ## 🚀 快速开始
 
-### 方法一：使用自动部署脚本（推荐）
+### 方法一：Ollama本地AI服务（推荐新手）
+
+使用本地AI服务，无需API Key，开箱即用：
+
+**🚀 一键启动脚本**：
+
+**Linux/macOS用户**：
+```bash
+# 克隆项目
+git clone https://github.com/AIDotNet/auto-prompt.git
+cd auto-prompt
+
+# 给脚本添加执行权限
+chmod +x start-ollama.sh
+
+# 运行一键启动脚本
+./start-ollama.sh
+```
+
+**Windows用户**：
+```bash
+# 克隆项目
+git clone https://github.com/AIDotNet/auto-prompt.git
+cd auto-prompt
+
+# 直接运行批处理脚本
+start-ollama.bat
+```
+
+**脚本功能**：
+- 🚀 自动启动ollama服务和控制台服务
+- ⏳ 等待服务完全启动
+- 📦 自动拉取qwen3模型
+- ✅ 验证模型安装状态
+- 🎉 完成后显示访问地址
+
+**访问地址**: http://localhost:10426
+
+### 方法二：使用自动部署脚本
 
 1. **克隆项目**
    ```bash
@@ -88,7 +126,7 @@ brew install docker docker-compose
    - 完整配置 (PostgreSQL + Ollama + Redis)
    - 自定义配置
 
-### 方法二：手动配置部署
+### 方法三：手动配置部署
 
 1. **复制配置文件**
    ```bash

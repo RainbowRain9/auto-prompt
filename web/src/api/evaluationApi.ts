@@ -1,18 +1,8 @@
-import { useAuthStore } from "../stores/authStore";
+import { authenticatedFetch } from '../utils/apiUtils';
 
 // 获取API基础URL
 const getApiBaseUrl = () => {
   return '/v1/evaluation';
-};
-
-// 获取认证头
-const getAuthHeaders = () => {
-  const { apiKey, token } = useAuthStore.getState();
-  return {
-    'Content-Type': 'application/json',
-    'api-key': apiKey || '',
-    'Authorization': `Bearer ${token}`,
-  };
 };
 
 // 评估结果接口
@@ -44,7 +34,7 @@ export interface EvaluationInput {
   models: string[];
   prompt: string;
   request: string;
-  apiKey: string;
+  apiKey?: string;  // 在内置API Key模式下可选
   executionCount?: number;  // 每个模型的执行次数，默认为1
   enableOptimization?: boolean;  // 是否启用提示词优化，默认为true
   requirements?: string;  // 提示词优化的需求参数（可选）
@@ -90,9 +80,8 @@ export const streamEvaluateModels = (
   // 使用fetch实现SSE
   const fetchSSE = async () => {
     try {
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method: 'POST',
-        headers: getAuthHeaders(),
         body: JSON.stringify(input),
         signal: abortController.signal,
       });
@@ -164,9 +153,8 @@ export const streamEvaluateModels = (
 
 // 同步模型评估（备用方案）
 export const evaluateModels = async (input: EvaluationInput): Promise<Record<string, EvaluationResult>> => {
-  const response = await fetch(`${getApiBaseUrl()}/execute-model-task`, {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/execute-model-task`, {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify(input),
   });
 

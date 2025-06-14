@@ -1,10 +1,13 @@
-﻿namespace Console.Service.Options;
+﻿using System.ClientModel;
+using System.Net.Http.Headers;
+using Console.Service.Dto;
+using OpenAI;
+
+namespace Console.Service.Options;
 
 public class ConsoleOptions
 {
     public static string OpenAIEndpoint { get; set; }
-
-    public static string GenerationChatModel { get; set; } = "gpt-4.1-mini";
 
     public static string[] ChatModel { get; set; }
 
@@ -22,12 +25,15 @@ public class ConsoleOptions
     /// </summary>
     public static string ScoreModel { get; set; }
 
-    public static void Initialize(IConfiguration configuration)
+    /// <summary>
+    /// 默认的API密钥
+    /// </summary>
+    public static string? DefaultAPIKey { get; set; } = null;
+
+    public static async Task Initialize(IConfiguration configuration)
     {
         OpenAIEndpoint = configuration["OpenAIEndpoint"] ??
                          throw new ArgumentNullException("请配置环境变量：OpenAIEndpoint 示例：https://api.openai.com/v1");
-
-        GenerationChatModel = configuration["GenerationChatModel"] ?? "gpt-4.1-mini";
 
         ChatModel = configuration.GetSection("CHAT_MODEL").Get<string>()?.Split(',') ??
                     throw new ArgumentNullException("请配置环境变量：ChatModel 示例：gpt-4.1-mini,gpt-3.5-turbo");
@@ -40,5 +46,27 @@ public class ConsoleOptions
         DefaultImageGenerationModel = configuration["DEFAULT_IMAGE_GENERATION_MODEL"] ?? "o4-mini";
 
         ScoreModel = configuration["SCORE_MODEL"] ?? "gpt-4.1";
+
+        DefaultAPIKey = configuration["API_KEY"];
+
+        // 如果DefaultAPIKey和OpenAIEndpoint都配置了则自动获取模型列表
+        if (!string.IsNullOrEmpty(DefaultAPIKey) && !string.IsNullOrEmpty(OpenAIEndpoint) &&
+            DefaultChatModel.Length == 0)
+        {
+            using var client = new HttpClient();
+            client.BaseAddress = new Uri(OpenAIEndpoint);
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", DefaultAPIKey);
+
+            var response = await client.GetFromJsonAsync<ModelDto>("/models");
+
+
+            if (response?.Data == null)
+            {
+                throw new Exception("无法获取模型列表，请检查API密钥和端点配置是否正确。");
+            }
+
+            ChatModel = response.Data.Select(x => x.Id).ToArray();
+        }
     }
 }

@@ -46,13 +46,16 @@ import {
   HistoryOutlined,
   PieChartOutlined
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
+import { useTourStore } from '../../stores/tourStore';
 import { getModels } from '../../api/modelApi';
 import { streamEvaluateModels, getEvaluationExamples } from '../../api/evaluationApi';
 import { evaluationDB, type EvaluationRecord } from '../../api/evaluationHistoryApi';
 import EvaluationCharts from '../../components/EvaluationCharts';
 import EvaluationHistory from '../../components/EvaluationHistory';
+import ModelEvaluationTour from '../../components/ModelEvaluationTour';
 import type {
   EvaluationInput,
   EvaluationResult,
@@ -60,6 +63,7 @@ import type {
   StreamController,
   EvaluationExample
 } from '../../api/evaluationApi';
+import { isApiConfigReady } from '../../utils/apiUtils';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -78,8 +82,10 @@ interface ModelEvaluationState {
 }
 
 const ModelEvaluationPage: React.FC = () => {
+  const { t } = useTranslation();
   const { theme } = useThemeStore();
-  const { apiKey } = useAuthStore();
+  const { systemInfo, apiKey } = useAuthStore();
+  const { shouldShowModelEvaluationTour, setModelEvaluationTourCompleted } = useTourStore();
   const [form] = Form.useForm();
 
   // 状态管理
@@ -107,29 +113,36 @@ const ModelEvaluationPage: React.FC = () => {
   // 多次执行结果查看状态
   const [selectedExecutionIndex, setSelectedExecutionIndex] = useState<{ [model: string]: number }>({});
 
+  // 标签展开状态管理
+  const [expandedTags, setExpandedTags] = useState<{ [key: string]: boolean }>({});
+
+  // 引导相关状态
+  const [showTour, setShowTour] = useState(false);
+
   // 加载模型列表
   useEffect(() => {
     const loadModels = async () => {
       try {
         setIsLoadingModels(true);
-        const response = await getModels();
-        const chatModels = response.chatModels || [];
-        const modelList = chatModels.map((model: any) => model.id);
-        setModels(modelList);
+        const response = (await getModels()) as any;
+
+        const models =  response.chatModels.map((x:any)=>x.id);
+
+        setModels(models);
 
         // 默认选择前3个模型
-        if (modelList.length > 0) {
-          setSelectedModels(modelList.slice(0, Math.min(3, modelList.length)));
+        if (models.length > 0) {
+          setSelectedModels(models.slice(0, Math.min(3, models.length)));
         }
       } catch (error) {
         console.error('加载模型列表失败:', error);
-        message.error('加载模型列表失败，请检查网络连接');
+        message.error(t('modelEvaluation.messages.loadModelsError'));
       } finally {
         setIsLoadingModels(false);
       }
     };
     loadModels();
-  }, []);
+  }, [t]);
 
   // 加载示例数据
   useEffect(() => {
@@ -152,12 +165,12 @@ const ModelEvaluationPage: React.FC = () => {
         }
       } catch (error) {
         console.error('加载示例数据失败:', error);
-        message.error('加载示例数据失败，请检查网络连接');
+        message.error(t('modelEvaluation.messages.loadExamplesError'));
         // 如果加载失败，设置一个默认示例
         const defaultExample = {
           id: 'default',
-          title: '默认示例',
-          category: '通用',
+          title: t('modelEvaluation.categories.general') + '示例',
+          category: t('modelEvaluation.categories.general'),
           description: '通用示例',
           prompt: '你是一个有用的AI助手，请根据用户的请求提供帮助。',
           request: '请介绍一下你的功能和特点。'
@@ -175,7 +188,7 @@ const ModelEvaluationPage: React.FC = () => {
       }
     };
     loadExamples();
-  }, [form]);
+  }, [form, t]);
 
   // 加载历史记录
   useEffect(() => {
@@ -187,13 +200,34 @@ const ModelEvaluationPage: React.FC = () => {
         setEvaluationHistory(history);
       } catch (error) {
         console.error('加载历史记录失败:', error);
-        message.error('加载历史记录失败');
+        message.error(t('modelEvaluation.messages.loadHistoryFailed'));
       } finally {
         setIsLoadingHistory(false);
       }
     };
     loadHistory();
-  }, []);
+  }, [t]);
+
+  // 检查是否是首次使用，如果是则自动显示引导
+  useEffect(() => {
+    if (shouldShowModelEvaluationTour()) {
+      // 延迟一点时间让页面完全加载
+      setTimeout(() => {
+        setShowTour(true);
+      }, 1000);
+    }
+  }, [shouldShowModelEvaluationTour]);
+
+  // 处理引导关闭
+  const handleTourClose = () => {
+    setShowTour(false);
+    setModelEvaluationTourCompleted(true);
+  };
+
+  // 手动开始引导
+  const handleStartTour = () => {
+    setShowTour(true);
+  };
 
   // 重新加载评估历史列表的函数
   const reloadEvaluationHistory = async () => {
@@ -203,7 +237,7 @@ const ModelEvaluationPage: React.FC = () => {
       setEvaluationHistory(history);
     } catch (error) {
       console.error('重新加载历史记录失败:', error);
-      message.error('重新加载历史记录失败');
+      message.error(t('modelEvaluation.messages.loadHistoryFailed'));
     } finally {
       setIsLoadingHistory(false);
     }
@@ -223,7 +257,7 @@ const ModelEvaluationPage: React.FC = () => {
         selectedModels.forEach(model => {
           initialStates[model] = {
             status: 'pending',
-            step: '等待开始',
+            step: t('modelEvaluation.status.pending'),
             startTime: Date.now()
           };
         });
@@ -236,7 +270,7 @@ const ModelEvaluationPage: React.FC = () => {
           [data.model]: {
             ...prev[data.model],
             status: 'processing',
-            step: '开始处理',
+            step: t('modelEvaluation.status.processing'),
             startTime: Date.now()
           }
         }));
@@ -245,35 +279,35 @@ const ModelEvaluationPage: React.FC = () => {
       case 'optimize-start':
         setEvaluationStates(prev => ({
           ...prev,
-          [data.model]: { ...prev[data.model], step: '🔧 优化提示词' }
+          [data.model]: { ...prev[data.model], step: t('modelEvaluation.status.optimizingPrompt') }
         }));
         break;
 
       case 'optimize-complete':
         setEvaluationStates(prev => ({
           ...prev,
-          [data.model]: { ...prev[data.model], step: '✅ 提示词优化完成' }
+          [data.model]: { ...prev[data.model], step: t('modelEvaluation.status.optimizationComplete') }
         }));
         break;
 
       case 'execute-original':
         setEvaluationStates(prev => ({
           ...prev,
-          [data.model]: { ...prev[data.model], step: data.execution ? `🚀 执行原始提示词 (第${data.execution}次)` : '🚀 执行原始提示词' }
+          [data.model]: { ...prev[data.model], step: data.execution ? t('modelEvaluation.status.executingOriginalWithCount', { count: data.execution }) : t('modelEvaluation.status.executingOriginal') }
         }));
         break;
 
       case 'execute-optimized':
         setEvaluationStates(prev => ({
           ...prev,
-          [data.model]: { ...prev[data.model], step: data.execution ? `⚡ 执行优化提示词 (第${data.execution}次)` : '⚡ 执行优化提示词' }
+          [data.model]: { ...prev[data.model], step: data.execution ? t('modelEvaluation.status.executingOptimizedWithCount', { count: data.execution }) : t('modelEvaluation.status.executingOptimized') }
         }));
         break;
 
       case 'scoring':
         setEvaluationStates(prev => ({
           ...prev,
-          [data.model]: { ...prev[data.model], step: data.execution ? `📊 智能评分中 (第${data.execution}次)` : '📊 智能评分中' }
+          [data.model]: { ...prev[data.model], step: data.execution ? t('modelEvaluation.status.scoringWithCount', { count: data.execution }) : t('modelEvaluation.status.scoring') }
         }));
         break;
 
@@ -283,7 +317,7 @@ const ModelEvaluationPage: React.FC = () => {
           [data.model]: {
             ...prev[data.model],
             status: 'completed',
-            step: data.result?.executionCount > 1 ? `🎉 评估完成 (${data.result.executionCount}次执行)` : '🎉 评估完成',
+            step: data.result?.executionCount > 1 ? t('modelEvaluation.status.evaluationCompleteWithCount', { count: data.result.executionCount }) : t('modelEvaluation.status.evaluationComplete'),
             result: data.result,
             endTime: Date.now()
           }
@@ -297,7 +331,7 @@ const ModelEvaluationPage: React.FC = () => {
           [data.model]: {
             ...prev[data.model],
             status: 'error',
-            step: '❌ 评估失败',
+            step: t('modelEvaluation.status.evaluationFailed'),
             error: data.error || '未知错误',
             result: data.result,
             endTime: Date.now()
@@ -309,17 +343,17 @@ const ModelEvaluationPage: React.FC = () => {
       case 'complete':
         setIsRunning(false);
         setStreamController(null);
-        message.success('🎊 所有模型评估完成！');
+        message.success(t('modelEvaluation.messages.allEvaluationComplete'));
         // 后端已自动保存评估记录，这里只需要重新加载历史记录
         reloadEvaluationHistory().then(() => {
-          message.success('评估记录已自动保存');
+          message.success(t('modelEvaluation.messages.evaluationRecordSaved'));
         }).catch((error) => {
           console.error('重新加载历史记录失败:', error);
-          message.warning('评估完成，但重新加载历史记录失败');
+          message.warning(t('modelEvaluation.messages.loadHistoryFailed'));
         });
         break;
     }
-  }, [selectedModels, reloadEvaluationHistory]);
+  }, [selectedModels, reloadEvaluationHistory, t]);
 
   // 历史记录管理函数
   const handleViewHistoryEvaluation = (evaluation: EvaluationRecord) => {
@@ -359,7 +393,7 @@ const ModelEvaluationPage: React.FC = () => {
         prompt: selectedExample.prompt,
         request: selectedExample.request
       });
-      message.success(`已选择示例：${selectedExample.title}`);
+      message.success(t('modelEvaluation.selectedExample', { title: selectedExample.title }));
     }
   };
 
@@ -369,12 +403,12 @@ const ModelEvaluationPage: React.FC = () => {
       const values = await form.validateFields();
 
       if (!selectedModels.length) {
-        message.error('请至少选择一个模型进行评估');
+        message.error(t('modelEvaluation.messages.noModelsSelected'));
         return;
       }
 
       if (selectedModels.length > 10) {
-        message.warning('建议同时评估的模型数量不超过10个，以确保最佳性能');
+        message.warning(t('modelEvaluation.modelLimit'));
       }
 
       setIsRunning(true);
@@ -384,15 +418,19 @@ const ModelEvaluationPage: React.FC = () => {
         models: selectedModels,
         prompt: values.prompt,
         request: values.request,
-        apiKey: apiKey || '',
         executionCount: values.executionCount || 1,
         enableOptimization: values.enableOptimization !== false,
         requirements: values.requirements
       };
 
-      // 如果token为空，则提示用户输入token
-      if (!apiKey) {
-        message.error('请先填写API Key');
+      // 只在非内置API Key模式下添加apiKey字段
+      if (!systemInfo?.builtInApiKey && apiKey) {
+        input.apiKey = apiKey;
+      }
+
+      // 检查API配置是否就绪
+      if (!isApiConfigReady()) {
+        message.error(t('modelEvaluation.messages.apiKeyRequired'));
         return;
       }
 
@@ -401,7 +439,7 @@ const ModelEvaluationPage: React.FC = () => {
         handleSSEEvent,
         (error) => {
           console.error('评估错误:', error);
-          message.error(`评估失败: ${error.message}`);
+          message.error(t('modelEvaluation.messages.evaluationError', { message: error.message }));
           setIsRunning(false);
           setStreamController(null);
         },
@@ -413,7 +451,7 @@ const ModelEvaluationPage: React.FC = () => {
       setStreamController(controller);
     } catch (error) {
       console.error('表单验证失败:', error);
-      message.error('请检查输入内容是否完整');
+      message.error(t('modelEvaluation.messages.validationError'));
     }
   };
 
@@ -424,7 +462,7 @@ const ModelEvaluationPage: React.FC = () => {
       setStreamController(null);
     }
     setIsRunning(false);
-    message.info('评估已停止');
+    message.info(t('modelEvaluation.messages.evaluationStopped'));
   };
 
   // 重置表单
@@ -433,7 +471,7 @@ const ModelEvaluationPage: React.FC = () => {
     setCompletedModels(0);
     setTotalModels(0);
     setStartTime(0);
-    message.success('已重置评估状态');
+    message.success(t('modelEvaluation.messages.evaluationReset'));
   };
 
   // 获取状态图标
@@ -506,7 +544,7 @@ const ModelEvaluationPage: React.FC = () => {
             label: (
               <span>
                 <RocketOutlined />
-                模型评估
+                {t('modelEvaluation.tabs.evaluation')}
               </span>
             ),
             children: (
@@ -520,9 +558,20 @@ const ModelEvaluationPage: React.FC = () => {
                   <div style={{ padding: '24px', height: '100%', overflow: 'auto' }}>
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
                       <BarChartOutlined style={{ fontSize: '24px', color: '#1677ff', marginRight: '12px' }} />
-                      <Title level={3} style={{ margin: 0 }}>
-                        模型评估工作台
+                      <Title level={3} style={{ margin: 0, flex: 1 }}>
+                        {t('modelEvaluation.titles.workbench')}
                       </Title>
+                      <Button
+                        type="text"
+                        icon={<QuestionCircleOutlined />}
+                        onClick={handleStartTour}
+                        style={{
+                          color: '#1677ff',
+                          fontWeight: 500,
+                        }}
+                      >
+                        新人引导
+                      </Button>
                     </div>
 
                     <Form
@@ -531,18 +580,23 @@ const ModelEvaluationPage: React.FC = () => {
                       size="large"
                     >
                       {/* 示例选择区域 */}
-                      <Card size="small" style={{ marginBottom: '24px' }} title={
-                        <Space>
-                          <BookOutlined style={{ color: '#1677ff' }} />
-                          <Text strong>选择示例模板</Text>
-                        </Space>
-                      }>
+                      <Card 
+                        size="small" 
+                        style={{ marginBottom: '24px' }} 
+                        title={
+                          <Space>
+                            <BookOutlined style={{ color: '#1677ff' }} />
+                            <Text strong>{t('modelEvaluation.titles.selectExampleTemplate')}</Text>
+                          </Space>
+                        }
+                        data-tour="example-selector"
+                      >
                         <Form.Item
-                          label="示例类型"
-                          extra={`共有 ${examples.length} 个示例可选`}
+                          label={t('modelEvaluation.labels.exampleType')}
+                          extra={`${t('modelEvaluation.messages.totalExamples', { count: examples.length })}`}
                         >
                           <Select
-                            placeholder={isLoadingExamples ? "正在加载示例..." : "请选择示例类型"}
+                            placeholder={isLoadingExamples ? t('modelEvaluation.placeholders.loadingExamples') : t('modelEvaluation.placeholders.selectExample')}
                             value={selectedExampleId}
                             onChange={handleExampleChange}
                             style={{ width: '100%' }}
@@ -657,18 +711,19 @@ const ModelEvaluationPage: React.FC = () => {
                       <Form.Item
                         label={
                           <Space>
-                            <Text strong>选择评估模型</Text>
-                            <Tooltip title="支持同时评估多个模型，建议不超过10个">
+                            <Text strong>{t('modelEvaluation.labels.selectModels')}</Text>
+                            <Tooltip title={t('modelEvaluation.tooltips.selectMultipleModels')}>
                               <QuestionCircleOutlined style={{ color: '#999' }} />
                             </Tooltip>
                           </Space>
                         }
                         required
-                        extra={`已选择 ${selectedModels.length} 个模型 | 共 ${models.length} 个可用模型`}
+                        extra={`${t('modelEvaluation.messages.selectedModels', { count: selectedModels.length })} | ${t('modelEvaluation.messages.totalModels', { count: models.length })}`}
+                        data-tour="model-selector"
                       >
                         <Select
                           mode="multiple"
-                          placeholder={isLoadingModels ? "正在加载模型列表..." : "请选择要评估的模型"}
+                          placeholder={isLoadingModels ? t('modelEvaluation.placeholders.loadingModels') : t('modelEvaluation.placeholders.selectModels')}
                           value={selectedModels}
                           onChange={setSelectedModels}
                           style={{ width: '100%' }}
@@ -698,18 +753,19 @@ const ModelEvaluationPage: React.FC = () => {
                         name="prompt"
                         label={
                           <Space>
-                            <Text strong>基础提示词</Text>
-                            <Tooltip title="这是将要被优化的原始提示词">
+                            <Text strong>{t('modelEvaluation.labels.basePrompt')}</Text>
+                            <Tooltip title={t('modelEvaluation.tooltips.basePrompt')}>
                               <InfoCircleOutlined style={{ color: '#999' }} />
                             </Tooltip>
                           </Space>
                         }
-                        rules={[{ required: true, message: '请输入基础提示词' }]}
-                        extra="用于模型评估的基础提示词模板"
+                        rules={[{ required: true, message: t('modelEvaluation.messages.enterBasePrompt') }]}
+                        extra={t('modelEvaluation.messages.basePromptTemplate')}
+                        data-tour="base-prompt"
                       >
                         <TextArea
                           rows={8}
-                          placeholder="请输入您的提示词模板..."
+                          placeholder={t('modelEvaluation.placeholders.enterPromptTemplate')}
                           disabled={isRunning}
                           showCount
                           maxLength={10000}
@@ -720,43 +776,49 @@ const ModelEvaluationPage: React.FC = () => {
                         name="request"
                         label={
                           <Space>
-                            <Text strong>测试任务</Text>
-                            <Tooltip title="具体的测试请求，用于验证提示词效果">
+                            <Text strong>{t('modelEvaluation.labels.testTask')}</Text>
+                            <Tooltip title={t('modelEvaluation.tooltips.testTask')}>
                               <BulbOutlined style={{ color: '#999' }} />
                             </Tooltip>
                           </Space>
                         }
-                        rules={[{ required: true, message: '请输入测试任务' }]}
-                        extra="这个任务将用于测试原始提示词和优化后提示词的效果差异"
+                        rules={[{ required: true, message: t('modelEvaluation.messages.enterTestTask') }]}
+                        extra={t('modelEvaluation.messages.testTaskDescription')}
+                        data-tour="test-task"
                       >
                         <TextArea
                           rows={4}
-                          placeholder="请输入具体的测试任务..."
+                          placeholder={t('modelEvaluation.placeholders.enterTestTask')}
                           disabled={isRunning}
                           showCount
                           maxLength={500}
                         />
                       </Form.Item>
 
-                      <Card size="small" title={
-                        <Space>
-                          <SettingOutlined style={{ color: '#1677ff' }} />
-                          <Text strong>评估配置</Text>
-                        </Space>
-                      } style={{ marginBottom: '24px' }}>
+                      <Card 
+                        size="small" 
+                        title={
+                          <Space>
+                            <SettingOutlined style={{ color: '#1677ff' }} />
+                            <Text strong>{t('modelEvaluation.titles.evaluationConfig')}</Text>
+                          </Space>
+                        } 
+                        style={{ marginBottom: '24px' }}
+                        data-tour="evaluation-config"
+                      >
                         <Row gutter={16}>
                           <Col span={12}>
                             <Form.Item
                               name="executionCount"
                               label={
                                 <Space>
-                                  <Text strong>执行次数</Text>
-                                  <Tooltip title="每个模型执行测试的次数，多次执行将计算平均分">
+                                  <Text strong>{t('modelEvaluation.labels.executionCount')}</Text>
+                                  <Tooltip title={t('modelEvaluation.tooltips.executionCount')}>
                                     <QuestionCircleOutlined style={{ color: '#999' }} />
                                   </Tooltip>
                                 </Space>
                               }
-                              extra="设置每个模型执行评估的次数"
+                              extra={t('modelEvaluation.messages.setExecutionCount')}
                             >
                               <InputNumber
                                 min={1}
@@ -764,7 +826,7 @@ const ModelEvaluationPage: React.FC = () => {
                                 style={{ width: '100%' }}
                                 placeholder="1"
                                 disabled={isRunning}
-                                addonAfter="次"
+                                addonAfter={t('modelEvaluation.labels.times')}
                               />
                             </Form.Item>
                           </Col>
@@ -773,18 +835,18 @@ const ModelEvaluationPage: React.FC = () => {
                               name="enableOptimization"
                               label={
                                 <Space>
-                                  <Text strong>提示词优化</Text>
-                                  <Tooltip title="是否启用提示词自动优化功能">
+                                  <Text strong>{t('modelEvaluation.labels.promptOptimization')}</Text>
+                                  <Tooltip title={t('modelEvaluation.tooltips.promptOptimization')}>
                                     <ThunderboltOutlined style={{ color: '#999' }} />
                                   </Tooltip>
                                 </Space>
                               }
                               valuePropName="checked"
-                              extra="启用后将对比优化前后的效果"
+                              extra={t('modelEvaluation.messages.enableOptimization')}
                             >
                               <Switch
-                                checkedChildren="启用"
-                                unCheckedChildren="禁用"
+                                checkedChildren={t('modelEvaluation.labels.enable')}
+                                unCheckedChildren={t('modelEvaluation.labels.disable')}
                                 disabled={isRunning}
                               />
                             </Form.Item>
@@ -799,18 +861,18 @@ const ModelEvaluationPage: React.FC = () => {
                                 name="requirements"
                                 label={
                                   <Space>
-                                    <Text strong>优化需求</Text>
-                                    <Tooltip title="可选参数，用于指导提示词优化的具体需求和方向">
+                                    <Text strong>{t('modelEvaluation.labels.optimizationRequirements')}</Text>
+                                    <Tooltip title={t('modelEvaluation.tooltips.optimizationRequirements')}>
                                       <InfoCircleOutlined style={{ color: '#999' }} />
                                     </Tooltip>
                                   </Space>
                                 }
-                                extra="可选：描述您希望提示词优化的方向和具体需求"
+                                extra={t('modelEvaluation.messages.optimizationRequirementsDescription')}
                                 style={{ marginTop: '16px' }}
                               >
                                 <TextArea
                                   rows={3}
-                                  placeholder="例如：提高回答的专业性，增加创意元素，使语言更加生动有趣..."
+                                  placeholder={t('modelEvaluation.placeholders.optimizationRequirementsExample')}
                                   disabled={isRunning}
                                   showCount
                                   maxLength={1000}
@@ -822,7 +884,7 @@ const ModelEvaluationPage: React.FC = () => {
                       </Card>
 
                       <Form.Item>
-                        <Space size="middle">
+                        <Space size="middle" data-tour="start-button">
                           <Button
                             type="primary"
                             size="large"
@@ -831,7 +893,7 @@ const ModelEvaluationPage: React.FC = () => {
                             loading={isRunning}
                             disabled={!selectedModels.length || isLoadingModels}
                           >
-                            开始评估
+                            {t('modelEvaluation.buttons.startEvaluation')}
                           </Button>
 
                           {isRunning && (
@@ -841,7 +903,7 @@ const ModelEvaluationPage: React.FC = () => {
                               icon={<StopOutlined />}
                               onClick={handleStopEvaluation}
                             >
-                              停止评估
+                              {t('modelEvaluation.buttons.stopEvaluation')}
                             </Button>
                           )}
 
@@ -851,7 +913,7 @@ const ModelEvaluationPage: React.FC = () => {
                             onClick={handleReset}
                             disabled={isRunning}
                           >
-                            重置
+                            {t('modelEvaluation.buttons.reset')}
                           </Button>
                         </Space>
                       </Form.Item>
@@ -864,7 +926,7 @@ const ModelEvaluationPage: React.FC = () => {
                           <Row gutter={16}>
                             <Col span={12}>
                               <Statistic
-                                title="完成进度"
+                                title={t('modelEvaluation.labels.completionProgress')}
                                 value={completedModels}
                                 suffix={`/ ${totalModels}`}
                                 prefix={<FireOutlined />}
@@ -872,10 +934,10 @@ const ModelEvaluationPage: React.FC = () => {
                             </Col>
                             <Col span={12}>
                               <Statistic
-                                title="平均得分"
+                                title={t('modelEvaluation.labels.averageScore')}
                                 value={statistics.avgScore}
                                 precision={1}
-                                suffix="分"
+                                suffix={t('modelEvaluation.labels.points')}
                                 prefix={getScoreInfo(statistics.avgScore).icon}
                               />
                             </Col>
@@ -884,10 +946,10 @@ const ModelEvaluationPage: React.FC = () => {
                           {/* 显示当前配置 */}
                           <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                             <Tag color="processing">
-                              执行次数: {form.getFieldValue('executionCount') || 1}次
+                              {t('modelEvaluation.labels.executionCount')}: {form.getFieldValue('executionCount') || 1}{t('modelEvaluation.labels.times')}
                             </Tag>
                             <Tag color={form.getFieldValue('enableOptimization') !== false ? 'success' : 'default'}>
-                              {form.getFieldValue('enableOptimization') !== false ? '已启用优化' : '未启用优化'}
+                              {form.getFieldValue('enableOptimization') !== false ? t('modelEvaluation.labels.optimizationEnabled') : t('modelEvaluation.labels.optimizationDisabled')}
                             </Tag>
                           </div>
                         </div>
@@ -899,7 +961,7 @@ const ModelEvaluationPage: React.FC = () => {
                         />
                         {statistics.totalTime > 0 && (
                           <Text type="secondary" style={{ marginTop: '8px', display: 'block' }}>
-                            总耗时: {Math.round(statistics.totalTime / 1000)}秒
+                            {t('modelEvaluation.labels.totalTime')}: {Math.round(statistics.totalTime / 1000)}{t('modelEvaluation.labels.seconds')}
                           </Text>
                         )}
                       </Card>
@@ -912,11 +974,11 @@ const ModelEvaluationPage: React.FC = () => {
                   height: '100%',
                   background: theme === 'dark' ? '#141414' : '#fafafa'
                 }}>
-                  <div style={{ padding: '24px', height: '100%', overflow: 'auto' }}>
+                  <div style={{ padding: '24px', height: '100%', overflow: 'auto' }} data-tour="results-area">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         <Title level={3} style={{ margin: 0 }}>
-                          评估结果
+                          {t('modelEvaluation.titles.evaluationResults')}
                         </Title>
                         {Object.keys(evaluationStates).length > 0 && (
                           <Badge
@@ -928,7 +990,7 @@ const ModelEvaluationPage: React.FC = () => {
                       </div>
                       {completedModels > 0 && totalModels > 0 && (
                         <Tag color={overallProgress === 100 ? 'success' : 'processing'}>
-                          {overallProgress === 100 ? '全部完成' : '进行中'}
+                          {overallProgress === 100 ? t('modelEvaluation.labels.allCompleted') : t('modelEvaluation.labels.inProgress')}
                         </Tag>
                       )}
                     </div>
@@ -937,9 +999,9 @@ const ModelEvaluationPage: React.FC = () => {
                       <Empty
                         description={
                           <div>
-                            <Text>请配置评估参数并开始模型评估</Text>
+                            <Text>{t('modelEvaluation.messages.configureEvaluation')}</Text>
                             <br />
-                            <Text type="secondary">左侧配置完成后点击"开始评估"按钮</Text>
+                            <Text type="secondary">{t('modelEvaluation.messages.clickStartAfterConfiguration')}</Text>
                           </div>
                         }
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -994,7 +1056,7 @@ const ModelEvaluationPage: React.FC = () => {
                                         </div>
                                         <Statistic
                                           value={state.result.score}
-                                          suffix="分"
+                                          suffix={t('modelEvaluation.labels.points')}
                                           valueStyle={{
                                             color: getScoreInfo(state.result.score).color,
                                             fontSize: '24px'
@@ -1007,7 +1069,7 @@ const ModelEvaluationPage: React.FC = () => {
                                     </Col>
                                     <Col span={16}>
                                       <div>
-                                        <Text strong>评估描述</Text>
+                                        <Text strong>{t('modelEvaluation.labels.evaluationDescription')}</Text>
                                         <div style={{ marginTop: '4px', marginBottom: '12px' }}>
                                           <Text>{state.result.description}</Text>
                                         </div>
@@ -1015,27 +1077,59 @@ const ModelEvaluationPage: React.FC = () => {
                                         {/* 显示标签 */}
                                         {state.result.tags && state.result.tags.length > 0 && (
                                           <div style={{ marginBottom: '12px' }}>
-                                            <Text strong style={{ fontSize: '12px', color: '#666' }}>提示词分类:</Text>
-                                            <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                              {state.result.tags.map((tag, index) => (
-                                                <Tag
-                                                  key={index}
-                                                  color="blue"
-                                                  style={{ fontSize: '11px', padding: '2px 6px', lineHeight: '16px' }}
-                                                >
-                                                  {tag}
-                                                </Tag>
-                                              ))}
+                                            <Text strong style={{ fontSize: '12px', color: '#666' }}>{t('modelEvaluation.labels.promptCategories')}:</Text>
+                                            <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                              {(() => {
+                                                const MAX_VISIBLE_TAGS = 3;
+                                                const tagKey = `${model}-main-tags`;
+                                                const isExpanded = expandedTags[tagKey];
+                                                const visibleTags = isExpanded ? state.result.tags : state.result.tags.slice(0, MAX_VISIBLE_TAGS);
+                                                const hasMoreTags = state.result.tags.length > MAX_VISIBLE_TAGS;
+
+                                                return (
+                                                  <>
+                                                    {visibleTags.map((tag, index) => (
+                                                      <Tag
+                                                        key={index}
+                                                        color="blue"
+                                                        style={{ fontSize: '11px', padding: '2px 6px', lineHeight: '16px' }}
+                                                      >
+                                                        {tag}
+                                                      </Tag>
+                                                    ))}
+                                                    {hasMoreTags && (
+                                                      <Button
+                                                        type="link"
+                                                        size="small"
+                                                        style={{ 
+                                                          fontSize: '11px', 
+                                                          padding: '0 4px', 
+                                                          height: '18px',
+                                                          minWidth: 'auto'
+                                                        }}
+                                                        onClick={() => {
+                                                          setExpandedTags(prev => ({
+                                                            ...prev,
+                                                            [tagKey]: !prev[tagKey]
+                                                          }));
+                                                        }}
+                                                      >
+                                                        {isExpanded ? t('modelEvaluation.buttons.collapse') : `+${state.result.tags.length - MAX_VISIBLE_TAGS}${t('modelEvaluation.labels.more')}`}
+                                                      </Button>
+                                                    )}
+                                                  </>
+                                                );
+                                              })()}
                                             </div>
                                           </div>
                                         )}
 
                                         {state.result.comment && (
                                           <Collapse ghost size="small">
-                                            <Panel header="详细评价" key="1">
+                                            <Panel header={t('modelEvaluation.labels.detailedEvaluation')} key="1">
                                               <Paragraph
                                                 style={{ margin: 0, fontSize: '14px' }}
-                                                ellipsis={{ rows: 3, expandable: true, symbol: '展开' }}
+                                                ellipsis={{ rows: 3, expandable: true, symbol: t('modelEvaluation.buttons.expand') }}
                                               >
                                                 {state.result.comment}
                                               </Paragraph>
@@ -1051,10 +1145,10 @@ const ModelEvaluationPage: React.FC = () => {
                                     <Panel header={
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <BulbOutlined style={{ color: '#1677ff' }} />
-                                        <Text strong>查看提示词对比和输出结果</Text>
+                                        <Text strong>{t('modelEvaluation.labels.viewPromptsAndOutputs')}</Text>
                                         {(state.result?.executionCount ?? 1) > 1 && (
                                           <Tag color="blue">
-                                            {state.result?.executionCount}次执行
+                                            {state.result?.executionCount}{t('modelEvaluation.labels.executions')}
                                           </Tag>
                                         )}
                                       </div>
@@ -1062,7 +1156,7 @@ const ModelEvaluationPage: React.FC = () => {
                                       {/* 多次执行结果选择器 */}
                                       {state.result?.executionResults && state.result.executionResults.length > 1 && (
                                         <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                          <Text strong style={{ fontSize: '13px' }}>查看执行结果:</Text>
+                                          <Text strong style={{ fontSize: '13px' }}>{t('modelEvaluation.labels.viewExecutionResults')}:</Text>
                                           <Select
                                             size="small"
                                             value={selectedExecutionIndex[model] ?? -1}
@@ -1077,18 +1171,18 @@ const ModelEvaluationPage: React.FC = () => {
                                             <Option value={-1}>
                                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                 <BarChartOutlined style={{ color: '#1677ff' }} />
-                                                <span>平均结果</span>
+                                                <span>{t('modelEvaluation.labels.averageResults')}</span>
                                               </div>
                                             </Option>
                                             {state.result.executionResults.map((_, index) => (
                                               <Option key={index} value={index}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                  <span>第{index + 1}次执行</span>
+                                                  <span>{t('modelEvaluation.labels.execution')} {index + 1}</span>
                                                   <Tag
                                                     color={getScoreInfo(state.result?.executionResults?.[index]?.score || 0).color}
                                                     style={{ fontSize: '10px', lineHeight: '14px', margin: 0 }}
                                                   >
-                                                    {state.result?.executionResults?.[index]?.score || 0}分
+                                                    {state.result?.executionResults?.[index]?.score || 0}{t('modelEvaluation.labels.points')}
                                                   </Tag>
                                                 </div>
                                               </Option>
@@ -1110,9 +1204,9 @@ const ModelEvaluationPage: React.FC = () => {
                                               <Alert
                                                 message={
                                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span>第{currentExecutionIndex + 1}次执行结果</span>
+                                                    <span>{t('modelEvaluation.labels.execution')} {currentExecutionIndex + 1} {t('modelEvaluation.labels.result')}</span>
                                                     <Tag color={getScoreInfo(currentExecution.score).color}>
-                                                      {currentExecution.score}分 - {getScoreInfo(currentExecution.score).level}
+                                                      {currentExecution.score}{t('modelEvaluation.labels.points')} - {getScoreInfo(currentExecution.score).level}
                                                     </Tag>
                                                   </div>
                                                 }
@@ -1123,17 +1217,49 @@ const ModelEvaluationPage: React.FC = () => {
                                               />
                                               {currentExecution.tags && currentExecution.tags.length > 0 && (
                                                 <div style={{ marginBottom: '12px' }}>
-                                                  <Text strong style={{ fontSize: '12px', color: '#666' }}>本次执行标签:</Text>
-                                                  <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                                    {currentExecution.tags.map((tag, tagIndex) => (
-                                                      <Tag
-                                                        key={tagIndex}
-                                                        color="cyan"
-                                                        style={{ fontSize: '10px', margin: '2px' }}
-                                                      >
-                                                        {tag}
-                                                      </Tag>
-                                                    ))}
+                                                  <Text strong style={{ fontSize: '12px', color: '#666' }}>{t('modelEvaluation.labels.executionTags')}:</Text>
+                                                  <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                                    {(() => {
+                                                      const MAX_VISIBLE_TAGS = 3;
+                                                      const tagKey = `${model}-execution-${currentExecutionIndex}-tags`;
+                                                      const isExpanded = expandedTags[tagKey];
+                                                      const visibleTags = isExpanded ? currentExecution.tags : currentExecution.tags.slice(0, MAX_VISIBLE_TAGS);
+                                                      const hasMoreTags = currentExecution.tags.length > MAX_VISIBLE_TAGS;
+
+                                                      return (
+                                                        <>
+                                                          {visibleTags.map((tag, tagIndex) => (
+                                                            <Tag
+                                                              key={tagIndex}
+                                                              color="cyan"
+                                                              style={{ fontSize: '10px', margin: '2px' }}
+                                                            >
+                                                              {tag}
+                                                            </Tag>
+                                                          ))}
+                                                          {hasMoreTags && (
+                                                            <Button
+                                                              type="link"
+                                                              size="small"
+                                                              style={{ 
+                                                                fontSize: '10px', 
+                                                                padding: '0 4px', 
+                                                                height: '16px',
+                                                                minWidth: 'auto'
+                                                              }}
+                                                              onClick={() => {
+                                                                setExpandedTags(prev => ({
+                                                                  ...prev,
+                                                                  [tagKey]: !prev[tagKey]
+                                                                }));
+                                                              }}
+                                                            >
+                                                              {isExpanded ? t('modelEvaluation.buttons.collapse') : `+${currentExecution.tags.length - MAX_VISIBLE_TAGS}${t('modelEvaluation.labels.more')}`}
+                                                            </Button>
+                                                          )}
+                                                        </>
+                                                      );
+                                                    })()}
                                                   </div>
                                                 </div>
                                               )}
@@ -1147,29 +1273,29 @@ const ModelEvaluationPage: React.FC = () => {
                                         <Col span={12}>
                                           <Card size="small" title={
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                              <Text style={{ fontSize: '13px', color: '#666' }}>原始提示词</Text>
+                                              <Text style={{ fontSize: '13px', color: '#666' }}>{t('modelEvaluation.labels.originalPrompt')}</Text>
                                             </div>
                                           }>
                                             <Paragraph
                                               style={{ margin: 0, fontSize: '12px', maxHeight: '200px', overflow: 'auto' }}
-                                              ellipsis={{ rows: 6, expandable: true, symbol: '展开' }}
+                                              ellipsis={{ rows: 6, expandable: true, symbol: t('modelEvaluation.buttons.expand') }}
                                             >
                                               {(() => {
                                                 const currentExecutionIndex = selectedExecutionIndex[model] ?? -1;
                                                 const currentExecution = state.result?.executionResults?.[currentExecutionIndex];
-                                                return currentExecution?.prompt || state.result.prompt || '无';
+                                                return currentExecution?.prompt || state.result.prompt || t('modelEvaluation.labels.none');
                                               })()}
                                             </Paragraph>
                                             <div style={{ marginTop: '12px', padding: '8px', background: theme === 'dark' ? '#1a1a1a' : '#f5f5f5', borderRadius: '4px' }}>
-                                              <Text style={{ fontSize: '11px', color: '#999' }}>输出结果:</Text>
+                                              <Text style={{ fontSize: '11px', color: '#999' }}>{t('modelEvaluation.labels.output')}:</Text>
                                               <Paragraph
                                                 style={{ margin: '4px 0 0 0', fontSize: '12px' }}
-                                                ellipsis={{ rows: 4, expandable: true, symbol: '展开' }}
+                                                ellipsis={{ rows: 4, expandable: true, symbol: t('modelEvaluation.results.expand') }}
                                               >
                                                 {(() => {
                                                   const currentExecutionIndex = selectedExecutionIndex[model] ?? -1;
                                                   const currentExecution = state.result?.executionResults?.[currentExecutionIndex];
-                                                  return currentExecution?.promptOutput || state.result.promptOutput || '无输出';
+                                                  return currentExecution?.promptOutput || state.result.promptOutput || t('modelEvaluation.results.noOutput');
                                                 })()}
                                               </Paragraph>
                                             </div>
@@ -1185,31 +1311,31 @@ const ModelEvaluationPage: React.FC = () => {
                                                   const currentExecution = state.result?.executionResults?.[currentExecutionIndex];
                                                   const optimizedPrompt = currentExecution?.originalPrompt || state.result?.originalPrompt;
                                                   const originalPrompt = currentExecution?.prompt || state.result?.prompt;
-                                                  return optimizedPrompt === originalPrompt ? '原始提示词 (未优化)' : '优化提示词';
+                                                  return optimizedPrompt === originalPrompt ? t('modelEvaluation.labels.originalPromptUnoptimized') : t('modelEvaluation.labels.optimizedPrompt');
                                                 })()}
                                               </Text>
                                             </div>
                                           }>
                                             <Paragraph
                                               style={{ margin: 0, fontSize: '12px', maxHeight: '200px', overflow: 'auto' }}
-                                              ellipsis={{ rows: 6, expandable: true, symbol: '展开' }}
+                                              ellipsis={{ rows: 6, expandable: true, symbol: t('modelEvaluation.buttons.expand') }}
                                             >
                                               {(() => {
                                                 const currentExecutionIndex = selectedExecutionIndex[model] ?? -1;
                                                 const currentExecution = state.result?.executionResults?.[currentExecutionIndex];
-                                                return currentExecution?.originalPrompt || state.result.originalPrompt || '无';
+                                                return currentExecution?.originalPrompt || state.result.originalPrompt || t('modelEvaluation.labels.none');
                                               })()}
                                             </Paragraph>
                                             <div style={{ marginTop: '12px', padding: '8px', background: theme === 'dark' ? '#1a1a1a' : '#f5f5f5', borderRadius: '4px' }}>
-                                              <Text style={{ fontSize: '11px', color: '#999' }}>输出结果:</Text>
+                                              <Text style={{ fontSize: '11px', color: '#999' }}>{t('modelEvaluation.results.outputResult')}</Text>
                                               <Paragraph
                                                 style={{ margin: '4px 0 0 0', fontSize: '12px' }}
-                                                ellipsis={{ rows: 4, expandable: true, symbol: '展开' }}
+                                                ellipsis={{ rows: 4, expandable: true, symbol: t('modelEvaluation.results.expand') }}
                                               >
                                                 {(() => {
                                                   const currentExecutionIndex = selectedExecutionIndex[model] ?? -1;
                                                   const currentExecution = state.result?.executionResults?.[currentExecutionIndex];
-                                                  return currentExecution?.originalPromptOutput || state.result.originalPromptOutput || '无输出';
+                                                  return currentExecution?.originalPromptOutput || state.result.originalPromptOutput || t('modelEvaluation.results.noOutput');
                                                 })()}
                                               </Paragraph>
                                             </div>
@@ -1223,7 +1349,7 @@ const ModelEvaluationPage: React.FC = () => {
 
                               {state.error && (
                                 <Alert
-                                  message="评估失败"
+                                  message={t('modelEvaluation.status.evaluationFailed')}
                                   description={state.error}
                                   type="error"
                                   showIcon
@@ -1240,39 +1366,39 @@ const ModelEvaluationPage: React.FC = () => {
                     {overallProgress === 100 && completedModels > 0 && (
                       <Card
                         style={{ marginTop: '24px', background: theme === 'dark' ? '#262626' : '#f9f9f9' }}
-                        title="📊 评估总结"
+                        title={t('modelEvaluation.results.evaluationSummary')}
                       >
                         <Row gutter={24}>
                           <Col span={6}>
                             <Statistic
-                              title="参与模型"
+                              title={t('modelEvaluation.results.participatingModels')}
                               value={totalModels}
-                              suffix="个"
+                              suffix={t('modelEvaluation.results.modelCount')}
                               prefix="🤖"
                             />
                           </Col>
                           <Col span={6}>
                             <Statistic
-                              title="成功完成"
+                              title={t('modelEvaluation.results.successfullyCompleted')}
                               value={statistics.completed}
-                              suffix="个"
+                              suffix={t('modelEvaluation.results.modelCount')}
                               prefix="✅"
                             />
                           </Col>
                           <Col span={6}>
                             <Statistic
-                              title="平均得分"
+                              title={t('modelEvaluation.results.averageScoreTitle')}
                               value={statistics.avgScore}
                               precision={1}
-                              suffix="分"
+                              suffix={t('modelEvaluation.labels.points')}
                               prefix={getScoreInfo(statistics.avgScore).icon}
                             />
                           </Col>
                           <Col span={6}>
                             <Statistic
-                              title="总耗时"
+                              title={t('modelEvaluation.results.totalTimeTitle')}
                               value={Math.round(statistics.totalTime / 1000)}
-                              suffix="秒"
+                              suffix={t('modelEvaluation.results.seconds')}
                               prefix="⏱️"
                             />
                           </Col>
@@ -1298,7 +1424,7 @@ const ModelEvaluationPage: React.FC = () => {
                           return (
                             <div style={{ marginTop: '16px' }}>
                               <Text strong style={{ marginBottom: '8px', display: 'block' }}>
-                                🏷️ 提示词分类统计
+                                {t('modelEvaluation.results.tagStatistics')}
                               </Text>
                               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                                 {sortedTags.map(([tag, count]) => (
@@ -1326,7 +1452,7 @@ const ModelEvaluationPage: React.FC = () => {
             label: (
               <span>
                 <PieChartOutlined />
-                数据图表
+                {t('modelEvaluation.tabs.charts')}
                 {currentEvaluationRecord ? <Badge dot style={{ marginLeft: '4px' }} /> : null}
               </span>
             ),
@@ -1344,7 +1470,7 @@ const ModelEvaluationPage: React.FC = () => {
             label: (
               <span>
                 <HistoryOutlined />
-                评估历史
+                {t('modelEvaluation.tabs.history')}
                 <Badge count={evaluationHistory.length} showZero style={{ marginLeft: '4px' }} />
               </span>
             ),
@@ -1361,6 +1487,12 @@ const ModelEvaluationPage: React.FC = () => {
             )
           }
         ]}
+      />
+      
+      {/* 引导组件 */}
+      <ModelEvaluationTour
+        open={showTour}
+        onClose={handleTourClose}
       />
     </div>
   );

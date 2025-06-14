@@ -40,6 +40,57 @@
     "loginFailed": "Login Failed",
     "pleaseLogin": "Please login first"
   },
+  "apiConfig": {
+    "title": {
+      "loginRequired": "Login Required",
+      "configApiKey": "Configure API Key",
+      "modifyApiSettings": "Modify API Settings"
+    },
+    "description": {
+      "loginRequired": "You need to login first to use AI features. Please choose a login method.",
+      "apiKeyRequired": "You need to configure an API key to use AI features. Your API key will be securely stored in your local browser. For local Ollama access, you can enter any value as the key."
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "thorLogin": "Login with Thor Platform",
+      "passwordLogin": "Login with Username and Password",
+      "saveConfig": "Save Configuration"
+    },
+    "form": {
+      "apiKeyLabel": "API Key",
+      "apiKeyPlaceholder": "sk-...",
+      "apiKeyDescription": "Your API key, starting with sk-.",
+      "getApiKeyLink": "Get API Key"
+    },
+    "errors": {
+      "apiKeyRequired": "Please enter API key",
+      "apiKeyTooShort": "API key must be at least 10 characters long",
+      "saveFailed": "Failed to save configuration"
+    },
+    "messages": {
+      "configSaved": "API configuration saved",
+      "loginExplanation": "After logging in, you will be able to use all AI features, including prompt optimization, image generation, etc.",
+      "privacyProtection": "Your API key is only stored in your local browser, we do not collect or store your API key information."
+    },
+    "alerts": {
+      "loginRequired": {
+        "title": "Login Required",
+        "description": "You need to login first to use AI features. Please choose a login method."
+      },
+      "loginExplanation": {
+        "title": "Login Instructions",
+        "description": "After logging in, you will be able to use all AI features, including prompt optimization, image generation, etc."
+      },
+      "apiConfigInfo": {
+        "title": "API Configuration Instructions",
+        "description": "You need to configure an API key to use AI features. Your API key will be securely stored in your local browser. For local Ollama access, you can enter any value as the key."
+      },
+      "privacyProtection": {
+        "title": "Privacy Protection",
+        "description": "Your API key is only stored in your local browser, we do not collect or store your API key information."
+      }
+    }
+  },
   "workbench": {
     "title": "Prompt Optimization Platform",
     "run": "Run",
@@ -150,7 +201,8 @@
     "noEvaluation": "No evaluation result available",
     "waitingForEvaluation": "Waiting for evaluation...",
     "reasoningInProgress": "Reasoning in progress...",
-    "cannotCloseWhileGenerating": "Cannot close window while generating"
+    "cannotCloseWhileGenerating": "Cannot close window while generating",
+    "noModelsSelected": "Please select at least one model for evaluation"
   },
   "prompts": {
     "title": "Prompt Management",
@@ -629,6 +681,220 @@
     },
     "pagination": {
       "total": "Total {{total}} items"
+    }
+  },
+  "modelEvaluation": {
+    "workbench": "Model Evaluation Workbench",
+    "configuration": "Configuration Area",
+    "exampleTemplate": "Select Example Template",
+    "exampleType": "Example Type",
+    "exampleCount": "{{count}} examples available",
+    "selectExamplePlaceholder": "Please select example type",
+    "loadingExamples": "Loading examples...",
+    "currentExample": "Current selected example information",
+    "selectedExample": "Selected example: {{title}}",
+    "modelSelection": "Select Evaluation Models",
+    "modelSelectionRequired": "Select Evaluation Models",
+    "modelSelectionExtra": "{{selected}} models selected | {{total}} models available",
+    "modelSelectionPlaceholder": "Please select models to evaluate",
+    "loadingModels": "Loading model list...",
+    "modelLimit": "Recommend evaluating no more than 10 models simultaneously for optimal performance",
+    "basicPrompt": "Basic Prompt",
+    "basicPromptPlaceholder": "Please enter your prompt template...",
+    "basicPromptExtra": "Basic prompt template for model evaluation",
+    "basicPromptRequired": "Please enter basic prompt",
+    "basicPromptTooltip": "This is the original prompt to be optimized",
+    "testTask": "Test Task",
+    "testTaskPlaceholder": "Please enter specific test task...",
+    "testTaskExtra": "This task will test the effectiveness difference between original and optimized prompts",
+    "testTaskRequired": "Please enter test task",
+    "testTaskTooltip": "Specific test request to verify prompt effectiveness",
+    "evaluationConfig": "Evaluation Configuration",
+    "executionCount": "Execution Count",
+    "executionCountExtra": "Set the number of evaluations for each model",
+    "executionCountTooltip": "Number of test executions per model, multiple executions will calculate average score",
+    "executionCountUnit": "times",
+    "promptOptimization": "Prompt Optimization",
+    "promptOptimizationExtra": "When enabled, will compare before and after optimization effects",
+    "promptOptimizationTooltip": "Whether to enable automatic prompt optimization",
+    "promptOptimizationEnabled": "Enabled",
+    "promptOptimizationDisabled": "Disabled",
+    "optimizationRequirements": "Optimization Requirements",
+    "optimizationRequirementsPlaceholder": "e.g.: Improve answer professionalism, add creative elements, make language more vivid and interesting...",
+    "optimizationRequirementsExtra": "Optional: Describe the direction and specific requirements for prompt optimization",
+    "optimizationRequirementsTooltip": "Optional parameter to guide specific requirements and direction for prompt optimization",
+    "titles": {
+      "workbench": "Model Evaluation Workbench",
+      "selectExampleTemplate": "Select Example Template",
+      "evaluationConfig": "Evaluation Configuration",
+      "evaluationResults": "Evaluation Results"
+    },
+    "labels": {
+      "exampleType": "Example Type",
+      "selectModels": "Select Evaluation Models",
+      "basePrompt": "Basic Prompt",
+      "testTask": "Test Task",
+      "executionCount": "Execution Count",
+      "promptOptimization": "Prompt Optimization",
+      "optimizationRequirements": "Optimization Requirements",
+      "enable": "Enable",
+      "disable": "Disable",
+      "times": "times",
+      "completionProgress": "Completion Progress",
+      "averageScore": "Average Score",
+      "points": "pts",
+      "optimizationEnabled": "Optimization enabled",
+      "optimizationDisabled": "Optimization disabled",
+      "totalTime": "Total time",
+      "seconds": "s",
+      "allCompleted": "All completed",
+      "inProgress": "In progress",
+      "evaluationDescription": "Evaluation Description",
+      "promptCategories": "Prompt Categories",
+      "more": " more",
+      "detailedEvaluation": "Detailed Evaluation",
+      "viewPromptsAndOutputs": "View Prompt Comparison and Output Results",
+      "executions": " executions",
+      "viewExecutionResults": "View execution results",
+      "averageResults": "Average Results",
+      "execution": "Execution ",
+      "result": " result",
+      "executionTags": "This execution tags",
+      "originalPrompt": "Original Prompt",
+      "optimizedPrompt": "Optimized Prompt",
+      "originalPromptUnoptimized": "Original Prompt (Not optimized)",
+      "output": "Output",
+      "none": "None"
+    },
+    "placeholders": {
+      "loadingExamples": "Loading examples...",
+      "selectExample": "Please select example type",
+      "loadingModels": "Loading model list...",
+      "selectModels": "Please select models to evaluate",
+      "enterPromptTemplate": "Please enter your prompt template...",
+      "enterTestTask": "Please enter specific test task...",
+      "optimizationRequirementsExample": "e.g.: Improve answer professionalism, add creative elements, make language more vivid and interesting..."
+    },
+    "tooltips": {
+      "selectMultipleModels": "Support evaluating multiple models simultaneously, recommend no more than 10",
+      "basePrompt": "This is the original prompt to be optimized",
+      "testTask": "Specific test request to verify prompt effectiveness",
+      "executionCount": "Number of test executions per model, multiple executions will calculate average score",
+      "promptOptimization": "Whether to enable automatic prompt optimization",
+      "optimizationRequirements": "Optional parameter to guide specific requirements and direction for prompt optimization"
+    },
+    "buttons": {
+      "startEvaluation": "Start Evaluation",
+      "stopEvaluation": "Stop Evaluation",
+      "reset": "Reset",
+      "expand": "Expand",
+      "collapse": "Collapse"
+    },
+    "progress": {
+      "completedProgress": "Completion Progress",
+      "averageScore": "Average Score",
+      "executionInfo": "Execution count: {{count}} times",
+      "optimizationEnabled": "Optimization enabled",
+      "optimizationDisabled": "Optimization disabled",
+      "totalTime": "Total time: {{seconds}}s"
+    },
+    "status": {
+      "pending": "Waiting to start",
+      "processing": "In progress",
+      "completed": "Completed",
+      "error": "Evaluation failed",
+      "allCompleted": "All completed",
+      "optimizingPrompt": "🔧 Optimizing prompt",
+      "optimizationComplete": "✅ Prompt optimization complete",
+      "executingOriginal": "🚀 Executing original prompt",
+      "executingOptimized": "⚡ Executing optimized prompt",
+      "scoring": "📊 AI scoring in progress",
+      "evaluationComplete": "🎉 Evaluation complete",
+      "evaluationFailed": "❌ Evaluation failed",
+      "executingOriginalWithCount": "🚀 Executing original prompt ({{count}} time)",
+      "executingOptimizedWithCount": "⚡ Executing optimized prompt ({{count}} time)",
+      "scoringWithCount": "📊 AI scoring in progress ({{count}} time)",
+      "evaluationCompleteWithCount": "🎉 Evaluation complete ({{count}} executions)"
+    },
+    "scores": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "average": "Average",
+      "passed": "Passed",
+      "needsImprovement": "Needs Improvement"
+    },
+    "results": {
+      "emptyState": "Please configure evaluation parameters and start model evaluation",
+      "emptyStateDescription": "Click \"Start Evaluation\" button after completing configuration on the left",
+      "evaluationDescription": "Evaluation Description",
+      "promptCategory": "Prompt Category:",
+      "detailedEvaluation": "Detailed Evaluation",
+      "viewPromptAndOutput": "View Prompt Comparison and Output Results",
+      "multiExecution": "{{count}} executions",
+      "executionSelector": "View execution results:",
+      "averageResult": "Average Result",
+      "executionResult": "Execution {{index}}",
+      "executionInfo": "Execution {{index}} result",
+      "executionTags": "This execution tags:",
+      "originalPrompt": "Original Prompt",
+      "optimizedPrompt": "Optimized Prompt",
+      "notOptimized": "Original Prompt (Not optimized)",
+      "outputResult": "Output Result:",
+      "noOutput": "No output",
+      "none": "None",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "showMore": "+{{count}} more",
+      "evaluationSummary": "📊 Evaluation Summary",
+      "participatingModels": "Participating Models",
+      "successfullyCompleted": "Successfully Completed",
+      "averageScoreTitle": "Average Score",
+      "totalTimeTitle": "Total Time",
+      "tagStatistics": "🏷️ Prompt Category Statistics",
+      "modelCount": "",
+      "seconds": "s"
+    },
+    "messages": {
+      "totalExamples": "{{count}} examples available",
+      "selectedModels": "{{count}} models selected",
+      "totalModels": "{{total}} models available",
+      "enterBasePrompt": "Please enter basic prompt",
+      "basePromptTemplate": "Basic prompt template for model evaluation",
+      "enterTestTask": "Please enter test task",
+      "testTaskDescription": "This task will test the effectiveness difference between original and optimized prompts",
+      "setExecutionCount": "Set the number of evaluations for each model",
+      "enableOptimization": "When enabled, will compare before and after optimization effects",
+      "optimizationRequirementsDescription": "Optional: Describe the direction and specific requirements for prompt optimization",
+      "configureEvaluation": "Please configure evaluation parameters and start model evaluation",
+      "clickStartAfterConfiguration": "Click \"Start Evaluation\" button after completing configuration on the left",
+      "selectAtLeastOneModel": "Please select at least one model for evaluation",
+      "noModelsSelected": "Please select at least one model for evaluation",
+      "apiKeyRequired": "Please fill in API Key first",
+      "evaluationStopped": "Evaluation stopped",
+      "evaluationReset": "Evaluation state reset",
+      "allEvaluationComplete": "🎊 All model evaluations completed!",
+      "evaluationRecordSaved": "Evaluation record automatically saved",
+      "loadHistoryFailed": "Evaluation completed, but failed to reload history records",
+      "loadModelsError": "Failed to load model list, please check network connection",
+      "loadExamplesError": "Failed to load example data, please check network connection",
+      "validationError": "Please check if input content is complete",
+      "evaluationError": "Evaluation failed: {{message}}"
+    },
+    "tabs": {
+      "evaluation": "Model Evaluation",
+      "charts": "Data Charts",
+      "history": "Evaluation History"
+    },
+    "categories": {
+      "copywriting": "Copywriting",
+      "programming": "Programming",
+      "creative": "Creative Writing",
+      "business": "Business Analysis",
+      "education": "Education",
+      "service": "Customer Service",
+      "technical": "Technical Writing",
+      "lifestyle": "Lifestyle Service",
+      "general": "General"
     }
   }
 } 
