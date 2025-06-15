@@ -55,7 +55,6 @@ export default function GenerateFunctionCallingPrompt({
     
     // 推理时间相关状态
     const [reasoningStartTime, setReasoningStartTime] = useState<number | null>(null);
-    const [reasoningEndTime, setReasoningEndTime] = useState<number | null>(null);
     const [reasoningDuration, setReasoningDuration] = useState<number>(0);
 
     const [input, setInput] = useState({
@@ -117,7 +116,6 @@ export default function GenerateFunctionCallingPrompt({
             setSavingTemplate(false);
             setReasoningExpanded(false);
             setReasoningStartTime(null);
-            setReasoningEndTime(null);
             setReasoningDuration(0);
             templateForm.resetFields();
             // 取消正在进行的请求
@@ -216,7 +214,6 @@ export default function GenerateFunctionCallingPrompt({
         setEvaluationContent('');
         setIsEvaluating(false);
         setReasoningStartTime(null);
-        setReasoningEndTime(null);
         setReasoningDuration(0);
 
         // 创建新的AbortController
@@ -247,7 +244,6 @@ export default function GenerateFunctionCallingPrompt({
                         } else if (data.type === "deep-reasoning-end") {
                             setIsDeepReasoning(false);
                             const endTime = Date.now();
-                            setReasoningEndTime(endTime);
                             // 使用当前时间和开始时间计算持续时间
                             if (reasoningStartTime !== null) {
                                 setReasoningDuration(endTime - reasoningStartTime);
