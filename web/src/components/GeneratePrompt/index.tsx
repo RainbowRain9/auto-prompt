@@ -800,7 +800,6 @@ export default function GeneratePrompt({
                                         setIsEvaluating(false);
                                         setReasoningExpanded(false);
                                         setReasoningStartTime(null);
-                                        setReasoningEndTime(null);
                                         setReasoningDuration(0);
                                     }}
                                 >
