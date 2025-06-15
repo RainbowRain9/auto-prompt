@@ -7,7 +7,7 @@
 ![.NET](https://img.shields.io/badge/.NET-9.0-purple?style=for-the-badge&logo=dotnet)
 ![React](https://img.shields.io/badge/React-19.1.0-blue?style=for-the-badge&logo=react)
 
-**Professional AI prompt optimization, debugging, and sharing platform**
+**Professional AI Prompt Optimization, Debugging, and Sharing Platform**
 
 [🚀 Quick Start](#quick-start) • [📖 Features](#features) • [🛠️ Tech Stack](#tech-stack) • [📦 Deployment Guide](#deployment-guide) • [🤝 Contribution Guide](#contribution-guide)
 
@@ -17,51 +17,51 @@
 
 ## 📋 Project Overview
 
-AI Prompt Optimization Platform is a professional prompt engineering tool designed to help users optimize AI model prompts, enhancing the effectiveness and accuracy of AI interactions. The platform integrates intelligent optimization algorithms, deep reasoning analysis, visualization debugging tools, and community sharing features, providing comprehensive prompt optimization solutions for AI application developers and content creators.
+The AI Prompt Optimization Platform is a professional tool designed to help users optimize prompts for AI models, enhancing AI conversation effectiveness and response accuracy. The platform integrates intelligent optimization algorithms, deep inference analysis, visualization debugging tools, and community sharing features, providing comprehensive prompt optimization solutions for AI application developers and content creators.
 
 ### 🎯 Core Values
 
-- **Intelligent Optimization**: Automatically analyze and optimize prompt structures based on advanced AI algorithms
-- **Deep Reasoning**: Provide multi-dimensional thinking analysis to deeply understand user needs
-- **Community Sharing**: Discover and share high-quality prompt templates, exchange experiences with community users
-- **Visualization Debugging**: Robust debugging environment with real-time preview of prompt effects
+- **Intelligent Optimization**: Automatically analyzes and optimizes prompt structures based on advanced AI algorithms.
+- **Deep Inference**: Offers multidimensional thinking analysis to deeply understand user needs.
+- **Community Sharing**: Discover and share high-quality prompt templates, exchange experiences with community users.
+- **Visualization Debugging**: Powerful debugging environment with real-time preview of prompt effects.
 
 ## ✨ Features
 
 ### 🧠 Intelligent Prompt Optimization
 
-- **Automatic Structure Analysis**: Deeply analyze the semantic structure and logical relationships of prompts
-- **Multi-Dimensional Optimization**: Optimize from multiple dimensions such as clarity, accuracy, and completeness
-- **Deep Reasoning Mode**: Enable AI deep thinking to provide detailed analysis processes
-- **Real-Time Generation**: Stream output of optimization results, view the generation process in real-time
+- **Automatic Structure Analysis**: In-depth analysis of the semantic structure and logical relationships of prompts.
+- **Multidimensional Optimization**: Optimizes from multiple dimensions such as clarity, accuracy, and completeness.
+- **Deep Inference Mode**: Enables AI deep thinking to provide detailed analysis processes.
+- **Real-time Generation**: Streamlined output of optimization results, view the generation process in real-time.
 
 ### 📚 Prompt Template Management
 
-- **Template Creation**: Save optimized prompts as reusable templates
-- **Tag Classification**: Support multi-tag classification management for easy searching and organizing
-- **Favorites Feature**: Favorite templates for quick access to commonly used prompts
-- **Usage Statistics**: Track template usage and feedback on effectiveness
+- **Template Creation**: Save optimized prompts as reusable templates.
+- **Tag Classification**: Supports multi-tag classification management for easy searching and organization.
+- **Favorite Function**: Bookmark favorite templates for quick access to commonly used prompts.
+- **Usage Statistics**: Track template usage and feedback on effectiveness.
 
 ### 🌐 Community Sharing Platform
 
-- **Public Sharing**: Share high-quality templates with community users
-- **Popularity Ranking**: Display popular templates based on views, likes, etc.
-- **Search Discovery**: Powerful search functionality to quickly find needed templates
-- **Interactive Features**: Social features such as likes, comments, and favorites
+- **Public Sharing**: Share high-quality templates with community users.
+- **Popularity Rankings**: Display popular templates based on views, likes, etc.
+- **Search Discovery**: Powerful search function to quickly find needed templates.
+- **Interactive Communication**: Social features like likes, comments, and bookmarks.
 
 ### 🔧 Debugging and Testing Tools
 
-- **Visual Interface**: Intuitive user interface to simplify operations
-- **Real-Time Preview**: Instantly view prompt optimization effects
-- **History Records**: Save optimization history and support version comparison
-- **Export Functionality**: Support exporting optimization results in multiple formats
+- **Visual Interface**: Intuitive user interface simplifies operation processes.
+- **Real-time Preview**: Instantly view prompt optimization effects.
+- **History Records**: Save optimization history, support version comparison.
+- **Export Functionality**: Support exporting optimization results in various formats.
 
-### 🌐 Multi-Language Support
+### 🌐 Multi-language Support
 
-- **Language Switching**: Support Chinese and English interface switching
-- **Real-Time Translation**: Instant language switching without page refresh
-- **Localized Content**: Complete localization of all interface elements
-- **Browser Detection**: Automatic language detection based on browser settings
+- **Language Switching**: Supports switching between Chinese and English interfaces.
+- **Real-time Translation**: Switch languages without refreshing the page.
+- **Localized Content**: All interface elements are fully localized.
+- **Browser Detection**: Automatically detects language based on browser settings.
 
 ## 🛠️ Tech Stack
 
@@ -70,8 +70,8 @@ AI Prompt Optimization Platform is a professional prompt engineering tool design
 - **Framework**: .NET 9.0 + ASP.NET Core
 - **AI Engine**: Microsoft Semantic Kernel 1.54.0
 - **Database**: PostgreSQL + Entity Framework Core
-- **Authentication**: JWT Token authentication
-- **Logging**: Serilog structured logging
+- **Authentication**: JWT Token Authentication
+- **Logging**: Serilog Structured Logging
 - **API Documentation**: Scalar OpenAPI
 
 ### Frontend Technologies
@@ -85,198 +85,63 @@ AI Prompt Optimization Platform is a professional prompt engineering tool design
 
 ### Core Dependencies
 
-- **AI Model Integration**: OpenAI API compatible interface
-- **Real-Time Communication**: Server-Sent Events (SSE)
-- **Data Storage**: IndexedDB (client-side caching)
-- **Rich Text Editing**: TipTap editor
+- **AI Model Integration**: OpenAI API Compatible Interface
+- **Real-time Communication**: Server-Sent Events (SSE)
+- **Data Storage**: IndexedDB (client-side cache)
+- **Rich Text Editing**: TipTap Editor
 - **Code Highlighting**: Prism.js + React Syntax Highlighter
-- **Internationalization**: React i18next for multi-language support
+- **Internationalization**: React i18next Multi-language Support
 
 ## 📦 Deployment Guide
 
 ### Environment Requirements
 
 - Docker & Docker Compose
-- .NET 9.0 SDK (development environment)
-- Node.js 18+ (development environment)
 
 ### 🚀 Quick Start
 
-1. Clone the project
-   
+#### 1. Standard Deployment (Recommended)
+
 ```bash
+# Clone the project
 git clone https://github.com/AIDotNet/auto-prompt.git
 cd auto-prompt
-```
 
-2. Deploy using Docker Compose
-
-```bash
-# Start services
+# Start service
 docker-compose up -d
 
 # Check service status
 docker-compose ps
-
-# View logs
-docker-compose logs -f
 ```
 
-3. Access the application
+**Access URL**: http://localhost:10426
 
-- Frontend: http://localhost:10426
-- API Documentation: http://localhost:10426/scalar/v1
+#### 2. Custom API Endpoint Deployment
 
-### 🔐 Default Account Information
-
-After the first deployment, the system will automatically create a default admin account:
-
-- **Username**: `admin`
-- **Password**: `admin123`
-
-**Security Notice**: For system security, please change the default password immediately after first login.
-
-You can customize the default account through environment variables:
+Create `docker-compose.override.yaml` file:
 
 ```yaml
-environment:
-  - DEFAULT_USERNAME=your_admin_username
-  - DEFAULT_PASSWORD=your_secure_password
-```
+version: '3.8'
 
-
-### 🔧 Development Environment Setup
-
-1. Backend Development
-
-```bash
-cd src/Console.Service
-dotnet restore
-dotnet run
-```
-
-2. Frontend Development
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-### 🌐 Environment Variable Configuration
-
-Configure in `src/Console.Service/appsettings.json`:
-
-```json
-{
-  "OpenAIEndpoint": "https://api.openai.com/v1",
-  "CHAT_MODEL": "gpt-4,gpt-3.5-turbo,claude-3-sonnet",
-  "IMAGE_GENERATION_MODEL": "dall-e-3,midjourney,stable-diffusion",
-  "DEFAULT_CHAT_MODEL": "gpt-4",
-  "DEFAULT_IMAGE_GENERATION_MODEL": "dall-e-3",
-  "GenerationChatModel": "gpt-4",
-  "ConnectionStrings": {
-    "Type": "postgresql",
-    "Default": "Host=localhost;Database=prompt_db;Username=postgres;Password=your_password"
-  },
-  "Jwt": {
-    "Key": "your_jwt_secret_key",
-    "Issuer": "auto-prompt",
-    "Audience": "auto-prompt-users"
-  }
-}
-```
-
-### 🔧 Custom Endpoint Configuration
-
-This platform supports configuring custom AI API endpoints that are compatible with the OpenAI API format.
-
-#### Configuration Methods
-
-##### 1. Configuration via Configuration File (Recommended for Production)
-
-Configure in `src/Console.Service/appsettings.json`:
-
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "AllowedHosts": "*",
-  "OpenAIEndpoint": "https://your-custom-api.com/v1",
-  "ConnectionStrings": {
-    "Type": "sqlite",
-    "Default": "Data Source=/data/ConsoleService.db"
-  }
-}
-```
-
-##### 2. Configuration via Environment Variables
-
-```bash
-export OPENAIENDPOINT="https://your-custom-api.com/v1"
-```
-
-##### 3. Docker Compose Environment Variable Configuration
-
-Create or modify `docker-compose.yaml`:
-
-```yaml
 services:
   console-service:
-    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
-    ports:
-      - 10426:8080
     environment:
-      - TZ=Asia/Shanghai
-      - OpenAIEndpoint=https://your-custom-api.com/v1
-      # AI Model Configuration
+      # Custom AI API endpoint
+      - OpenAIEndpoint=https://your-api-endpoint.com/v1
+      # Available model configuration
       - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
-      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
       - DEFAULT_CHAT_MODEL=gpt-4
-      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
       - GenerationChatModel=gpt-4
-      # Database Configuration
-      - ConnectionStrings:Type=sqlite
-      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
-    volumes:
-      - ./data:/app/data
-    build:
-      context: .
-      dockerfile: src/Console.Service/Dockerfile
 ```
 
-#### New Environment Variables Detailed Description
+```bash
+# Start with custom configuration
+docker-compose -f docker-compose.yaml -f docker-compose.override.yaml up -d
+```
 
-##### AI Model Configuration Variables
+#### 3. Local AI Service Deployment (Ollama)
 
-- **`CHAT_MODEL`**: Configure the list of chat models supported by the platform, separated by commas. Users can select from these models in the frontend interface.
-- **`IMAGE_GENERATION_MODEL`**: Configure the list of image generation models supported by the platform, separated by commas.
-- **`DEFAULT_CHAT_MODEL`**: Set the default chat model to use when users don't specify one.
-- **`DEFAULT_IMAGE_GENERATION_MODEL`**: Set the default image generation model.
-- **`GenerationChatModel`**: Chat model specifically used for prompt optimization and generation features.
-
-#### Supported API Endpoint Types
-
-The platform supports the following services compatible with the OpenAI API format:
-
-- **OpenAI Official API**: `https://api.openai.com/v1`
-- **Azure OpenAI**: `https://your-resource.openai.azure.com/openai/deployments/your-deployment`
-- **Domestic Proxy Services**:
-  - `https://api.token-ai.cn/v1` (default)
-  - `https://api.deepseek.com/v1`
-  - `https://api.moonshot.cn/v1`
-- **Self-hosted Services**:
-  - Ollama: `http://localhost:11434/v1`
-  - LocalAI: `http://localhost:8080/v1`
-  - vLLM: `http://localhost:8000/v1`
-
-#### Complete Docker Compose Configuration Example
-
-##### Basic Configuration (SQLite Database)
+Create `docker-compose.ollama.yaml` file:
 
 ```yaml
 version: '3.8'
@@ -284,107 +149,14 @@ version: '3.8'
 services:
   console-service:
     image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
-    container_name: auto-prompt
     ports:
       - "10426:8080"
     environment:
       - TZ=Asia/Shanghai
-      - DEFAULT_USERNAME=admin
-      - DEFAULT_PASSWORD=admin123
-      - OpenAIEndpoint=https://api.openai.com/v1
-      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
-      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
-      - DEFAULT_CHAT_MODEL=gpt-4
-      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
-      - GenerationChatModel=gpt-4
-      - ConnectionStrings:Type=sqlite
-      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
-    volumes:
-      - ./data:/app/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-```
-
-##### Advanced Configuration (PostgreSQL Database)
-
-```yaml
-version: '3.8'
-
-services:
-  console-service:
-    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
-    container_name: auto-prompt
-    ports:
-      - "10426:8080"
-    environment:
-      - TZ=Asia/Shanghai
-      - DEFAULT_USERNAME=admin
-      - DEFAULT_PASSWORD=admin123
-      - OpenAIEndpoint=https://your-custom-api.com/v1
-      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
-      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
-      - DEFAULT_CHAT_MODEL=gpt-4
-      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
-      - GenerationChatModel=gpt-4
-      - ConnectionStrings:Type=postgresql
-      - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_password
-    depends_on:
-      - postgres
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: auto-prompt-db
-    environment:
-      - POSTGRES_DB=auto_prompt
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=your_password
-      - TZ=Asia/Shanghai
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
-```
-
-##### Local AI Service Configuration (Ollama)
-
-```yaml
-version: '3.8'
-
-services:
-  console-service:
-    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
-    container_name: auto-prompt
-    ports:
-      - "10426:8080"
-    environment:
-      - TZ=Asia/Shanghai
-      - DEFAULT_USERNAME=admin
-      - DEFAULT_PASSWORD=admin123
       - OpenAIEndpoint=http://ollama:11434/v1
-      - CHAT_MODEL=llama2,codellama,mistral
-      - IMAGE_GENERATION_MODEL=stable-diffusion
-      - DEFAULT_CHAT_MODEL=llama2
-      - DEFAULT_IMAGE_GENERATION_MODEL=stable-diffusion
-      - GenerationChatModel=llama2
+      - CHAT_MODEL=qwen2.5-coder:32b,llama3.2:3b,gemma2:9b
+      - DEFAULT_CHAT_MODEL=qwen2.5-coder:32b
+      - GenerationChatModel=qwen2.5-coder:32b
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
@@ -403,7 +175,7 @@ services:
     environment:
       - OLLAMA_HOST=0.0.0.0
     restart: unless-stopped
-    # Uncomment the following if you have a GPU
+    # GPU support (if NVIDIA GPU available)
     # deploy:
     #   resources:
     #     reservations:
@@ -414,98 +186,175 @@ services:
 
 volumes:
   ollama_data:
+```
 
-**🚀 One-Click Startup Scripts**:
+**Start Ollama Version**:
 
-To simplify the deployment process, we provide one-click startup scripts:
+```bash
+# Start service
+docker-compose -f docker-compose-ollama.yaml up -d
+
+# Pull recommended models
+docker exec ollama ollama pull qwen3
+docker exec ollama ollama pull qwen2.5:3b
+docker exec ollama ollama pull llama3.2:3b
+
+# Verify models
+docker exec ollama ollama list
+docker-compose restart console-service
+```
+
+**🚀 One-click Start Script**:
+
+To simplify the deployment process, we provide a one-click start script:
 
 **Linux/macOS Users**:
 ```bash
-# Grant execute permissions to the script
+# Add execution permission to script
 chmod +x start-ollama.sh
 
-# Run the one-click startup script
+# Run one-click start script
 ./start-ollama.sh
 ```
 
 **Windows Users**:
 ```bash
-# Run the batch script directly
+# Directly run batch script
 start-ollama.bat
 ```
 
 **Script Features**:
-- 🚀 Automatically start ollama service and console service
+- 🚀 Automatically start the ollama service and console service
 - ⏳ Wait for services to fully start
-- 📦 Automatically pull qwen3 model
+- 📦 Automatically pull the qwen3 model
 - ✅ Verify model installation status
-- 🎉 Display access URL after completion
-
-**After starting, you can pull additional models**:
-```bash
-# Pull recommended models
-docker exec ollama ollama pull qwen3
-docker exec ollama ollama pull qwen2.5:3b
-docker exec ollama ollama pull llama3.2:3b
-docker exec ollama ollama pull gemma2:9b
-
-# Verify models
-docker exec ollama ollama list
-```
+- 🎉 Display access address upon completion
 
 **Recommended Models**:
-- `qwen3` - Excellent Chinese conversational AI (~5GB)
-- `qwen2.5:3b` - Lightweight version (~2GB)
-- `llama3.2:3b` - Good English conversational AI (~2GB)
-- `gemma2:9b` - Google's open-source model (~5GB)
+- `qwen3` - Excellent Chinese conversation effect (about 5GB)
+- `qwen2.5:3b` - Lightweight version (about 2GB)
+- `llama3.2:3b` - Good English conversation effect (about 2GB)
+- `gemma2:9b` - Google open-source model (about 5GB)
+
+#### 4. PostgreSQL Database Deployment
+
+Create `docker-compose.postgres.yaml` file:
+
+```yaml
+version: '3.8'
+
+services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    ports:
+      - "10426:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - OpenAIEndpoint=https://api.openai.com/v1
+      - ConnectionStrings:Type=postgresql
+      - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_password
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=auto_prompt
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=your_password
+      - TZ=Asia/Shanghai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+
+### 🔐 Default Account Information
+
+- **Username**: `admin`
+- **Password**: `admin123`
+
+### 🔧 Environment Variable Configuration
+
+| Variable Name | Description | Default Value |
+|---------------|-------------|---------------|
+| `OpenAIEndpoint` | AI API endpoint address | `https://api.token-ai.cn/v1` |
+| `CHAT_MODEL` | Available chat model list | `gpt-4.1,o4-mini,claude-sonnet-4-20250514` |
+| `DEFAULT_CHAT_MODEL` | Default chat model | `gpt-4.1-mini` |
+| `DEFAULT_USERNAME` | Default admin username | `admin` |
+| `DEFAULT_PASSWORD` | Default admin password | `admin123` |
+| `ConnectionStrings:Type` | Database type | `sqlite` |
+
+### ⚡ Common Commands
+
+```bash
+# View logs
+docker-compose logs -f console-service
+
+# Restart service
+docker-compose restart console-service
+
+# Stop service
+docker-compose down
+
+# Update image
+docker-compose pull && docker-compose up -d
+```
+
+## 🏗️ Project Structure
+
+```
+auto-prompt/
+├── src/
+│   └── Console.Service/          # Backend service
+│       ├── Controllers/          # API controllers
+│       ├── Services/             # Business services
+│       ├── Entities/             # Data entities
+│       ├── Dto/                  # Data transfer objects
+│       ├── plugins/              # AI plugin configurations
+│       └── Migrations/           # Database migrations
+├── web/                          # Frontend application
+│   ├── src/
+│   └── public/                   # Static resources
+├── docker-compose.yaml           # Docker orchestration configuration
+└── README.md                     # Project documentation
+```
 
 ## 🎮 Usage Guide
 
 ### 1. Prompt Optimization
 
-1. Enter the prompt to be optimized in the workbench
-2. Describe specific requirements and expected outcomes
-3. Choose whether to enable deep reasoning mode
-4. Click "Generate" to start the optimization process
-5. View optimization results and reasoning process
+1. Enter the prompt you want to optimize in the workspace.
+2. Describe specific needs and expected effects.
+3. Choose whether to enable deep inference mode.
+4. Click "Generate" to start the optimization process.
+5. View optimization results and inference process.
 
 ### 2. Template Management
 
-1. Save optimized prompts as templates
-2. Add title, description, and tags
-3. Manage personal templates in "My Prompts"
-4. Support editing, deleting, and favoriting operations
+1. Save optimized prompts as templates.
+2. Add titles, descriptions, and tags.
+3. Manage personal templates in "My Prompts."
+4. Supports editing, deleting, bookmarking, etc.
 
 ### 3. Community Sharing
 
-1. Browse popular templates in the prompt plaza
-2. Use the search function to find specific types of templates
-3. Like and favorite interesting templates
-4. Share your high-quality templates with the community
+1. Browse popular templates in the Prompt Square.
+2. Use the search function to find specific types of templates.
+3. Like and bookmark templates of interest.
+4. Share your high-quality templates with the community.
 
 ### 4. Language Switching
 
-1. Click the language switcher button (🌐) in the top-right corner or sidebar
-2. Select your preferred language (Chinese/English)
-3. The interface will switch languages instantly without page refresh
-4. Your language preference will be saved for future visits
-
-## 🤝 Contribution Guide
-
-We welcome community contributions! Please follow these steps:
-
-1. **Fork the project** to your GitHub account
-2. **Create a feature branch**: `git checkout -b feature/AmazingFeature`
-3. **Commit your changes**: `git commit -m 'Add some AmazingFeature'`
-4. **Push the branch**: `git push origin feature/AmazingFeature`
-5. **Create a Pull Request**
-
-### Development Standards
-
-- Follow existing code style and naming conventions
-- Add appropriate comments and documentation
-- Ensure all tests pass
-- Update related documentation
+1. Click the language switch button (🌐) in the top right corner or sidebar.
+2. Choose your preferred language (Chinese/English).
+3. The interface will switch languages immediately without refreshing the page.
+4. Your language preference will be saved and automatically applied next time you visit.
 
 ## 📄 Open Source License
 
@@ -513,24 +362,24 @@ This project is licensed under the **LGPL (Lesser General Public License)**.
 
 ### License Terms
 
-- ✅ **Commercial Use**: Allows deployment and use in commercial environments
-- ✅ **Distribution**: Allows distribution of original code and binaries
-- ✅ **Modification**: Allows modification of source code for personal or internal use
-- ❌ **Commercial Distribution After Modification**: Prohibits commercial distribution of modified source code
-- ⚠️ **Liability**: Use of this software is at the user's own risk
+- ✅ **Commercial Use**: Allowed to deploy and use in commercial environments.
+- ✅ **Distribution**: Allowed to distribute original code and binaries.
+- ✅ **Modification**: Allowed to modify source code for personal or internal use.
+- ❌ **Commercial Distribution of Modified Code**: Prohibited from distributing modified source code commercially.
+- ⚠️ **Liability**: Users assume the risk of using this software.
 
 ### Important Notes
 
-- Direct deployment of this project for commercial use is allowed
-- Development of internal tools based on this project is allowed
-- Modified source code cannot be redistributed
-- Original copyright statements must be retained
+- Can directly deploy this project for commercial use.
+- Can develop internal tools based on this project.
+- Cannot repack and distribute modified source code.
+- Must retain original copyright notice.
 
 For detailed license terms, please refer to the [LICENSE](LICENSE) file.
 
 ## 🙏 Acknowledgments
 
-Thanks to the following open source projects and technologies:
+Thanks to the following open-source projects and technologies:
 
 - [Microsoft Semantic Kernel](https://github.com/microsoft/semantic-kernel) - AI orchestration framework
 - [Ant Design](https://ant.design/) - React UI component library
@@ -540,15 +389,22 @@ Thanks to the following open source projects and technologies:
 ## 📞 Contact Us
 
 - **Project Homepage**: https://github.com/AIDotNet/auto-prompt
-- **Issue Reporting**: [GitHub Issues](https://github.com/AIDotNet/auto-prompt/issues)
+- **Feedback**: [GitHub Issues](https://github.com/AIDotNet/auto-prompt/issues)
 - **Official Website**: https://token-ai.cn
 - **Technical Support**: Submit via GitHub Issues
 
 ---
-
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=AIDotNet/auto-prompt&type=Date)](https://www.star-history.com/#AIDotNet/auto-prompt&Date)
+
+## 👥 Contributors
+
+Thanks to all the developers who contributed to this project!
+<div align="center">
+<a href="https://github.com/AIDotNet/auto-prompt/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=AIDotNet/auto-prompt&max=50&columns=10" />
+</a>
 
 ## 💌WeChat
 
