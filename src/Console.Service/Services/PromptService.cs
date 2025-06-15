@@ -529,7 +529,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
                     else if (deepReasoningEnd == false)
                     {
                         deepReasoningEnd = true;
-                        
+
                         await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
                         {
                             type = "deep-reasoning-end",
@@ -834,6 +834,73 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         }
     }
 
+    /// <summary>
+    /// 生成提示词优化建议
+    /// </summary>
+    /// <returns></returns>
+    [EndpointSummary("生成提示词优化建议")]
+    [HttpPost("generate-prompt-optimization-suggestion")]
+    public async Task<string> GeneratePromptOptimizationSuggestionAsync(GeneratePromptOptimizationSuggestionInput input,
+        HttpContext context)
+    {
+        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
+
+        if (string.IsNullOrEmpty(token))
+        {
+            context.Response.StatusCode = 401;
+            return "Unauthorized access, please provide a valid API token.";
+        }
+
+        if (token.StartsWith("tk-"))
+        {
+            // 如果是sk 则是API Key
+            var apiKey = await dbContext.ApiKeys
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Key == token);
+
+            if (apiKey == null)
+            {
+                throw new InvalidOperationException("API Key not found.");
+            }
+
+            if (apiKey.ExpiresAt != null && apiKey.ExpiresAt < DateTime.Now)
+            {
+                throw new InvalidOperationException("API Key has expired.");
+            }
+
+            token = apiKey.OpenAiApiKey;
+        }
+
+
+        var kernel = KernelFactory.CreateKernel(input.Model, ConsoleOptions.OpenAIEndpoint, token);
+
+        var result = new StringBuilder();
+
+        await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["Suggestion"],
+                           new KernelArguments(
+                               new OpenAIPromptExecutionSettings()
+                               {
+                                   MaxTokens = MaxToken(input.Model),
+                                   Temperature = 0.7f,
+                               })
+                           {
+                               { "prompt", input.Prompt },
+                               { "newPrompt", input.NewPrompt }
+                           }))
+        {
+            if (item is OpenAIStreamingChatMessageContent chatMessageContent)
+            {
+                if (chatMessageContent.Content == null)
+                {
+                    continue;
+                }
+
+                result.Append(chatMessageContent.Content);
+            }
+        }
+
+        return result.ToString();
+    }
 
     private static int MaxToken(string model)
     {

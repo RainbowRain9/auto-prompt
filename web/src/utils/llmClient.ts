@@ -22,6 +22,13 @@ export const clearLLMConfig = (): void => {
  */
 export const getCurrentLLMConfig = (): LLMConfig | null => {
   const authState = useAuthStore.getState();
+  const { systemInfo } = useAuthStore.getState();
+
+  if (systemInfo?.builtInApiKey === true) {
+    return {
+      apiKey: 'sk-1234567890',
+    };
+  }
 
   if (authState.isAuthenticated && authState.apiKey) {
     return {
