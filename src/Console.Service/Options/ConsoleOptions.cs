@@ -47,7 +47,10 @@ public class ConsoleOptions
 
         ScoreModel = configuration["SCORE_MODEL"] ?? "gpt-4.1";
 
-        DefaultAPIKey = configuration["API_KEY"];
+        if (!string.IsNullOrWhiteSpace(configuration["API_KEY"]))
+        {
+            DefaultAPIKey = configuration["API_KEY"];
+        }
 
         // 如果DefaultAPIKey和OpenAIEndpoint都配置了则自动获取模型列表
         if (!string.IsNullOrEmpty(DefaultAPIKey) && !string.IsNullOrEmpty(OpenAIEndpoint) &&
