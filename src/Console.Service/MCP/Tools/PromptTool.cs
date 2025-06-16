@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Text;
 using Console.Core;
+using Console.Core.Entities;
 using Console.Service.Dto;
-using Console.Service.Entities;
 using Console.Service.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

@@ -1,4 +1,4 @@
-namespace Console.Service.Entities;
+namespace Console.Core.Entities;
 
 public class UserFavorite
 {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ConfigProvider, Layout } from 'antd';
+import { ConfigProvider, Layout, Spin } from 'antd';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore, initializeTheme } from './stores/themeStore';
@@ -66,7 +66,14 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   const { theme } = useThemeStore();
-  const { isAuthenticated, hasApiConfig, setApiConfig } = useAuthStore();
+  const { 
+    isAuthenticated, 
+    hasApiConfig, 
+    setApiConfig, 
+    loadSystemInfo, 
+    shouldRequireLogin, 
+    systemInfoLoaded 
+  } = useAuthStore();
   const { language } = useLanguageStore();
   const { i18n } = useTranslation();
   const [showApiConfig, setShowApiConfig] = useState(false);
@@ -74,18 +81,24 @@ const App: React.FC = () => {
   useEffect(() => {
     initializeTheme();
     initializeLanguage();
-  }, []);
+    // 应用启动时加载系统信息
+    loadSystemInfo();
+  }, [loadSystemInfo]);
 
   useEffect(() => {
     i18n.changeLanguage(language);
   }, [language, i18n]);
 
   useEffect(() => {
-    // 检查已登录用户是否需要配置API
-    if (isAuthenticated && !hasApiConfig()) {
-      setShowApiConfig(true);
+    // 只有在系统信息加载完成后才检查API配置需求
+    if (systemInfoLoaded && isAuthenticated && !hasApiConfig()) {
+      // 如果有内置API Key，不需要用户配置API Key
+      const { systemInfo } = useAuthStore.getState();
+      if (!systemInfo?.builtInApiKey) {
+        setShowApiConfig(true);
+      }
     }
-  }, [isAuthenticated, hasApiConfig]);
+  }, [systemInfoLoaded, isAuthenticated, hasApiConfig]);
 
   const handleLoginSuccess = () => {
     window.location.reload();
@@ -107,10 +120,29 @@ const App: React.FC = () => {
     }
   };
 
+  // 显示加载状态直到系统信息加载完成
+  if (!systemInfoLoaded) {
+    return (
+      <ConfigProvider theme={getAntdTheme(theme === 'dark')}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
+          <Spin size="large" />
+          <div>正在初始化系统...</div>
+        </div>
+      </ConfigProvider>
+    );
+  }
+
   return (
     <ConfigProvider theme={getAntdTheme(theme === 'dark')}>
-      {/* 如果没有登录，显示登录页面 */}
-      {!isAuthenticated ? (
+      {/* 根据系统配置决定是否显示登录页面 */}
+      {shouldRequireLogin() ? (
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
         <Router>
@@ -118,7 +150,7 @@ const App: React.FC = () => {
         </Router>
       )}
       
-      {/* API配置弹窗 */}
+      {/* API配置弹窗 - 仅在非内置API Key模式下显示 */}
       <ApiConfigModal
         open={showApiConfig}
         onCancel={handleApiConfigCancel}

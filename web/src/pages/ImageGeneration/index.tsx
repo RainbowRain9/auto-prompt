@@ -53,12 +53,12 @@ import {
   type ImageEditParams
 } from '../../utils/imageClient';
 import { generateImagePrompt } from '../../api/promptApi';
-import { 
-  saveGeneratedImages, 
+import {
+  saveGeneratedImage,
   type SaveGeneratedImageInput,
   toggleImageFavorite,
   searchImages,
-  type ImageSearchInput 
+  type ImageSearchInput
 } from '../../api/imageApi';
 import './ImageGeneration.css';
 
@@ -76,7 +76,7 @@ const convertBase64ToBlob = (dataUri: string): string => {
     // 提取base64数据
     const [header, base64Data] = dataUri.split(',');
     const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/png';
-    
+
     // 将base64转换为二进制数据
     const byteCharacters = atob(base64Data);
     const byteNumbers = new Array(byteCharacters.length);
@@ -84,7 +84,7 @@ const convertBase64ToBlob = (dataUri: string): string => {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    
+
     // 创建Blob并生成URL
     const blob = new Blob([byteArray], { type: mimeType });
     return URL.createObjectURL(blob);
@@ -132,7 +132,7 @@ const ImageGeneration: React.FC = () => {
 
   // 图片管理
   const [images, setImages] = useState<GeneratedImage[]>([]);
-  
+
   // 历史记录加载状态
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -581,13 +581,13 @@ const ImageGeneration: React.FC = () => {
     setOptimizeModalVisible(true);
   };
 
-    // 执行优化
+  // 执行优化
   const executeOptimize = async () => {
     // 保存原始提示词
     setOriginalPrompt(promptValue);
     setOptimizedResult('');
     setIsOptimizing(true);
-    
+
     try {
       let optimizedPrompt = '';
       const data = {
@@ -666,13 +666,13 @@ const ImageGeneration: React.FC = () => {
       const response = await fetch(image.url);
       const blob = await response.blob();
       const file = new File([blob], `edit_${image.timestamp}.png`, { type: 'image/png' });
-      
+
       // 设置为编辑文件
       setEditImageFile(file);
-      
+
       // 设置提示词为原始提示词
       setPromptValue(image.prompt);
-      
+
       // 创建图片预览和初始化蒙版
       const img = document.createElement('img');
       img.onload = () => {
@@ -698,8 +698,8 @@ const ImageGeneration: React.FC = () => {
         const result = await toggleImageFavorite(image.savedId);
         if (result.success) {
           // 更新本地状态
-          setImages(prev => prev.map(img => 
-            img.id === image.id 
+          setImages(prev => prev.map(img =>
+            img.id === image.id
               ? { ...img, isFavorite: result.data?.isFavorite ?? !img.isFavorite }
               : img
           ));
@@ -712,8 +712,8 @@ const ImageGeneration: React.FC = () => {
       }
     } else {
       // 只是本地切换
-      setImages(prev => prev.map(img => 
-        img.id === image.id 
+      setImages(prev => prev.map(img =>
+        img.id === image.id
           ? { ...img, isFavorite: !img.isFavorite }
           : img
       ));
@@ -762,19 +762,19 @@ const ImageGeneration: React.FC = () => {
           quality: formValues.quality,
           style: formValues.style,
           // 标记原始数据类型
-          originalUrl: image.url.startsWith('data:image/') 
-            ? '[base64_data]' 
-            : image.url.startsWith('blob:') 
-              ? '[blob_data]' 
+          originalUrl: image.url.startsWith('data:image/')
+            ? '[base64_data]'
+            : image.url.startsWith('blob:')
+              ? '[blob_data]'
               : image.url
         }
       }));
 
-      const result = await saveGeneratedImages(saveInputs);
+      const result = await saveGeneratedImage(saveInputs);
       if (result.success && result.data) {
         // 更新本地图片的savedId
         setImages(prev => prev.map(img => {
-          const savedImage = result.data?.find(saved => {
+          const savedImage = result.data?.find((saved: any) => {
             // 对于特殊格式图片，需要特殊匹配逻辑
             if (img.url.startsWith('data:image/')) {
               return saved.generationParams?.originalUrl === '[base64_data]';
@@ -784,7 +784,7 @@ const ImageGeneration: React.FC = () => {
               return saved.imageUrl === img.url;
             }
           });
-          return savedImage 
+          return savedImage
             ? { ...img, savedId: savedImage.id, isFavorite: savedImage.isFavorite }
             : img;
         }));
@@ -1132,7 +1132,7 @@ const ImageGeneration: React.FC = () => {
                 </Form.Item>
               </Form>
 
-                            {/* 优化要求输入模态框 */}
+              {/* 优化要求输入模态框 */}
               <Modal
                 title="优化提示词"
                 open={optimizeModalVisible}
@@ -1143,8 +1143,8 @@ const ImageGeneration: React.FC = () => {
                       <Button onClick={cancelOptimize}>
                         取消
                       </Button>
-                      <Button 
-                        type="primary" 
+                      <Button
+                        type="primary"
                         onClick={insertOptimizedPrompt}
                         icon={<BulbOutlined />}
                       >
@@ -1154,13 +1154,13 @@ const ImageGeneration: React.FC = () => {
                   ) : (
                     // 优化前或优化中显示默认按钮
                     <Space>
-                      <Button 
+                      <Button
                         onClick={cancelOptimize}
                         disabled={isOptimizing}
                       >
                         取消
                       </Button>
-                      <Button 
+                      <Button
                         type="primary"
                         onClick={executeOptimize}
                         loading={isOptimizing}
@@ -1249,7 +1249,7 @@ const ImageGeneration: React.FC = () => {
                           minHeight: '50px'
                         }}>
                           {optimizedResult}
-                          <span style={{ 
+                          <span style={{
                             animation: 'blink 1s infinite',
                             fontSize: '16px',
                             color: '#1677ff',
@@ -1278,7 +1278,7 @@ const ImageGeneration: React.FC = () => {
                         {promptValue || '（未输入）'}
                       </div>
                     </div>
-                    
+
                     <div>
                       <Text strong>
                         优化要求 <Text type="secondary">（可选）</Text>：
@@ -1417,10 +1417,10 @@ const ImageGeneration: React.FC = () => {
                                 size="small"
                                 icon={image.isFavorite ? <StarFilled /> : <StarOutlined />}
                                 onClick={() => handleToggleFavorite(image)}
-                                style={{ 
-                                  background: image.isFavorite ? 'rgba(255,193,7,0.8)' : 'rgba(0,0,0,0.6)', 
-                                  border: 'none', 
-                                  color: 'white' 
+                                style={{
+                                  background: image.isFavorite ? 'rgba(255,193,7,0.8)' : 'rgba(0,0,0,0.6)',
+                                  border: 'none',
+                                  color: 'white'
                                 }}
                               />
                             </Tooltip>

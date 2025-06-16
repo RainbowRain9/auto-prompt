@@ -1,4 +1,4 @@
-﻿using Console.Service.Entities;
+﻿using Console.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Console.Core;
@@ -20,6 +20,8 @@ public interface IDbContext
     public DbSet<GeneratedImage> GeneratedImages { get; set; }
 
     public DbSet<ApiKey> ApiKeys { get; set; }
+
+    public DbSet<EvaluationRecord> EvaluationRecords { get; set; }
 
     public Task SaveChangesAsync();
  

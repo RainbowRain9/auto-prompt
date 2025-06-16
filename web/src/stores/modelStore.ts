@@ -58,7 +58,7 @@ export const useModelStore = create<ModelState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await getModels();
+      const response = (await getModels()) as any;
 
       if (response && response.chatModels && response.imageModels) {
         set({

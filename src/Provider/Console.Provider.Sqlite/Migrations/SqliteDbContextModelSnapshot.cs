@@ -17,7 +17,7 @@ namespace Console.Provider.Sqlite.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.5");
 
-            modelBuilder.Entity("Console.Service.Entities.ApiKey", b =>
+            modelBuilder.Entity("Console.Core.Entities.ApiKey", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -81,7 +81,54 @@ namespace Console.Provider.Sqlite.Migrations
                     b.ToTable("ApiKeys");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.GeneratedImage", b =>
+            modelBuilder.Entity("Console.Core.Entities.EvaluationRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Config")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatorName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Date")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Results")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Statistics")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Timestamp")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EvaluationRecords");
+                });
+
+            modelBuilder.Entity("Console.Core.Entities.GeneratedImage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -158,7 +205,7 @@ namespace Console.Provider.Sqlite.Migrations
                     b.ToTable("GeneratedImages");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.PromptComment", b =>
+            modelBuilder.Entity("Console.Core.Entities.PromptComment", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -209,7 +256,7 @@ namespace Console.Provider.Sqlite.Migrations
                     b.ToTable("PromptComments");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.PromptHistory", b =>
+            modelBuilder.Entity("Console.Core.Entities.PromptHistory", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -242,7 +289,7 @@ namespace Console.Provider.Sqlite.Migrations
                     b.ToTable("PromptHistory");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.PromptTemplate", b =>
+            modelBuilder.Entity("Console.Core.Entities.PromptTemplate", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -324,7 +371,7 @@ namespace Console.Provider.Sqlite.Migrations
                     b.ToTable("PromptTemplates");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.User", b =>
+            modelBuilder.Entity("Console.Core.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -384,7 +431,7 @@ namespace Console.Provider.Sqlite.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.UserFavorite", b =>
+            modelBuilder.Entity("Console.Core.Entities.UserFavorite", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -413,7 +460,7 @@ namespace Console.Provider.Sqlite.Migrations
                     b.ToTable("UserFavorites");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.UserLike", b =>
+            modelBuilder.Entity("Console.Core.Entities.UserLike", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -442,13 +489,13 @@ namespace Console.Provider.Sqlite.Migrations
                     b.ToTable("UserLikes");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.PromptComment", b =>
+            modelBuilder.Entity("Console.Core.Entities.PromptComment", b =>
                 {
-                    b.HasOne("Console.Service.Entities.PromptComment", "ParentComment")
+                    b.HasOne("Console.Core.Entities.PromptComment", "ParentComment")
                         .WithMany("Replies")
                         .HasForeignKey("ParentCommentId");
 
-                    b.HasOne("Console.Service.Entities.PromptTemplate", "PromptTemplate")
+                    b.HasOne("Console.Core.Entities.PromptTemplate", "PromptTemplate")
                         .WithMany()
                         .HasForeignKey("PromptTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -459,9 +506,9 @@ namespace Console.Provider.Sqlite.Migrations
                     b.Navigation("PromptTemplate");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.UserFavorite", b =>
+            modelBuilder.Entity("Console.Core.Entities.UserFavorite", b =>
                 {
-                    b.HasOne("Console.Service.Entities.PromptTemplate", "PromptTemplate")
+                    b.HasOne("Console.Core.Entities.PromptTemplate", "PromptTemplate")
                         .WithMany()
                         .HasForeignKey("PromptTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -470,9 +517,9 @@ namespace Console.Provider.Sqlite.Migrations
                     b.Navigation("PromptTemplate");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.UserLike", b =>
+            modelBuilder.Entity("Console.Core.Entities.UserLike", b =>
                 {
-                    b.HasOne("Console.Service.Entities.PromptTemplate", "PromptTemplate")
+                    b.HasOne("Console.Core.Entities.PromptTemplate", "PromptTemplate")
                         .WithMany()
                         .HasForeignKey("PromptTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -481,7 +528,7 @@ namespace Console.Provider.Sqlite.Migrations
                     b.Navigation("PromptTemplate");
                 });
 
-            modelBuilder.Entity("Console.Service.Entities.PromptComment", b =>
+            modelBuilder.Entity("Console.Core.Entities.PromptComment", b =>
                 {
                     b.Navigation("Replies");
                 });

@@ -3,7 +3,7 @@ import { Modal, Form, Input, Button, Space, Typography, message, Checkbox, Selec
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '../../stores/chatStore';
 import GeneratePromptButton from '../GeneratePromptButton';
-import { Sparkles, Brain, Save } from 'lucide-react';
+import { Sparkles, Brain, Save, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateFunctionCallingPrompt } from '../../api/promptApi';
 import { createPromptTemplate } from '../../api/promptTemplateApi';
 import type { CreatePromptTemplateInput } from '../../api/promptTemplateApi';
@@ -50,6 +50,13 @@ export default function GenerateFunctionCallingPrompt({
     const modelOptions = getChatModelOptions();
     const [modelsLoading, setModelsLoading] = useState(false);
 
+    // 推理过程展开收起状态
+    const [reasoningExpanded, setReasoningExpanded] = useState(false);
+    
+    // 推理时间相关状态
+    const [reasoningStartTime, setReasoningStartTime] = useState<number | null>(null);
+    const [reasoningDuration, setReasoningDuration] = useState<number>(0);
+
     const [input, setInput] = useState({
         prompt: '',
         requirements: '',
@@ -85,6 +92,17 @@ export default function GenerateFunctionCallingPrompt({
         setInput(prev => ({ ...prev, chatModel: selectedModel }));
     }, [selectedModel]);
 
+    // 监听推理状态变化，自动控制展开收起
+    useEffect(() => {
+        if (isDeepReasoning) {
+            // 推理开始时自动展开
+            setReasoningExpanded(true);
+        } else if (step === 2) {
+            // 生成完成后自动收起
+            setReasoningExpanded(false);
+        }
+    }, [isDeepReasoning, step]);
+
     // 组件关闭时重置状态
     useEffect(() => {
         if (!open) {
@@ -96,6 +114,9 @@ export default function GenerateFunctionCallingPrompt({
             setIsEvaluating(false);
             setSaveTemplateModalVisible(false);
             setSavingTemplate(false);
+            setReasoningExpanded(false);
+            setReasoningStartTime(null);
+            setReasoningDuration(0);
             templateForm.resetFields();
             // 取消正在进行的请求
             if (abortControllerRef.current) {
@@ -192,6 +213,8 @@ export default function GenerateFunctionCallingPrompt({
         setIsDeepReasoning(false);
         setEvaluationContent('');
         setIsEvaluating(false);
+        setReasoningStartTime(null);
+        setReasoningDuration(0);
 
         // 创建新的AbortController
         abortControllerRef.current = new AbortController();
@@ -217,8 +240,14 @@ export default function GenerateFunctionCallingPrompt({
 
                         if (data.type === "deep-reasoning-start") {
                             setIsDeepReasoning(true);
+                            setReasoningStartTime(Date.now());
                         } else if (data.type === "deep-reasoning-end") {
                             setIsDeepReasoning(false);
+                            const endTime = Date.now();
+                            // 使用当前时间和开始时间计算持续时间
+                            if (reasoningStartTime !== null) {
+                                setReasoningDuration(endTime - reasoningStartTime);
+                            }
                         } else if (data.type === "deep-reasoning") {
                             if (data.message) {
                                 setDeepReasoningContent(prev => prev + data.message);
@@ -275,6 +304,15 @@ export default function GenerateFunctionCallingPrompt({
             setStep(0);
         } finally {
             abortControllerRef.current = null;
+        }
+    };
+
+    // 格式化推理时间
+    const formatReasoningTime = (duration: number) => {
+        if (duration < 1000) {
+            return `${duration}ms`;
+        } else {
+            return `${(duration / 1000).toFixed(1)}s`;
         }
     };
 
@@ -520,12 +558,86 @@ export default function GenerateFunctionCallingPrompt({
                             />
                         </div>
 
-                        {/* 中间面板 - 优化后的提示词 */}
+                        {/* 中间面板 - 推理过程和优化后的提示词 */}
                         <div style={{
                             flex: 1,
                             display: 'flex',
                             flexDirection: 'column'
                         }}>
+                            {/* 推理过程区域 */}
+                            {deepReasoningContent && (
+                                <div style={{
+                                    marginBottom: 12,
+                                    border: '1px solid #e8f4fd',
+                                    borderRadius: 6,
+                                    backgroundColor: '#fafcff'
+                                }}>
+                                    {/* 推理过程头部 - 思考按钮 */}
+                                    <div 
+                                        style={{
+                                            padding: '8px 12px',
+                                            borderBottom: reasoningExpanded ? '1px solid #e8f4fd' : 'none',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            borderRadius: reasoningExpanded ? '6px 6px 0 0' : '6px'
+                                        }}
+                                        onClick={() => setReasoningExpanded(!reasoningExpanded)}
+                                    >
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 6,
+                                            fontSize: 14,
+                                            fontWeight: 500,
+                                            color: '#1890ff'
+                                        }}>
+                                            <Brain size={16} />
+                                            <span>
+                                                {step === 1 && isDeepReasoning ? 
+                                                    t('generatePrompt.reasoningInProgress') : 
+                                                    t('generatePrompt.reasoningProcess')
+                                                }
+                                            </span>
+                                            {step === 2 && reasoningDuration > 0 && (
+                                                <span style={{
+                                                    fontSize: 12,
+                                                    color: '#8c8c8c',
+                                                    marginLeft: 8
+                                                }}>
+                                                    ({formatReasoningTime(reasoningDuration)})
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            color: '#1890ff'
+                                        }}>
+                                            {reasoningExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* 推理过程内容 */}
+                                    {reasoningExpanded && (
+                                        <div style={{
+                                            padding: 12,
+                                            fontSize: 13,
+                                            lineHeight: 1.6,
+                                            color: '#2c2c2c',
+                                            whiteSpace: 'pre-wrap',
+                                            maxHeight: 150,
+                                            overflow: 'auto',
+                                            backgroundColor: '#ffffff'
+                                        }}>
+                                            {deepReasoningContent}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* 优化后的提示词标题 */}
                             <div style={{
                                 fontSize: 16,
                                 fontWeight: 500,
@@ -538,6 +650,8 @@ export default function GenerateFunctionCallingPrompt({
                                 <Sparkles size={16} />
                                 {t('generatePrompt.optimizedPromptLabel')}
                             </div>
+                            
+                            {/* 优化后的提示词内容 */}
                             <TextArea
                                 value={generatedPrompt || (step === 1 ? t('generatePrompt.generating') : '')}
                                 style={{
@@ -660,42 +774,6 @@ export default function GenerateFunctionCallingPrompt({
                         </div>
                     </div>
 
-                    {/* 深度推理内容 - 始终显示，不需要按钮切换 */}
-                    {deepReasoningContent && (
-                        <div style={{
-                            marginBottom: 16,
-                            border: '1px solid #e8f4fd',
-                            borderRadius: 6,
-                            padding: 16,
-                        }}>
-                            <div style={{
-                                fontSize: 14,
-                                fontWeight: 500,
-                                marginBottom: 8,
-                                color: '#1890ff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 6
-                            }}>
-                                <Brain size={16} />
-                                {step === 1 && isDeepReasoning ? 
-                                    t('generatePrompt.reasoningInProgress') : 
-                                    t('generatePrompt.reasoningProcess')
-                                }
-                            </div>
-                            <div style={{
-                                fontSize: 13,
-                                lineHeight: 1.6,
-                                color: '#ffffff',
-                                whiteSpace: 'pre-wrap',
-                                maxHeight: step === 1 ? 200 : 300,
-                                overflow: 'auto'
-                            }}>
-                                {deepReasoningContent}
-                            </div>
-                        </div>
-                    )}
-
                     <div style={{
                         textAlign: 'center',
                         gap: 8,
@@ -723,6 +801,9 @@ export default function GenerateFunctionCallingPrompt({
                                         setEvaluationContent('');
                                         setIsDeepReasoning(false);
                                         setIsEvaluating(false);
+                                        setReasoningExpanded(false);
+                                        setReasoningStartTime(null);
+                                        setReasoningDuration(0);
                                     }}
                                 >
                                     {t('generatePrompt.regenerate')}

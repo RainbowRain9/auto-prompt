@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 using Console.Core;
+using Console.Core.Entities;
 using Console.Service.Dto;
-using Console.Service.Entities;
 using FastService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

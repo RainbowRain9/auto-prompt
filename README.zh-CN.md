@@ -97,373 +97,66 @@ AI 提示词优化平台是一个专业的提示词工程工具，旨在帮助�
 ### 环境要求
 
 - Docker & Docker Compose
-- .NET 9.0 SDK (开发环境)
-- Node.js 18+ (开发环境)
 
 ### 🚀 快速开始
 
-1. 克隆项目
-   
+#### 1. 标准部署（推荐）
+
 ```bash
+# 克隆项目
 git clone https://github.com/AIDotNet/auto-prompt.git
 cd auto-prompt
-```
 
-2. 使用 Docker Compose 部署
-
-```bash
 # 启动服务
 docker-compose up -d
 
 # 查看服务状态
 docker-compose ps
-
-# 查看日志
-docker-compose logs -f
 ```
 
-3. 访问应用
+**访问地址**: http://localhost:10426
 
-- 前端界面: http://localhost:10426
-- API文档: http://localhost:10426/scalar/v1
+#### 2. 自定义API端点部署
 
-### 🔐 默认账户信息
-
-首次部署后，系统会自动创建默认管理员账户：
-
-- **用户名**: `admin`
-- **密码**: `admin123`
-
-**安全提醒**：为确保系统安全，请在首次登录后及时修改默认密码。
-
-您可以通过环境变量自定义默认账户：
+创建 `docker-compose.override.yaml` 文件：
 
 ```yaml
-environment:
-  - DEFAULT_USERNAME=your_admin_username
-  - DEFAULT_PASSWORD=your_secure_password
-```
+version: '3.8'
 
-### 🔧 开发环境配置
-
-1. 后端开发
-
-```bash
-cd src/Console.Service
-dotnet restore
-dotnet run
-```
-
-2. 前端开发
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-### 🌐 环境变量配置
-
-在 `src/Console.Service/appsettings.json` 中配置：
-
-```json
-{
-  "OpenAIEndpoint": "https://api.openai.com/v1",
-  "CHAT_MODEL": "gpt-4,gpt-3.5-turbo,claude-3-sonnet",
-  "IMAGE_GENERATION_MODEL": "dall-e-3,midjourney,stable-diffusion",
-  "DEFAULT_CHAT_MODEL": "gpt-4",
-  "DEFAULT_IMAGE_GENERATION_MODEL": "dall-e-3",
-  "GenerationChatModel": "gpt-4",
-  "ConnectionStrings": {
-    "Type": "postgresql",
-    "Default": "Host=localhost;Database=prompt_db;Username=postgres;Password=your_password"
-  }
-}
-```
-
-### 📖 详细部署文档
-
-如需了解完整的部署配置选项、自定义端点配置、故障排除等详细信息，请参考：
-
-**[📋 完整部署指南 (DEPLOYMENT.md)](./DEPLOYMENT.md)**
-
-该文档包含：
-
-- 🔧 自定义AI API端点配置
-- 📦 多种部署配置选项（SQLite、PostgreSQL、Ollama等）
-- 🚀 自动化部署脚本使用说明
-- ❓ 常见问题解决方案
-- 🔧 维护管理指南
-- 🔒 安全配置建议
-
-### 🔧 快速配置示例
-
-#### 使用自定义API端点
-
-```yaml
 services:
   console-service:
     environment:
-      - OpenAIEndpoint=https://your-custom-api.com/v1
+      # 自定义AI API端点
+      - OpenAIEndpoint=https://your-api-endpoint.com/v1
+      # 可用模型配置
       - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
-      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney
       - DEFAULT_CHAT_MODEL=gpt-4
-      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
       - GenerationChatModel=gpt-4
-      - ConnectionStrings:Type=sqlite
-      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
 ```
 
-#### 使用本地Ollama
+```bash
+# 使用自定义配置启动
+docker-compose -f docker-compose.yaml -f docker-compose.override.yaml up -d
+```
+
+#### 3. 本地AI服务部署（Ollama）
+
+创建 `docker-compose.ollama.yaml` 文件：
+
 ```yaml
+version: '3.8'
+
 services:
   console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    ports:
+      - "10426:8080"
     environment:
+      - TZ=Asia/Shanghai
       - OpenAIEndpoint=http://ollama:11434/v1
-      - CHAT_MODEL=llama2,codellama,mistral
-      - DEFAULT_CHAT_MODEL=qwen2.5-coder-32b
-      - GenerationChatModel=qwen2.5-coder-32b
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-```
-
-### 🔧 Development Environment Setup
-
-1. Backend Development
-
-```bash
-cd src/Console.Service
-dotnet restore
-dotnet run
-```
-
-2. Frontend Development
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-### 🌐 Environment Variable Configuration
-
-Configure in `src/Console.Service/appsettings.json`:
-
-```json
-{
-  "OpenAIEndpoint": "https://api.openai.com/v1",
-  "CHAT_MODEL": "gpt-4,gpt-3.5-turbo,claude-3-sonnet",
-  "IMAGE_GENERATION_MODEL": "dall-e-3,midjourney,stable-diffusion",
-  "DEFAULT_CHAT_MODEL": "gpt-4",
-  "DEFAULT_IMAGE_GENERATION_MODEL": "dall-e-3",
-  "GenerationChatModel": "gpt-4",
-  "ConnectionStrings": {
-    "Type": "postgresql",
-    "Default": "Host=localhost;Database=prompt_db;Username=postgres;Password=your_password"
-  }
-}
-```
-
-### 🔧 自定义端点配置
-
-本平台支持配置自定义的AI API端点，兼容OpenAI API格式的服务。
-
-#### 配置方式
-
-##### 1. 通过配置文件配置（推荐用于生产环境）
-
-在 `src/Console.Service/appsettings.json` 中配置：
-
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "AllowedHosts": "*",
-  "OpenAIEndpoint": "https://your-custom-api.com/v1",
-  "ConnectionStrings": {
-    "Type": "sqlite",
-    "Default": "Data Source=/data/ConsoleService.db"
-  }
-}
-```
-
-##### 2. 通过环境变量配置
-
-```bash
-export OPENAIENDPOINT="https://your-custom-api.com/v1"
-```
-
-##### 3. Docker Compose 环境变量配置
-
-创建或修改 `docker-compose.yaml`：
-
-```yaml
-services:
-  console-service:
-    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
-    ports:
-      - 10426:8080
-    environment:
-      - TZ=Asia/Shanghai
-      - OpenAIEndpoint=https://your-custom-api.com/v1
-      # AI模型配置
-      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
-      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
-      - DEFAULT_CHAT_MODEL=gpt-4
-      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
-      - GenerationChatModel=gpt-4
-      # 数据库配置
-      - ConnectionStrings:Type=sqlite
-      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
-    volumes:
-      - ./data:/app/data
-    build:
-      context: .
-      dockerfile: src/Console.Service/Dockerfile
-```
-
-#### 新增环境变量详细说明
-
-##### AI模型配置变量
-
-- **`CHAT_MODEL`**: 配置平台支持的聊天模型列表，多个模型用逗号分隔。用户在前端界面可以从这些模型中选择。
-- **`IMAGE_GENERATION_MODEL`**: 配置平台支持的图像生成模型列表，多个模型用逗号分隔。
-- **`DEFAULT_CHAT_MODEL`**: 设置默认的聊天模型，当用户没有特别指定时使用此模型。
-- **`DEFAULT_IMAGE_GENERATION_MODEL`**: 设置默认的图像生成模型。
-- **`GenerationChatModel`**: 专门用于提示词优化和生成功能的聊天模型。
-
-#### 支持的API端点类型
-
-平台支持以下兼容OpenAI API格式的服务：
-
-- **OpenAI 官方API**: `https://api.openai.com/v1`
-- **Azure OpenAI**: `https://your-resource.openai.azure.com/openai/deployments/your-deployment`
-- **国内代理服务**: 
-  - `https://api.token-ai.cn/v1` (默认)
-  - `https://api.deepseek.com/v1`
-  - `https://api.moonshot.cn/v1`
-- **自部署服务**:
-  - Ollama: `http://localhost:11434/v1`
-  - LocalAI: `http://localhost:8080/v1`
-  - vLLM: `http://localhost:8000/v1`
-
-#### 完整的Docker Compose配置示例
-
-##### 基础配置（SQLite数据库）
-
-```yaml
-version: '3.8'
-
-services:
-  console-service:
-    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
-    container_name: auto-prompt
-    ports:
-      - "10426:8080"
-    environment:
-      - TZ=Asia/Shanghai
-      - DEFAULT_USERNAME=admin
-      - DEFAULT_PASSWORD=admin123
-      - OpenAIEndpoint=https://api.openai.com/v1
-      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
-      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
-      - DEFAULT_CHAT_MODEL=gpt-4
-      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
-      - GenerationChatModel=gpt-4
-      - ConnectionStrings:Type=sqlite
-      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
-    volumes:
-      - ./data:/app/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-```
-
-##### 高级配置（PostgreSQL数据库）
-
-```yaml
-version: '3.8'
-
-services:
-  console-service:
-    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
-    container_name: auto-prompt
-    ports:
-      - "10426:8080"
-    environment:
-      - TZ=Asia/Shanghai
-      - DEFAULT_USERNAME=admin
-      - DEFAULT_PASSWORD=admin123
-      - OpenAIEndpoint=https://your-custom-api.com/v1
-      - CHAT_MODEL=gpt-4,gpt-3.5-turbo,claude-3-sonnet
-      - IMAGE_GENERATION_MODEL=dall-e-3,midjourney,stable-diffusion
-      - DEFAULT_CHAT_MODEL=gpt-4
-      - DEFAULT_IMAGE_GENERATION_MODEL=dall-e-3
-      - GenerationChatModel=gpt-4
-      - ConnectionStrings:Type=postgresql
-      - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_password
-    depends_on:
-      - postgres
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: auto-prompt-db
-    environment:
-      - POSTGRES_DB=auto_prompt
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=your_password
-      - TZ=Asia/Shanghai
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
-```
-
-##### 本地AI服务配置（Ollama）
-
-```yaml
-version: '3.8'
-
-services:
-  console-service:
-    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
-    container_name: auto-prompt
-    ports:
-      - "10426:8080"
-    environment:
-      - TZ=Asia/Shanghai
-      - DEFAULT_USERNAME=admin
-      - DEFAULT_PASSWORD=admin123
-      - OpenAIEndpoint=http://ollama:11434/v1
-      - CHAT_MODEL=llama2,codellama,mistral
-      - IMAGE_GENERATION_MODEL=stable-diffusion
-      - DEFAULT_CHAT_MODEL=llama2
-      - DEFAULT_IMAGE_GENERATION_MODEL=stable-diffusion
-      - GenerationChatModel=llama2
+      - CHAT_MODEL=qwen2.5-coder:32b,llama3.2:3b,gemma2:9b
+      - DEFAULT_CHAT_MODEL=qwen2.5-coder:32b
+      - GenerationChatModel=qwen2.5-coder:32b
       - ConnectionStrings:Type=sqlite
       - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
     volumes:
@@ -482,7 +175,7 @@ services:
     environment:
       - OLLAMA_HOST=0.0.0.0
     restart: unless-stopped
-    # 如果有GPU，取消注释以下配置
+    # GPU支持（如果有NVIDIA GPU）
     # deploy:
     #   resources:
     #     reservations:
@@ -495,150 +188,125 @@ volumes:
   ollama_data:
 ```
 
-#### 部署步骤
-
-1. **选择配置模板**
-   
-   根据您的需求选择上述配置模板之一，保存为 `docker-compose.yaml`
-
-2. **修改配置参数**
-   
-   ```bash
-   # 修改API端点
-   - OpenAIEndpoint=https://your-api-endpoint.com/v1
-   
-   # 修改数据库密码（如使用PostgreSQL）
-   - POSTGRES_PASSWORD=your_secure_password
-   - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_secure_password
-   ```
-
-3. **启动服务**
-   
-   ```bash
-   # 启动所有服务
-   docker-compose up -d
-   
-   # 查看服务状态
-   docker-compose ps
-   
-   # 查看日志
-   docker-compose logs -f console-service
-   ```
-
-4. **验证部署**
-   
-   ```bash
-   # 检查服务健康状态
-   curl http://localhost:10426/health
-   
-   # 访问API文档
-   curl http://localhost:10426/scalar/v1
-   ```
-
-#### 环境变量说明
-
-| 变量名 | 说明 | 默认值 | 示例 |
-|--------|------|--------|------|
-| `OpenAIEndpoint` | AI API端点地址 | `https://api.token-ai.cn/v1` | `https://api.openai.com/v1` |
-| `CHAT_MODEL` | 可用的聊天模型列表（逗号分隔） | `gpt-4.1,o4-mini,claude-sonnet-4-20250514,claude-3-7-sonnet` | `gpt-4,gpt-3.5-turbo,claude-3-sonnet` |
-| `IMAGE_GENERATION_MODEL` | 可用的图像生成模型列表（逗号分隔） | `gpt-image-1,dall-e-3,imagen4` | `dall-e-3,midjourney,stable-diffusion` |
-| `DEFAULT_CHAT_MODEL` | 默认聊天模型 | `gpt-4.1-mini` | `gpt-4` |
-| `DEFAULT_IMAGE_GENERATION_MODEL` | 默认图像生成模型 | `gpt-4.1` | `dall-e-3` |
-| `GenerationChatModel` | 提示词生成使用的聊天模型 | `gpt-4.1-mini` | `gpt-4` |
-| `DEFAULT_USERNAME` | 默认管理员用户名 | `admin` | `admin`, `root`, `administrator` |
-| `DEFAULT_PASSWORD` | 默认管理员密码 | `admin123` | `your_secure_password` |
-| `Jwt:Key` | JWT密钥 | 自动生成的默认密钥 | `your_secret_key_here` |
-| `Jwt:Issuer` | JWT发行者 | `prompt-console` | `your-app-name` |
-| `Jwt:Audience` | JWT受众 | `prompt-console-users` | `your-app-users` |
-| `ConnectionStrings:Type` | 数据库类型 | `sqlite` | `postgresql`, `sqlite` |
-| `ConnectionStrings:Default` | 数据库连接字符串 | `Data Source=/data/ConsoleService.db` | PostgreSQL: `Host=postgres;Database=auto_prompt;Username=postgres;Password=password` |
-| `TZ` | 时区设置 | `Asia/Shanghai` | `UTC`, `America/New_York` |
-
-#### 故障排除
-
-##### 常见问题
-
-1. **API端点连接失败**
-   ```bash
-   # 检查端点是否可访问
-   curl -I https://your-api-endpoint.com/v1/models
-   
-   # 检查容器网络
-   docker-compose exec console-service curl -I http://ollama:11434/v1/models
-   ```
-
-2. **数据库连接失败**
-   ```bash
-   # 检查PostgreSQL容器状态
-   docker-compose logs postgres
-   
-   # 测试数据库连接
-   docker-compose exec postgres psql -U postgres -d auto_prompt -c "SELECT 1;"
-   ```
-
-3. **权限问题**
-   ```bash
-   # 确保数据目录权限正确
-   sudo chown -R 1000:1000 ./data
-   chmod 755 ./data
-   ```
-
-##### 日志查看
+**启动Ollama版本**：
 
 ```bash
-# 查看应用日志
-docker-compose logs -f console-service
+# 启动服务
+docker-compose -f docker-compose-ollama.yaml up -d
 
-# 查看数据库日志
-docker-compose logs -f postgres
+# 拉取推荐模型
+docker exec ollama ollama pull qwen3
+docker exec ollama ollama pull qwen2.5:3b
+docker exec ollama ollama pull llama3.2:3b
 
-# 查看所有服务日志
-docker-compose logs -f
+# 验证模型
+docker exec ollama ollama list
+docker-compose restart console-service
 ```
 
-#### 性能优化建议
+**🚀 一键启动脚本**：
 
-1. **资源限制配置**
-   ```yaml
-   services:
-     console-service:
-       deploy:
-         resources:
-           limits:
-             memory: 2G
-             cpus: '1.0'
-           reservations:
-             memory: 512M
-             cpus: '0.5'
-   ```
+为了简化部署流程，我们提供了一键启动脚本：
 
-2. **数据库优化**
-   ```yaml
-   postgres:
-     environment:
-       - POSTGRES_SHARED_PRELOAD_LIBRARIES=pg_stat_statements
-       - POSTGRES_MAX_CONNECTIONS=200
-     command: >
-       postgres
-       -c shared_preload_libraries=pg_stat_statements
-       -c max_connections=200
-       -c shared_buffers=256MB
-       -c effective_cache_size=1GB
-   ```
+**Linux/macOS用户**：
+```bash
+# 给脚本添加执行权限
+chmod +x start-ollama.sh
 
-3. **缓存配置**
-   ```yaml
-   services:
-     redis:
-       image: redis:7-alpine
-       container_name: auto-prompt-redis
-       ports:
-         - "6379:6379"
-       volumes:
-         - redis_data:/data
-       restart: unless-stopped
-   ```
-   
+# 运行一键启动脚本
+./start-ollama.sh
+```
+
+**Windows用户**：
+```bash
+# 直接运行批处理脚本
+start-ollama.bat
+```
+
+**脚本功能**：
+- 🚀 自动启动ollama服务和控制台服务
+- ⏳ 等待服务完全启动
+- 📦 自动拉取qwen3模型
+- ✅ 验证模型安装状态
+- 🎉 完成后显示访问地址
+
+**推荐模型**：
+- `qwen3` - 中文对话效果优秀（约5GB）
+- `qwen2.5:3b` - 轻量级版本（约2GB）
+- `llama3.2:3b` - 英文对话效果好（约2GB）
+- `gemma2:9b` - Google开源模型（约5GB）
+
+#### 4. PostgreSQL数据库部署
+
+创建 `docker-compose.postgres.yaml` 文件：
+
+```yaml
+version: '3.8'
+
+services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    ports:
+      - "10426:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - OpenAIEndpoint=https://api.openai.com/v1
+      - ConnectionStrings:Type=postgresql
+      - ConnectionStrings:Default=Host=postgres;Database=auto_prompt;Username=postgres;Password=your_password
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=auto_prompt
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=your_password
+      - TZ=Asia/Shanghai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+
+### 🔐 默认账户信息
+
+- **用户名**: `admin`
+- **密码**: `admin123`
+
+
+### 🔧 环境变量配置
+
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `OpenAIEndpoint` | AI API端点地址 | `https://api.token-ai.cn/v1` |
+| `CHAT_MODEL` | 可用聊天模型列表 | `gpt-4.1,o4-mini,claude-sonnet-4-20250514` |
+| `DEFAULT_CHAT_MODEL` | 默认聊天模型 | `gpt-4.1-mini` |
+| `DEFAULT_USERNAME` | 默认管理员用户名 | `admin` |
+| `DEFAULT_PASSWORD` | 默认管理员密码 | `admin123` |
+| `ConnectionStrings:Type` | 数据库类型 | `sqlite` |
+
+### ⚡ 常用命令
+
+```bash
+# 查看日志
+docker-compose logs -f console-service
+
+# 重启服务
+docker-compose restart console-service
+
+# 停止服务
+docker-compose down
+
+# 更新镜像
+docker-compose pull && docker-compose up -d
+```
+
 ## 🏗️ 项目结构
 
 ```
@@ -649,26 +317,11 @@ auto-prompt/
 │       ├── Services/             # 业务服务
 │       ├── Entities/             # 数据实体
 │       ├── Dto/                  # 数据传输对象
-│       ├── DbAccess/             # 数据访问层
 │       ├── plugins/              # AI插件配置
-│       │   └── Generate/         # 提示词生成插件
-│       │       ├── DeepReasoning/           # 深度推理
-│       │       ├── DeepReasoningPrompt/     # 深度推理提示词
-│       │       └── OptimizeInitialPrompt/   # 初始优化
 │       └── Migrations/           # 数据库迁移
 ├── web/                          # 前端应用
 │   ├── src/
-│   │   ├── components/           # React组件
-│   │   │   ├── GeneratePrompt/   # 提示词生成组件
-│   │   │   ├── Workbench/        # 工作台
-│   │   │   ├── DashboardPage/    # 仪表板
-│   │   │   └── PromptsPage/      # 提示词管理
-│   │   ├── stores/               # 状态管理
-│   │   ├── api/                  # API接口
-│   │   ├── styles/               # 样式文件
-│   │   └── utils/                # 工具函数
-│   ├── public/                   # 静态资源
-│   └── dist/                     # 构建输出
+│   └── public/                   # 静态资源
 ├── docker-compose.yaml           # Docker编排配置
 └── README.md                     # 项目文档
 ```
@@ -703,23 +356,6 @@ auto-prompt/
 2. 选择您偏好的语言（中文/英文）
 3. 界面将立即切换语言，无需刷新页面
 4. 您的语言偏好将被保存，下次访问时自动应用
-
-## 🤝 贡献指南
-
-我们欢迎社区贡献！请遵循以下步骤：
-
-1. **Fork 项目**到你的GitHub账户
-2. **创建功能分支**: `git checkout -b feature/AmazingFeature`
-3. **提交更改**: `git commit -m 'Add some AmazingFeature'`
-4. **推送分支**: `git push origin feature/AmazingFeature`
-5. **创建 Pull Request**
-
-### 开发规范
-
-- 遵循现有代码风格和命名约定
-- 添加适当的注释和文档
-- 确保所有测试通过
-- 更新相关文档
 
 ## 📄 开源协议
 
@@ -763,6 +399,13 @@ auto-prompt/
 
 [![Star History Chart](https://api.star-history.com/svg?repos=AIDotNet/auto-prompt&type=Date)](https://www.star-history.com/#AIDotNet/auto-prompt&Date)
 
+## 👥 贡献者
+
+感谢所有为这个项目做出贡献的开发者！
+<div align="center">
+<a href="https://github.com/AIDotNet/auto-prompt/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=AIDotNet/auto-prompt&max=50&columns=10" />
+</a>
 
 ## 💌WeChat
 

@@ -1,5 +1,5 @@
 ﻿using Console.Core;
-using Console.Service.Entities;
+using Console.Core.Entities;
 
 namespace Console.Service.Migrate;
 

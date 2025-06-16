@@ -1,13 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout, Button, Select, Typography,  Card, Input,  message, Collapse,  } from 'antd';
 import {
   PlusOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import styled  from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../stores/themeStore';
 import { useChatStore } from '../../stores/chatStore';
 import { useModelStore } from '../../stores/modelStore';
+import { useTourStore } from '../../stores/tourStore';
 import type { Message as ChatStoreMessage } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/authStore';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -18,6 +20,7 @@ import ReactMarkdown from 'react-markdown';
 import SendButton from '../../components/SendButton';
 import GeneratePromptPanel from '../../components/GeneratePromptPanel';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import WorkbenchTour from '../../components/WorkbenchTour';
 
 const { Content, Header } = Layout;
 const {  Text } = Typography;
@@ -521,10 +524,45 @@ const StreamingMessage: React.FC<{ theme: 'dark' | 'light' }> = ({ theme }) => {
 //   data: ModelData[];
 // }
 
+const TourButton = styled(Button)<{ $theme: 'dark' | 'light' }>`
+  position: relative;
+  background: ${props => props.$theme === 'dark'
+    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'};
+  color: white;
+  border: none;
+  height: 36px;
+  border-radius: 18px;
+  padding: 0 16px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px ${props => props.$theme === 'dark'
+    ? 'rgba(118, 75, 162, 0.3)'
+    : 'rgba(79, 172, 254, 0.3)'};
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px ${props => props.$theme === 'dark'
+      ? 'rgba(118, 75, 162, 0.4)'
+      : 'rgba(79, 172, 254, 0.4)'};
+    background: ${props => props.$theme === 'dark'
+      ? 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)'
+      : 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)'};
+    color: white;
+  }
+  
+  &:active {
+    transform: translateY(0px);
+  }
+`;
+
 const Workbench: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useThemeStore();
   const { isAuthenticated } = useAuthStore();
+  const { shouldShowWorkbenchTour, setWorkbenchTourCompleted } = useTourStore();
+  const [showTour, setShowTour] = useState(false);
+  
   const {
     messages,
     systemPrompt,
@@ -573,6 +611,16 @@ const Workbench: React.FC = () => {
     }
   }, [modelOptions, selectedModel, setSelectedModel]);
 
+  // 检查是否是首次使用，如果是则自动显示引导
+  useEffect(() => {
+    if (shouldShowWorkbenchTour()) {
+      // 延迟一点时间让页面完全加载
+      setTimeout(() => {
+        setShowTour(true);
+      }, 1000);
+    }
+  }, [shouldShowWorkbenchTour]);
+
   const handleRun = async () => {
     if (!isAuthenticated) {
       message.error(t('auth.pleaseLogin'));
@@ -589,6 +637,15 @@ const Workbench: React.FC = () => {
     await sendMessages();
   };
 
+  const handleTourClose = () => {
+    setShowTour(false);
+    setWorkbenchTourCompleted(true);
+  };
+
+  const handleStartTour = () => {
+    setShowTour(true);
+  };
+
   return (
     <WorkbenchContainer theme={theme}>
       <WorkbenchHeader theme={theme}>
@@ -597,10 +654,19 @@ const Workbench: React.FC = () => {
             {t('workbench.title')}
           </Text>
         </HeaderLeft>
-          <HeaderRight>
+        <HeaderRight>
+          <TourButton
+            $theme={theme}
+            icon={<QuestionCircleOutlined />}
+            onClick={handleStartTour}
+            size="small"
+          >
+            新人引导
+          </TourButton>
           <LanguageSwitcher />
           <ThemeToggle />
           <SendButton
+            data-tour="run-button"
             onClick={handleRun}
             disabled={isLoading}
             theme={theme}
@@ -612,7 +678,7 @@ const Workbench: React.FC = () => {
 
       <WorkbenchContent>
         <PromptSection>
-          <ModelSelectorSection theme={theme}>
+          <ModelSelectorSection theme={theme} className="model-selector-section">
             <div className="model-label">{t('workbench.model')}:</div>
             <UiverseModelSelector theme={theme}>
               <ModelSelector
@@ -635,7 +701,9 @@ const Workbench: React.FC = () => {
             bodyStyle={{
               padding: 8
             }}
-            theme={theme}>
+            theme={theme}
+            data-tour="system-prompt"
+          >
             <Collapse
               ghost
               items={[
@@ -656,9 +724,12 @@ const Workbench: React.FC = () => {
             />
           </SystemPromptCard>
 
-          <div style={{
-            overflow: 'auto',
-          }}>
+          <div 
+            style={{
+              overflow: 'auto',
+            }}
+            data-tour="messages"
+          >
             {messages.map((msg: ChatStoreMessage, index) => (
               <MessageCard
                 key={index}
@@ -699,25 +770,29 @@ const Workbench: React.FC = () => {
               />
             ))}
           </div>
-          <div>
+          <div data-tour="add-messages">
             <Button
               icon={<User />}
-              type="text" onClick={() => {
+              type="text" 
+              onClick={() => {
                 addUserMessage(t('workbench.userMessageDefault'));
-              }}>
+              }}
+            >
               {t('workbench.addUserMessage')}
             </Button>
             <Button
               icon={<Bot />}
-              type="text" onClick={() => {
+              type="text" 
+              onClick={() => {
                 addAssistantMessage(t('workbench.assistantMessageDefault'));
-              }}>
+              }}
+            >
               {t('workbench.addAssistantMessage')}
             </Button>
           </div>
         </PromptSection>
 
-        <TestSection theme={theme}>
+        <TestSection theme={theme} data-tour="test-section">
           {error && (
             <ErrorMessage $theme={theme}>
               {error}
@@ -728,7 +803,10 @@ const Workbench: React.FC = () => {
         </TestSection>
       </WorkbenchContent>
 
-
+      <WorkbenchTour
+        open={showTour}
+        onClose={handleTourClose}
+      />
     </WorkbenchContainer>
   );
 };

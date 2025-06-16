@@ -13,6 +13,7 @@
 *.userosscache
 *.sln.docstates
 
+ollama_data/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

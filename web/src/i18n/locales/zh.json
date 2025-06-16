@@ -4,6 +4,7 @@
     "dashboard": "提示词广场",
     "prompts": "提示词管理",
     "workbench": "工作台",
+    "evaluation": "模型评估",
     "image": "图片生成",
     "code": "代码生成",
     "documentation": "文档",
@@ -40,6 +41,57 @@
     "loginFailed": "登录失败",
     "pleaseLogin": "请先登录"
   },
+  "apiConfig": {
+    "title": {
+      "loginRequired": "需要登录",
+      "configApiKey": "配置API密钥",
+      "modifyApiSettings": "修改API设置"
+    },
+    "description": {
+      "loginRequired": "您需要先登录才能使用AI功能。请选择登录方式。",
+      "apiKeyRequired": "您需要配置API密钥才能使用AI功能。您的API密钥将安全地存储在本地浏览器中，如果是本地Ollama访问，密钥需要随便填写。"
+    },
+    "buttons": {
+      "cancel": "取消",
+      "thorLogin": "使用 Thor 平台登录",
+      "passwordLogin": "使用账户密码登录",
+      "saveConfig": "保存配置"
+    },
+    "form": {
+      "apiKeyLabel": "API 密钥",
+      "apiKeyPlaceholder": "sk-...",
+      "apiKeyDescription": "您的API API密钥，以 sk- 开头。",
+      "getApiKeyLink": "获取API密钥"
+    },
+    "errors": {
+      "apiKeyRequired": "请输入API密钥",
+      "apiKeyTooShort": "API密钥长度不能少于10个字符",
+      "saveFailed": "保存配置失败"
+    },
+    "messages": {
+      "configSaved": "API配置已保存",
+      "loginExplanation": "登录后您将能够使用所有AI功能，包括提示词优化、图片生成等。",
+      "privacyProtection": "您的API密钥仅存储在本地浏览器中，我们不会收集或存储您的API密钥信息。"
+    },
+    "alerts": {
+      "loginRequired": {
+        "title": "需要登录",
+        "description": "您需要先登录才能使用AI功能。请选择登录方式。"
+      },
+      "loginExplanation": {
+        "title": "登录说明",
+        "description": "登录后您将能够使用所有AI功能，包括提示词优化、图片生成等。"
+      },
+      "apiConfigInfo": {
+        "title": "API配置说明",
+        "description": "您需要配置API密钥才能使用AI功能。您的API密钥将安全地存储在本地浏览器中，如果是本地Ollama访问，密钥需要随便填写。"
+      },
+      "privacyProtection": {
+        "title": "隐私保护",
+        "description": "您的API密钥仅存储在本地浏览器中，我们不会收集或存储您的API密钥信息。"
+      }
+    }
+  },
   "workbench": {
     "title": "提示词优化平台",
     "run": "运行",
@@ -69,7 +121,49 @@
     "saveAsTemplate": "保存为模板",
     "templateName": "模板名称",
     "templateDescription": "模板描述",
-    "templateTags": "标签"
+    "templateTags": "标签",
+    "tour": {
+      "welcome": {
+        "title": "欢迎使用工作台！",
+        "description": "这里是您的AI助手工作区，让我们来了解一下各个功能区域的作用。"
+      },
+      "modelSelector": {
+        "title": "选择AI模型",
+        "description": "在这里选择您要使用的AI模型。不同模型有着不同的特点和能力，您可以根据需要进行选择。"
+      },
+      "promptOptimization": {
+        "title": "提示词优化",
+        "description": "点击这个按钮可以优化您的提示词，让AI更好地理解您的需求并给出更准确的回答。"
+      },
+      "functionCalling": {
+        "title": "Function Calling优化",
+        "description": "点击这个按钮可以优化您的Function Calling提示词，让AI能够更准确地调用函数和工具。"
+      },
+      "systemPrompt": {
+        "title": "系统提示词",
+        "description": "这里是系统提示词输入区，用于设定AI的角色、行为规范和对话风格。它就像给AI设定一个基本的\"人设\"。"
+      },
+      "messages": {
+        "title": "对话消息管理",
+        "description": "在这个区域可以添加和编辑对话消息，包括用户消息和AI回复。您可以构建完整的对话上下文。"
+      },
+      "addMessages": {
+        "title": "添加消息按钮",
+        "description": "点击这些按钮可以快速添加用户消息或助手消息到对话中。用户消息是您的输入，助手消息是AI的回复。"
+      },
+      "testSection": {
+        "title": "测试与运行区域",
+        "description": "这里显示AI的回复结果。配置好左侧的内容后，点击运行按钮即可开始与AI对话。"
+      },
+      "runButton": {
+        "title": "运行按钮",
+        "description": "点击这个按钮开始运行您配置的对话。AI将基于您的设置给出回复。"
+      },
+      "complete": {
+        "title": "引导完成！",
+        "description": "现在您已经了解了工作台的主要功能。开始使用这些强大的功能来优化您的AI体验吧！"
+      }
+    }
   },
   "messageCard": {
     "user": "用户",
@@ -644,6 +738,262 @@
     },
     "pagination": {
       "total": "共 {{total}} 条"
+    }
+  },
+  "modelEvaluation": {
+    "tour": {
+      "welcome": {
+        "title": "欢迎使用模型评估工作台！",
+        "description": "这里是专业的AI模型评估平台，可以帮您对比不同模型的性能表现。让我们来了解一下各个功能区域的作用。"
+      },
+      "exampleSelector": {
+        "title": "选择示例模板",
+        "description": "这里提供了多种评估场景的示例模板，包括文案策划、编程开发、创意写作等。选择合适的示例可以快速开始评估。"
+      },
+      "modelSelector": {
+        "title": "选择评估模型",
+        "description": "在这里选择您要评估的AI模型。支持同时选择多个模型进行对比，建议不超过10个以确保最佳性能。"
+      },
+      "basePrompt": {
+        "title": "基础提示词",
+        "description": "输入您的提示词模板，这是将要被评估和优化的原始提示词。系统会基于这个提示词进行优化对比。"
+      },
+      "testTask": {
+        "title": "测试任务",
+        "description": "输入具体的测试任务或问题，用于验证提示词的效果。系统会使用这个任务来测试原始提示词和优化后提示词的差异。"
+      },
+      "evaluationConfig": {
+        "title": "评估配置",
+        "description": "配置评估参数，包括执行次数和是否启用提示词优化。多次执行可以获得更准确的平均分数。"
+      },
+      "startButton": {
+        "title": "开始评估",
+        "description": "配置完成后，点击这个按钮开始模型评估。系统会自动运行测试并给出详细的评分和分析报告。"
+      },
+      "resultsArea": {
+        "title": "评估结果区域",
+        "description": "这里显示详细的评估结果。包括每个模型的得分、评估描述、提示词对比和输出结果等信息。"
+      },
+      "tabsNavigation": {
+        "title": "功能导航",
+        "description": "通过这些标签页可以查看不同的功能：模型评估、数据图表分析、历史记录管理等。"
+      },
+      "complete": {
+        "title": "引导完成！",
+        "description": "🎉 您已经了解了模型评估工作台的主要功能！现在可以开始使用这个强大的工具来评估和优化您的AI提示词了。"
+      }
+    },
+    "workbench": "模型评估工作台",
+    "configuration": "配置区域",
+    "exampleTemplate": "选择示例模板",
+    "exampleType": "示例类型",
+    "exampleCount": "共有 {{count}} 个示例可选",
+    "selectExamplePlaceholder": "请选择示例类型",
+    "loadingExamples": "正在加载示例...",
+    "currentExample": "当前选择的示例信息",
+    "selectedExample": "已选择示例：{{title}}",
+    "modelSelection": "选择评估模型",
+    "modelSelectionRequired": "选择评估模型",
+    "modelSelectionExtra": "已选择 {{selected}} 个模型 | 共 {{total}} 个可用模型",
+    "modelSelectionPlaceholder": "请选择要评估的模型",
+    "loadingModels": "正在加载模型列表...",
+    "modelLimit": "建议同时评估的模型数量不超过10个，以确保最佳性能",
+    "basicPrompt": "基础提示词",
+    "basicPromptPlaceholder": "请输入您的提示词模板...",
+    "basicPromptExtra": "用于模型评估的基础提示词模板",
+    "basicPromptRequired": "请输入基础提示词",
+    "basicPromptTooltip": "这是将要被优化的原始提示词",
+    "testTask": "测试任务",
+    "testTaskPlaceholder": "请输入具体的测试任务...",
+    "testTaskExtra": "这个任务将用于测试原始提示词和优化后提示词的效果差异",
+    "testTaskRequired": "请输入测试任务",
+    "testTaskTooltip": "具体的测试请求，用于验证提示词效果",
+    "evaluationConfig": "评估配置",
+    "executionCount": "执行次数",
+    "executionCountExtra": "设置每个模型执行评估的次数",
+    "executionCountTooltip": "每个模型执行测试的次数，多次执行将计算平均分",
+    "executionCountUnit": "次",
+    "promptOptimization": "提示词优化",
+    "promptOptimizationExtra": "启用后将对比优化前后的效果",
+    "promptOptimizationTooltip": "是否启用提示词自动优化功能",
+    "promptOptimizationEnabled": "启用",
+    "promptOptimizationDisabled": "禁用",
+    "optimizationRequirements": "优化需求",
+    "optimizationRequirementsPlaceholder": "例如：提高回答的专业性，增加创意元素，使语言更加生动有趣...",
+    "optimizationRequirementsExtra": "可选：描述您希望提示词优化的方向和具体需求",
+    "optimizationRequirementsTooltip": "可选参数，用于指导提示词优化的具体需求和方向",
+    "titles": {
+      "workbench": "模型评估工作台",
+      "selectExampleTemplate": "选择示例模板",
+      "evaluationConfig": "评估配置",
+      "evaluationResults": "评估结果"
+    },
+    "labels": {
+      "exampleType": "示例类型",
+      "selectModels": "选择评估模型",
+      "basePrompt": "基础提示词",
+      "testTask": "测试任务",
+      "executionCount": "执行次数",
+      "promptOptimization": "提示词优化",
+      "optimizationRequirements": "优化需求",
+      "enable": "启用",
+      "disable": "禁用",
+      "times": "次",
+      "completionProgress": "完成进度",
+      "averageScore": "平均得分",
+      "points": "分",
+      "optimizationEnabled": "已启用优化",
+      "optimizationDisabled": "未启用优化",
+      "totalTime": "总耗时",
+      "seconds": "秒",
+      "allCompleted": "全部完成",
+      "inProgress": "进行中",
+      "evaluationDescription": "评估描述",
+      "promptCategories": "提示词分类",
+      "more": "个",
+      "detailedEvaluation": "详细评价",
+      "viewPromptsAndOutputs": "查看提示词对比和输出结果",
+      "executions": "次执行",
+      "viewExecutionResults": "查看执行结果",
+      "averageResults": "平均结果",
+      "execution": "第",
+      "result": "次执行结果",
+      "executionTags": "本次执行标签",
+      "originalPrompt": "原始提示词",
+      "optimizedPrompt": "优化提示词",
+      "originalPromptUnoptimized": "原始提示词 (未优化)",
+      "output": "输出",
+      "none": "无"
+    },
+    "placeholders": {
+      "loadingExamples": "正在加载示例...",
+      "selectExample": "请选择示例类型",
+      "loadingModels": "正在加载模型列表...",
+      "selectModels": "请选择要评估的模型",
+      "enterPromptTemplate": "请输入您的提示词模板...",
+      "enterTestTask": "请输入具体的测试任务...",
+      "optimizationRequirementsExample": "例如：提高回答的专业性，增加创意元素，使语言更加生动有趣..."
+    },
+    "tooltips": {
+      "selectMultipleModels": "支持同时评估多个模型，建议不超过10个",
+      "basePrompt": "这是将要被优化的原始提示词",
+      "testTask": "具体的测试请求，用于验证提示词效果",
+      "executionCount": "每个模型执行测试的次数，多次执行将计算平均分",
+      "promptOptimization": "是否启用提示词自动优化功能",
+      "optimizationRequirements": "可选参数，用于指导提示词优化的具体需求和方向"
+    },
+    "buttons": {
+      "startEvaluation": "开始评估",
+      "stopEvaluation": "停止评估",
+      "reset": "重置",
+      "expand": "展开",
+      "collapse": "收起"
+    },
+    "progress": {
+      "completedProgress": "完成进度",
+      "averageScore": "平均得分",
+      "executionInfo": "执行次数: {{count}}次",
+      "optimizationEnabled": "已启用优化",
+      "optimizationDisabled": "未启用优化",
+      "totalTime": "总耗时: {{seconds}}秒"
+    },
+    "status": {
+      "pending": "等待开始",
+      "processing": "进行中",
+      "completed": "已完成",
+      "error": "评估失败",
+      "allCompleted": "全部完成",
+      "optimizingPrompt": "🔧 优化提示词",
+      "optimizationComplete": "✅ 提示词优化完成",
+      "executingOriginal": "🚀 执行原始提示词",
+      "executingOptimized": "⚡ 执行优化提示词",
+      "scoring": "📊 智能评分中",
+      "evaluationComplete": "🎉 评估完成",
+      "evaluationFailed": "❌ 评估失败",
+      "executingOriginalWithCount": "🚀 执行原始提示词 (第{{count}}次)",
+      "executingOptimizedWithCount": "⚡ 执行优化提示词 (第{{count}}次)",
+      "scoringWithCount": "📊 智能评分中 (第{{count}}次)",
+      "evaluationCompleteWithCount": "🎉 评估完成 ({{count}}次执行)"
+    },
+    "scores": {
+      "excellent": "优秀",
+      "good": "良好",
+      "average": "中等",
+      "passed": "及格",
+      "needsImprovement": "待提升"
+    },
+    "results": {
+      "emptyState": "请配置评估参数并开始模型评估",
+      "emptyStateDescription": "左侧配置完成后点击\"开始评估\"按钮",
+      "evaluationDescription": "评估描述",
+      "promptCategory": "提示词分类:",
+      "detailedEvaluation": "详细评价",
+      "viewPromptAndOutput": "查看提示词对比和输出结果",
+      "multiExecution": "{{count}}次执行",
+      "executionSelector": "查看执行结果:",
+      "averageResult": "平均结果",
+      "executionResult": "第{{index}}次执行",
+      "executionInfo": "第{{index}}次执行结果",
+      "executionTags": "本次执行标签:",
+      "originalPrompt": "原始提示词",
+      "optimizedPrompt": "优化提示词",
+      "notOptimized": "原始提示词 (未优化)",
+      "outputResult": "输出结果:",
+      "noOutput": "无输出",
+      "none": "无",
+      "expand": "展开",
+      "collapse": "收起",
+      "showMore": "+{{count}}个",
+      "evaluationSummary": "📊 评估总结",
+      "participatingModels": "参与模型",
+      "successfullyCompleted": "成功完成",
+      "averageScoreTitle": "平均得分",
+      "totalTimeTitle": "总耗时",
+      "tagStatistics": "🏷️ 提示词分类统计",
+      "modelCount": "个",
+      "seconds": "秒"
+    },
+    "messages": {
+      "totalExamples": "共有 {{count}} 个示例可选",
+      "selectedModels": "已选择 {{count}} 个模型",
+      "totalModels": "共 {{total}} 个可用模型",
+      "enterBasePrompt": "请输入基础提示词",
+      "basePromptTemplate": "用于模型评估的基础提示词模板",
+      "enterTestTask": "请输入测试任务",
+      "testTaskDescription": "这个任务将用于测试原始提示词和优化后提示词的效果差异",
+      "setExecutionCount": "设置每个模型执行评估的次数",
+      "enableOptimization": "启用后将对比优化前后的效果",
+      "optimizationRequirementsDescription": "可选：描述您希望提示词优化的方向和具体需求",
+      "configureEvaluation": "请配置评估参数并开始模型评估",
+      "clickStartAfterConfiguration": "左侧配置完成后点击\"开始评估\"按钮",
+      "selectAtLeastOneModel": "请至少选择一个模型进行评估",
+      "noModelsSelected": "请选择至少一个模型进行评估",
+      "apiKeyRequired": "请先填写API Key",
+      "evaluationStopped": "评估已停止",
+      "evaluationReset": "已重置评估状态",
+      "allEvaluationComplete": "🎊 所有模型评估完成！",
+      "evaluationRecordSaved": "评估记录已自动保存",
+      "loadHistoryFailed": "评估完成，但重新加载历史记录失败",
+      "loadModelsError": "加载模型列表失败，请检查网络连接",
+      "loadExamplesError": "加载示例数据失败，请检查网络连接",
+      "validationError": "请检查输入内容是否完整",
+      "evaluationError": "评估失败: {{message}}"
+    },
+    "tabs": {
+      "evaluation": "模型评估",
+      "charts": "数据图表",
+      "history": "评估历史"
+    },
+    "categories": {
+      "copywriting": "文案策划",
+      "programming": "编程开发",
+      "creative": "创意写作",
+      "business": "商业分析",
+      "education": "教育培训",
+      "service": "客户服务",
+      "technical": "技术写作",
+      "lifestyle": "生活服务",
+      "general": "通用"
     }
   }
 } 

@@ -5,10 +5,13 @@
       - 10426:8080
     environment:
       - TZ=Asia/Shanghai
-      - DEFAULT_USERNAME=admin
-      - DEFAULT_PASSWORD=admin123
+      - DEFAULT_USERNAME=admin # 默认管理员账户
+      - DEFAULT_PASSWORD=admin123 # 默认管理员账户
+      - API_KEY=your_api_key_here # 替换为您的API密钥
+      - OpenAIEndpoint=https://api.token-ai.cn/v1 # OpenAI API端点
+      - DEFAULT_IMAGE_GENERATION_MODEL=gpt-4.1 # 用于优化图片提示词的基础模型
+      - IMAGE_GENERATION_MODEL=gpt-image-1,dall-e-3 # 用于生成图片的模型列表，逗号分隔
+      - CHAT_MODEL=gpt-4.1,gpt-4.1-mini,o4-mini,o3,DeepSeek-V3 # 聊天模型列表，逗号分隔
+      - DEFAULT_CHAT_MODEL=gpt-4.1 # 默认聊天模型
     volumes:
       - ./data:/app/data
-    build:
-      context: .
-      dockerfile: src/Console.Service/Dockerfile

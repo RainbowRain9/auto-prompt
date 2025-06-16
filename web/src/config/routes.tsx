@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { Home, Dashboard, Prompts, Workbench, ImageGeneration, ModelScores } from '../pages';
+import { Home, Dashboard, Prompts, Workbench, ImageGeneration, ModelScores, ModelEvaluation } from '../pages';
 import ApiKeysPage from '../pages/ApiKeys';
 
 export interface RouteConfig {
@@ -39,6 +39,15 @@ export const mainRoutes: RouteConfig[] = [
     key: 'prompts',
     title: '提示词',
     icon: 'MessageOutlined',
+    showInSidebar: true,
+    requireAuth: false,
+  },
+  {
+    path: '/evaluation',
+    element: <ModelEvaluation />,
+    key: 'evaluation',
+    title: '模型评估',
+    icon: 'BarChartOutlined',
     showInSidebar: true,
     requireAuth: false,
   },

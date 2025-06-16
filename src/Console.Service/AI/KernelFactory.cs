@@ -1,4 +1,5 @@
 ﻿using Console.Service.Infrastructure;
+using Console.Service.Options;
 using Microsoft.SemanticKernel;
 using Serilog;
 
@@ -9,7 +10,8 @@ public class KernelFactory
     public static Kernel CreateKernel(string chatModel, string apiUrl, string token)
     {
         var kernelBuilder = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(chatModel, new Uri(apiUrl), token,
+            // 如果配置了API密钥，则使用API密钥
+            .AddOpenAIChatCompletion(chatModel, new Uri(apiUrl), ConsoleOptions.DefaultAPIKey ?? token,
                 httpClient: new HttpClient(new KernelHttpClientHandler()
                 {
                 })
@@ -17,8 +19,8 @@ public class KernelFactory
                     Timeout = TimeSpan.FromSeconds(600),
                     DefaultRequestHeaders =
                     {
-                        { "User-Agent", "KoalaAI" },
-                        { "Accept", "application/json" }
+                        { "User-Agent", "PromptAI" },
+                        { "Accept", "application/json" },
                     }
                 });
 

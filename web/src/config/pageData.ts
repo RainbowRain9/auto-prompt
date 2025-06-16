@@ -82,6 +82,33 @@ export const pageMetadata: Record<string, PageMetadata> = {
     showFooter: false,
     requireAuth: false,
     layout: 'minimal'
+  },
+  apikeys: {
+    title: 'API密钥管理',
+    description: 'API密钥设置与管理',
+    keywords: ['API', '密钥', '管理'],
+    showHeader: true,
+    showFooter: false,
+    requireAuth: false,
+    layout: 'default'
+  },
+  evaluation: {
+    title: '模型评估',
+    description: '多模型性能评估与对比分析',
+    keywords: ['模型评估', '性能对比', '评分'],
+    showHeader: true,
+    showFooter: false,
+    requireAuth: false,
+    layout: 'default'
+  },
+  image: {
+    title: '图片生成',
+    description: 'AI图片生成工具',
+    keywords: ['图片生成', 'AI', '创作'],
+    showHeader: true,
+    showFooter: false,
+    requireAuth: false,
+    layout: 'default'
   }
 };
 

@@ -14,6 +14,12 @@ public static class ProxyService
                 context.Request.PathBase = "/";
                 var httpForwarder = context.RequestServices.GetRequiredService<IHttpForwarder>();
 
+                if (!string.IsNullOrWhiteSpace(ConsoleOptions.DefaultAPIKey))
+                {
+                    context.Request.Headers["Authorization"] =
+                        $"Bearer {ConsoleOptions.DefaultAPIKey}";
+                }
+
                 await httpForwarder.SendAsync(context, ConsoleOptions.OpenAIEndpoint, new HttpMessageInvoker(
                     new HttpClientHandler()
                     {

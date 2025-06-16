@@ -93,7 +93,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
       const response = await useModelStore.getState().fetchModels();
 
-      await initializeDefaultData(); // 确保数据库和默认数据已初始化
+      await initializeDefaultData(response.defaultChatModel); // 确保数据库和默认数据已初始化
       const config = await getConfig(workspaceId);
       const dbMessages = await getMessagesFromDB(workspaceId);
 

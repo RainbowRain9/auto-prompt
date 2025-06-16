@@ -1,4 +1,4 @@
-import { useAuthStore } from '../stores/authStore';
+import { authenticatedFetch } from '../utils/apiUtils';
 
 export interface GeneratedImageDto {
   id: string;
@@ -60,51 +60,117 @@ export interface ImageSearchResponse {
   message?: string;
 }
 
-const getAuthHeaders = () => {
-  const token = useAuthStore.getState().token;
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  };
+export interface GenerateImageInput {
+  prompt: string;
+  model?: string;
+  size?: string;
+  quality?: string;
+  style?: string;
+  numberOfImages?: number;
+}
+
+export interface UpdateGeneratedImageInput {
+  id: string;
+  isFavorite?: boolean;
+  tags?: string[];
+}
+
+// 获取API基础URL
+const getApiBaseUrl = () => {
+  return '/v1/image';
 };
 
-const API_BASE_URL = '/v1/images';
-
-export const saveGeneratedImage = async (input: SaveGeneratedImageInput): Promise<{ success: boolean; data?: GeneratedImageDto; message?: string }> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/save`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(input),
-    });
-
-    const result = await response.json();
-    return result;
-  } catch (error: any) {
-    return { success: false, message: error.message || '保存图片失败' };
+export const saveGeneratedImage = async (input: SaveGeneratedImageInput[]): Promise<{ success: boolean; data?: GeneratedImageDto[]; message?: string }> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/save`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
+  
+  return await response.json();
 };
 
-export const saveGeneratedImages = async (inputs: SaveGeneratedImageInput[]): Promise<{ success: boolean; data?: GeneratedImageDto[]; message?: string }> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/save-batch`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(inputs),
-    });
-
-    const result = await response.json();
-    return result;
-  } catch (error: any) {
-    return { success: false, message: error.message || '批量保存图片失败' };
+export const getGeneratedImages = async (): Promise<{ success: boolean; data?: GeneratedImageDto[]; message?: string }> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/list`, {
+    method: 'GET',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
+  
+  return await response.json();
+};
+
+export const deleteGeneratedImage = async (id: string): Promise<{ success: boolean; message?: string }> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/delete/${id}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return await response.json();
+};
+
+export const generateImage = async (input: GenerateImageInput): Promise<{ success: boolean; data?: GeneratedImageDto; message?: string }> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/generate`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return await response.json();
+};
+
+export const getImageHistory = async (): Promise<{ success: boolean; data?: GeneratedImageDto[]; message?: string }> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/history`, {
+    method: 'GET',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return await response.json();
+};
+
+export const downloadImage = async (url: string): Promise<Blob> => {
+  const response = await authenticatedFetch(url, {
+    method: 'GET',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return await response.blob();
+};
+
+export const updateGeneratedImage = async (input: UpdateGeneratedImageInput): Promise<{ success: boolean; data?: GeneratedImageDto; message?: string }> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/update`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return await response.json();
 };
 
 export const searchImages = async (input: ImageSearchInput): Promise<ImageSearchResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/search`, {
+    const response = await authenticatedFetch(`${getApiBaseUrl()}/search`, {
       method: 'POST',
-      headers: getAuthHeaders(),
       body: JSON.stringify(input),
     });
     const result = await response.json();
@@ -116,9 +182,8 @@ export const searchImages = async (input: ImageSearchInput): Promise<ImageSearch
 
 export const updateImage = async (input: UpdateImageInput): Promise<{ success: boolean; data?: GeneratedImageDto; message?: string }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/update`, {
+    const response = await authenticatedFetch(`${getApiBaseUrl()}/update`, {
       method: 'POST',
-      headers: getAuthHeaders(),
       body: JSON.stringify(input),
     });
 
@@ -131,9 +196,8 @@ export const updateImage = async (input: UpdateImageInput): Promise<{ success: b
 
 export const deleteImage = async (id: string): Promise<{ success: boolean; message?: string }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/${id}`, {
+    const response = await authenticatedFetch(`${getApiBaseUrl()}/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
     });
 
     const result = await response.json();
@@ -145,9 +209,8 @@ export const deleteImage = async (id: string): Promise<{ success: boolean; messa
 
 export const getImage = async (id: string): Promise<{ success: boolean; data?: GeneratedImageDto; message?: string }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/${id}`, {
+    const response = await authenticatedFetch(`${getApiBaseUrl()}/${id}`, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     const result = await response.json();
@@ -159,9 +222,8 @@ export const getImage = async (id: string): Promise<{ success: boolean; data?: G
 
 export const toggleImageFavorite = async (id: string): Promise<{ success: boolean; data?: { isFavorite: boolean }; message?: string }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/${id}/toggle-favorite`, {
+    const response = await authenticatedFetch(`${getApiBaseUrl()}/${id}/toggle-favorite`, {
       method: 'POST',
-      headers: getAuthHeaders(),
     });
 
     const result = await response.json();

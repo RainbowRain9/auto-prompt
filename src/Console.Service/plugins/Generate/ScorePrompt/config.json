@@ -10,14 +10,9 @@
   },
   "input_variables": [
     {
-      "name": "prompt",
-      "description": "原始提示词",
+      "name": "OriginalPromptGoal",
+      "description": "原始提示词目标",
       "required": true
-    },
-    {
-      "name": "prompt_output",
-      "description": "原始提示词优化结果",
-      "required": false
     },
     {
       "name": "OptimizePromptWords",
@@ -25,7 +20,17 @@
       "required": false
     },
     {
-      "name": "OptimizePromptWords_output",
+      "name": "OriginalPromptText",
+      "description": "原始提示词文本",
+      "required": false
+    },
+    {
+      "name": "OriginalPromptOutput",
+      "description": "原始提示词输出结果",
+      "required": false
+    },
+    {
+      "name": "OptimizePromptWordsOutput",
       "description": "优化后的提示词输出结果",
       "required": false
     }

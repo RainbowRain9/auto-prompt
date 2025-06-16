@@ -13,6 +13,7 @@
 **/*.jfm
 **/azds.yaml
 **/bin
+**/ollama_data
 **/charts
 **/docker-compose*
 **/Dockerfile*
