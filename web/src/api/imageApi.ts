@@ -77,7 +77,7 @@ export interface UpdateGeneratedImageInput {
 
 // 获取API基础URL
 const getApiBaseUrl = () => {
-  return '/v1/image';
+  return '/v1/images';
 };
 
 export const saveGeneratedImage = async (input: SaveGeneratedImageInput[]): Promise<{ success: boolean; data?: GeneratedImageDto[]; message?: string }> => {

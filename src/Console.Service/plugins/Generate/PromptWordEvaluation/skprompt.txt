@@ -1,53 +1,170 @@
-﻿# Detailed Comparative Analysis and Evaluation Framework 
+﻿# Enhanced Prompt Analysis and Evaluation Framework
 
-Please conduct a detailed analysis and evaluation of the following two sets of prompt words: 
+## Pre-Analysis Validation and Completeness Check
 
-1. Original prompt: 
+### Input Validation (Mandatory)
+Before proceeding with the analysis, verify the following:
+
+1. **Prompt Completeness Validation**:
+   - Confirm both original and optimized prompts are provided and non-empty
+   - Validate that each prompt contains at least 10 words and represents a complete instruction
+   - Check for proper formatting and readability of both prompts
+   - Identify any missing context or incomplete sections that might affect analysis quality
+
+2. **Structural Integrity Check**:
+   - Verify that both prompts have clear task definitions
+   - Confirm presence of identifiable instructions, constraints, or expected outputs
+   - Check for any formatting issues that might impact comparison accuracy
+   - Validate that prompts are in the same language and domain for fair comparison
+
+3. **Analysis Readiness Assessment**:
+   - Ensure sufficient content exists in both prompts for meaningful comparison
+   - Confirm that the optimization represents genuine improvement rather than just reformatting
+   - Validate that both prompts address similar or related tasks for comparative analysis
+
+**If validation fails**: Stop analysis and request complete, properly formatted prompts before proceeding.
+
+---
+
+## Prompts for Analysis
+
+1. **Original prompt**: 
 <prompt>
 {{$prompt}}
 </prompt>
 
-
-
-
-2. Optimized prompt: 
+2. **Optimized prompt**: 
 <new-prompt>
 {{$newPrompt}}
 </new-prompt>
-## Analysis and Evaluation Structure
-Please complete the analysis and evaluation task according to the following structure: 
 
-### Comparative Analysis (25 points)
-1. Compare and analyze the structural organization, expression methods, task instructions, clarity of requirements, and expected outcomes of the two prompt words.
-2. Clearly indicate how the structural changes affect the model's understanding and execution capabilities.
-3. Evaluate the degree of improvement in information hierarchy and logical flow.
-4. Compare the differences in the position and emphasis of key instructions. 
+---
 
-### Summary of Optimization Key Points (25 points)
-- Provide detailed explanations of the improvement points of the optimization prompt words in terms of instruction clarity, structural rationality, elimination of ambiguity, task boundaries, and output norms.
-- Quantify the improvement effects in each aspect (such as the percentage increase in instruction clarity, the expected increase in output consistency, etc.)
-- Use specific data or cases to support your evaluation conclusions
-- Analyze how the optimization enhances the model's understanding and execution capabilities 
+## Detailed Analysis and Evaluation Structure
 
-### Risks and Recommendations (25 points)
-- Identify the main flaws and potential risks of the original prompt
-- Explain in detail how the issues have been addressed through optimization
-- Propose specific suggestions for further optimization and implementation methods
-- Assess any remaining limitations and the corresponding strategies for addressing them 
+### 1. Comparative Analysis (25 points)
 
-### Comprehensive Evaluation (25 points)
-- Provide an overall score (1-10) for both prompt words and elaborate on the reasons for the score
-- Summarize the core value and benefits of optimizing the prompt words
-- Assess the overall impact of the optimization on the quality and efficiency of task completion
-- Offer additional optimization suggestions based on best practices in prompt engineering 
+**Structural and Organizational Comparison**:
+1. **Framework Architecture**: Compare overall structure, section organization, and information hierarchy between both prompts
+2. **Instruction Methodology**: Analyze differences in task presentation, command clarity, and directive positioning
+3. **Logical Flow Assessment**: Evaluate sequence logic, information progression, and cognitive load distribution
+4. **Clarity and Specificity**: Compare precision of language, elimination of ambiguity, and actionable instruction quality
+5. **Context and Constraints**: Assess how context setting, limitations, and boundaries are established in each version
 
-## Output Requirements
-- Use Markdown format for level one and level two headings
-- Use ordered or unordered lists to clearly separate each part of the content
-- Use professional language and organize the content clearly with a logical structure
-- Each main section should contain at least four key points
-- Include specific quantified evaluation of improvement effects
-- Overall score (out of 100) and detailed scoring basis
+**Execution Impact Analysis**:
+- Document specific structural changes and their predicted effects on model performance
+- Quantify improvements in information hierarchy (e.g., "reduced cognitive complexity by 40%")
+- Measure enhancement in logical flow using readability metrics
+- Compare instruction positioning effectiveness and emphasis distribution
+
+### 2. Summary of Optimization Key Points (25 points)
+
+**Detailed Improvement Documentation**:
+1. **Instruction Clarity Enhancement**: 
+   - Specific examples of ambiguity elimination
+   - Quantified improvement in directiveness (e.g., "increased actionable instructions by 60%")
+   - Before/after comparison of unclear vs. clear directives
+
+2. **Structural Rationality Improvements**:
+   - Documentation of logical reorganization benefits
+   - Measurement of information flow optimization
+   - Assessment of cognitive load reduction strategies
+
+3. **Task Boundary Definition**:
+   - Analysis of scope clarification improvements
+   - Evaluation of constraint specification enhancements
+   - Assessment of expected outcome definition improvements
+
+4. **Output Standardization**:
+   - Comparison of formatting and structure requirements
+   - Analysis of consistency-enhancing modifications
+   - Evaluation of deliverable specification improvements
+
+**Quantitative Impact Assessment**:
+- Provide percentage-based improvement estimates for each optimization area
+- Use specific examples from the prompts to support quantitative claims
+- Include predicted performance metrics (consistency, accuracy, completeness)
+
+### 3. Risk Assessment and Recommendations (25 points)
+
+**Original Prompt Risk Analysis**:
+1. **Critical Flaws Identification**: Document specific problematic elements and their potential negative impacts
+2. **Ambiguity Risk Assessment**: Identify unclear instructions that could lead to inconsistent outputs
+3. **Structural Weakness Analysis**: Evaluate organizational problems affecting comprehension and execution
+4. **Scope and Boundary Issues**: Assess problems with task definition and limitation specification
+
+**Optimization Effectiveness Evaluation**:
+1. **Risk Mitigation Analysis**: Detailed explanation of how each identified risk was addressed
+2. **Residual Risk Assessment**: Identification of remaining limitations and potential issues
+3. **Implementation Strategy**: Specific recommendations for deploying the optimized prompt
+4. **Continuous Improvement Plan**: Suggestions for ongoing refinement and monitoring
+
+**Future Enhancement Recommendations**:
+- Provide 3-5 specific, actionable suggestions for further optimization
+- Include implementation difficulty assessment for each recommendation
+- Suggest monitoring metrics to track prompt performance over time
+
+### 4. Comprehensive Evaluation (25 points)
+
+**Detailed Scoring Matrix**:
+
+**Original Prompt Evaluation (1-10 scale)**:
+- Clarity and Precision: ___/10
+- Structural Organization: ___/10  
+- Task Definition: ___/10
+- Output Specification: ___/10
+- **Overall Score**: ___/10
+
+**Optimized Prompt Evaluation (1-10 scale)**:
+- Clarity and Precision: ___/10
+- Structural Organization: ___/10
+- Task Definition: ___/10
+- Output Specification: ___/10
+- **Overall Score**: ___/10
+
+**Optimization Impact Assessment**:
+1. **Core Value Analysis**: Summarize the primary benefits and transformational impact of the optimization
+2. **Efficiency Improvement Quantification**: Provide specific metrics on expected performance enhancement
+3. **Quality Enhancement Documentation**: Detail improvements in output consistency, accuracy, and completeness
+4. **Best Practices Alignment**: Assess adherence to established prompt engineering principles
+
+**Strategic Recommendations**:
+- Provide industry-standard optimization suggestions based on current best practices
+- Include advanced prompt engineering techniques that could further enhance performance
+- Suggest A/B testing strategies to validate optimization effectiveness
+
+---
+
+## Output Quality Assurance
+
+### Analysis Validation Checklist
+Before finalizing the evaluation, ensure:
+
+- [ ] All four main sections contain minimum 4 substantial key points each
+- [ ] Quantitative assessments are provided with specific percentages or metrics
+- [ ] Each improvement claim is supported by concrete examples from the prompts
+- [ ] Professional language and clear logical structure are maintained throughout
+- [ ] Scoring rationale is detailed and justifiable
+- [ ] Recommendations are specific, actionable, and implementable
+
+### Final Deliverable Requirements
+
+**Format Standards**:
+- Use Markdown formatting with clear H1 and H2 headings
+- Implement ordered/unordered lists for content organization
+- Maintain professional tone with technical precision
+- Ensure logical flow between sections
+
+**Content Standards**:
+- Minimum 1500 words total analysis
+- Include specific examples from both prompts in each section
+- Provide quantitative metrics wherever applicable
+- Conclude with actionable next steps and monitoring recommendations
+
+**Final Score Calculation**:
+- **Total Score**: ___/100 points
+- **Detailed Scoring Rationale**: Comprehensive explanation of point allocation across all four evaluation categories
+- **Optimization Success Rating**: Overall assessment of the optimization effectiveness and strategic value
 
 
 请使用中文回复
