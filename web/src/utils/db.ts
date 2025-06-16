@@ -1,5 +1,19 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
+// UUID 生成函数（兼容性处理）
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  
+  // 兼容性回退方案
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 const DB_NAME = 'workbenchDB';
 const DB_VERSION = 2; // 版本升级为2，以便触发数据库升级
 const CONFIG_STORE_NAME = 'workbenchConfig';
@@ -99,7 +113,7 @@ export const getMessages = async (workspaceId: string = DEFAULT_WORKSPACE_ID): P
 // 添加单条消息
 export const addMessage = async (message: Omit<WorkbenchMessage, 'id' | 'timestamp'>): Promise<string> => {
   const db = await initDB();
-  const id = crypto.randomUUID(); // 生成唯一ID
+  const id = generateUUID(); // 生成唯一ID
   const timestamp = Date.now();
   const newMessage: WorkbenchMessage = {
     ...message,
@@ -150,7 +164,7 @@ export const saveMessages = async (workspaceId: string = DEFAULT_WORKSPACE_ID, m
   
   // 添加新消息
   const addPromises = messages.map((msg, idx) => {
-    const id = crypto.randomUUID();
+    const id = generateUUID();
     const timestamp = Date.now() + idx; // 确保顺序
     return tx.store.add({
       ...msg,
