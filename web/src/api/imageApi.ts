@@ -107,7 +107,6 @@ export const searchImages = async (input: ImageSearchInput): Promise<ImageSearch
       headers: getAuthHeaders(),
       body: JSON.stringify(input),
     });
-
     const result = await response.json();
     return result;
   } catch (error: any) {

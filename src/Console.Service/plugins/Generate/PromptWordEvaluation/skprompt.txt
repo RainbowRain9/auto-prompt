@@ -1,50 +1,187 @@
-﻿# Detailed Comparative Analysis and Evaluation Framework 
+﻿# Enhanced Detailed Comparative Analysis and Evaluation Framework
 
-Please conduct a detailed analysis and evaluation of the following two sets of prompt words: 
+Please conduct a comprehensive analysis and evaluation of the following two sets of prompt words with built-in validation protocols:
 
-1. Original prompt: 
-<prompt>
+## Input Parameters
+
+1. **Original prompt**: 
+<original-prompt>
 {{$prompt}}
-</prompt>
+</original-prompt>
 
-
-
-
-2. Optimized prompt: 
-<new-prompt>
+2. **Optimized prompt**: 
+<optimized-prompt>
 {{$newPrompt}}
-</new-prompt>
-## Analysis and Evaluation Structure
-Please complete the analysis and evaluation task according to the following structure: 
+</optimized-prompt>
 
-### Comparative Analysis (25 points)
-1. Compare and analyze the structural organization, expression methods, task instructions, clarity of requirements, and expected outcomes of the two prompt words.
-2. Clearly indicate how the structural changes affect the model's understanding and execution capabilities.
-3. Evaluate the degree of improvement in information hierarchy and logical flow.
-4. Compare the differences in the position and emphasis of key instructions. 
+## Phase 1: Completeness Validation (15 points)
 
-### Summary of Optimization Key Points (25 points)
-- Provide detailed explanations of the improvement points of the optimization prompt words in terms of instruction clarity, structural rationality, elimination of ambiguity, task boundaries, and output norms.
-- Quantify the improvement effects in each aspect (such as the percentage increase in instruction clarity, the expected increase in output consistency, etc.)
-- Use specific data or cases to support your evaluation conclusions
-- Analyze how the optimization enhances the model's understanding and execution capabilities 
+### Original Prompt Validation
+- **Content Presence Check**: Verify that `original-prompt` contains substantive content (minimum 10 words)
+- **Structure Assessment**: Evaluate if the original prompt has identifiable components (task description, instructions, constraints)
+- **Clarity Baseline**: Determine if the original prompt is comprehensible and actionable
+- **Missing Elements Identification**: List critical components that may be absent in the original prompt
 
-### Risks and Recommendations (25 points)
-- Identify the main flaws and potential risks of the original prompt
-- Explain in detail how the issues have been addressed through optimization
-- Propose specific suggestions for further optimization and implementation methods
-- Assess any remaining limitations and the corresponding strategies for addressing them 
+### Optimized Prompt Validation  
+- **Enhancement Verification**: Confirm that `optimized-prompt` represents a genuine optimization attempt
+- **Structural Integrity**: Validate that the optimized prompt maintains core functionality while adding improvements
+- **Completeness Score**: Rate completeness on a scale of 1-10 with specific justification
+- **Validation Status**: Declare whether both prompts meet minimum standards for comparative analysis
 
-### Comprehensive Evaluation (25 points)
-- Provide an overall score (1-10) for both prompt words and elaborate on the reasons for the score
-- Summarize the core value and benefits of optimizing the prompt words
-- Assess the overall impact of the optimization on the quality and efficiency of task completion
-- Offer additional optimization suggestions based on best practices in prompt engineering 
+**Validation Outcome**: [PASS/FAIL] - If FAIL, provide specific remediation steps before proceeding.
 
-## Output Requirements
-- Use Markdown format for level one and level two headings
-- Use ordered or unordered lists to clearly separate each part of the content
-- Use professional language and organize the content clearly with a logical structure
-- Each main section should contain at least four key points
-- Include specific quantified evaluation of improvement effects
-- Overall score (out of 100) and detailed scoring basis
+## Phase 2: Pre-Analysis Validation (10 points)
+
+### Comparative Readiness Assessment
+- **Length Differential Analysis**: Calculate and interpret the length difference between prompts
+- **Complexity Level Matching**: Ensure both prompts address similar complexity levels
+- **Scope Alignment Verification**: Confirm both prompts target the same general task domain
+- **Measurability Check**: Verify that improvements can be quantitatively assessed
+
+### Analysis Parameters Setup
+- **Evaluation Criteria Definition**: Establish specific metrics for each analysis dimension
+- **Baseline Establishment**: Set performance benchmarks from the original prompt
+- **Success Indicators**: Define what constitutes meaningful improvement
+- **Risk Factors Identification**: Preview potential analysis limitations or biases
+
+## Phase 3: Detailed Comparative Analysis (25 points)
+
+### Structural Organization Comparison
+1. **Architecture Assessment**: Compare overall prompt structure, flow, and organization
+2. **Information Hierarchy**: Analyze how information is prioritized and sequenced in each version
+3. **Logical Flow Evaluation**: Assess the coherence and progression of instructions
+4. **Modular Design**: Evaluate how well each prompt breaks down complex tasks into manageable components
+
+### Expression Methods Analysis
+1. **Language Precision**: Compare specificity, clarity, and technical accuracy of language used
+2. **Instruction Formatting**: Analyze presentation methods (lists, headings, emphasis, examples)
+3. **Tone and Style**: Evaluate appropriateness and consistency of communication style
+4. **Accessibility**: Assess ease of understanding for target users
+
+### Task Instructions Clarity
+1. **Objective Definition**: Compare how clearly each prompt defines the desired outcome
+2. **Step-by-Step Guidance**: Evaluate the quality and completeness of procedural instructions
+3. **Parameter Specification**: Analyze how well variables and inputs are defined
+4. **Constraint Communication**: Compare how limitations and boundaries are expressed
+
+### Requirements and Expectations
+1. **Output Specifications**: Compare detail and clarity of expected deliverables
+2. **Quality Standards**: Analyze how performance criteria are communicated
+3. **Format Requirements**: Evaluate consistency and clarity of formatting instructions
+4. **Success Metrics**: Compare how each prompt enables performance measurement
+
+## Phase 4: Optimization Impact Analysis (25 points)
+
+### Instruction Clarity Improvements
+- **Precision Enhancement**: Quantify reduction in ambiguous language (target: X% improvement)
+- **Specificity Increase**: Measure addition of concrete details and examples
+- **Readability Score**: Calculate before/after readability metrics using standard formulas
+- **Comprehension Testing**: Estimate cognitive load reduction through structural improvements
+
+### Structural Rationality Enhancements
+- **Logical Sequence**: Evaluate improvements in information flow and task progression
+- **Hierarchical Organization**: Assess better use of headings, sections, and priority indicators
+- **Dependency Management**: Analyze how prerequisites and relationships are clarified
+- **Modularity Benefits**: Measure improved task breakdown and component isolation
+
+### Ambiguity Elimination
+- **Vague Term Reduction**: Count and categorize instances where unclear language was refined
+- **Context Specification**: Evaluate addition of situational details and use cases
+- **Interpretation Consistency**: Estimate reduction in multiple possible interpretations
+- **Edge Case Handling**: Assess coverage of boundary conditions and special scenarios
+
+### Task Boundary Definition
+- **Scope Clarification**: Measure improvements in defining what is/isn't included
+- **Responsibility Delineation**: Evaluate clearer assignment of roles and expectations
+- **Constraint Communication**: Assess better articulation of limitations and restrictions
+- **Success Criteria**: Analyze enhancement of measurable completion standards
+
+### Output Standardization
+- **Format Consistency**: Evaluate improvements in output structure requirements
+- **Quality Benchmarks**: Assess addition of performance standards and evaluation criteria
+- **Deliverable Specification**: Measure enhancement in describing expected outcomes
+- **Validation Methods**: Analyze inclusion of self-assessment and verification steps
+
+## Phase 5: Risk Assessment and Mitigation (25 points)
+
+### Original Prompt Risk Analysis
+1. **Critical Flaws Identification**: Systematically catalog major weaknesses and failure points
+2. **Misinterpretation Potential**: Assess likelihood and impact of incorrect understanding
+3. **Incomplete Execution Risk**: Evaluate probability of partial or inadequate task completion
+4. **User Experience Impact**: Analyze frustration points and usability issues
+
+### Risk Mitigation Evaluation
+1. **Problem Resolution Assessment**: Evaluate how effectively identified issues were addressed
+2. **Prevention Mechanisms**: Analyze new safeguards and error-prevention features
+3. **Fallback Strategies**: Assess inclusion of alternative approaches and contingencies
+4. **Monitoring Capabilities**: Evaluate built-in feedback and quality control mechanisms
+
+### Remaining Limitations Analysis
+1. **Unresolved Issues**: Identify problems that persist despite optimization efforts
+2. **New Risk Introduction**: Evaluate any complications created by the optimization
+3. **Implementation Challenges**: Assess practical difficulties in deploying the optimized prompt
+4. **Context Dependencies**: Analyze situations where the optimization might not be effective
+
+### Strategic Recommendations
+1. **Priority Improvements**: Rank additional optimization opportunities by impact and feasibility
+2. **Implementation Roadmap**: Provide step-by-step deployment strategy for the optimized prompt
+3. **Monitoring Framework**: Establish metrics and methods for ongoing performance evaluation
+4. **Iteration Strategy**: Design process for continuous improvement based on usage feedback
+
+## Phase 6: Comprehensive Evaluation and Scoring (25 points)
+
+### Quantitative Assessment
+- **Original Prompt Score**: [X/10] with detailed breakdown by category
+- **Optimized Prompt Score**: [Y/10] with improvement justification
+- **Improvement Delta**: Calculate and interpret the net enhancement value
+- **Confidence Level**: Assess reliability of the evaluation methodology
+
+### Qualitative Impact Analysis
+- **Core Value Proposition**: Summarize the fundamental benefits of the optimization
+- **Efficiency Gains**: Estimate time savings and resource optimization potential
+- **Quality Enhancement**: Predict improvement in output consistency and accuracy
+- **User Experience Upgrade**: Assess enhancement in usability and satisfaction
+
+### Best Practices Alignment
+- **Industry Standards Compliance**: Evaluate adherence to prompt engineering principles
+- **Scalability Assessment**: Analyze adaptability to different contexts and use cases
+- **Maintainability Review**: Assess ease of future updates and modifications
+- **Documentation Quality**: Evaluate clarity and completeness of implementation guidance
+
+### Strategic Value Assessment
+- **ROI Projection**: Estimate return on investment for implementing the optimization
+- **Competitive Advantage**: Analyze differentiation potential and market benefits
+- **Risk-Adjusted Benefits**: Calculate expected value considering implementation risks
+- **Long-term Sustainability**: Assess durability and future-proofing of improvements
+
+## Output Requirements and Validation
+
+### Format Standards
+- Use **Markdown format** with consistent heading hierarchy (H1, H2, H3)
+- Employ **ordered and unordered lists** for structured content presentation
+- Maintain **professional language** with clear, logical organization
+- Include **quantified metrics** wherever possible (percentages, scores, ratios)
+
+### Content Requirements
+- **Minimum Content Standards**: Each main section must contain at least 4 substantive key points
+- **Evidence-Based Analysis**: Support conclusions with specific examples and data points
+- **Balanced Perspective**: Include both strengths and limitations in evaluations
+- **Actionable Insights**: Provide concrete recommendations for implementation
+
+### Quality Assurance
+- **Consistency Check**: Ensure alignment between different sections and recommendations
+- **Completeness Verification**: Confirm all required elements are addressed comprehensively
+- **Accuracy Validation**: Verify all quantitative claims and calculations
+- **Final Score Justification**: Provide detailed breakdown for overall assessment (out of 100)
+
+### Delivery Specifications
+- **Executive Summary**: Provide 2-3 sentence overview of key findings
+- **Detailed Analysis**: Complete evaluation following the framework structure
+- **Implementation Guide**: Practical steps for applying optimization recommendations
+- **Success Metrics**: Specific KPIs for measuring optimization effectiveness
+
+---
+
+**Total Framework Score**: ___/100 points
+**Overall Recommendation**: [IMPLEMENT/REVISE/REJECT] with detailed justification
+**Priority Actions**: Top 3 immediate steps for optimization implementation
