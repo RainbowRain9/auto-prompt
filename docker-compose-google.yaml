@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    ports:
+      - "10426:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - OpenAIEndpoint=https://generativelanguage.googleapis.com/v1beta/openai
+      - API_KEY=SK-1234567890 # https://aistudio.google.com/apikey 获取APIKey
+      - SCORE_MODEL=gemini-2.5-flash-preview-05-20
+      - CHAT_MODEL=gemini-2.5-pro-preview-06-05,gemini-2.5-flash-preview-05-20,gemini-2.5-flash-preview-04-17,gemini-2.5-pro-preview-05-06
+      - DEFAULT_CHAT_MODEL=gemini-2.5-flash-preview-05-20
+      - ConnectionStrings:Type=sqlite
+      - ConnectionStrings:Default=Data Source=/app/data/ConsoleService.db
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

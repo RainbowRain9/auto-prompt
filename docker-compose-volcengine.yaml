@@ -1,0 +1,17 @@
+﻿services:
+  console-service:
+    image: registry.cn-shenzhen.aliyuncs.com/tokengo/console
+    ports:
+      - 10426:8080
+    environment:
+      - TZ=Asia/Shanghai
+      - DEFAULT_USERNAME=admin # 默认管理员账户
+      - DEFAULT_PASSWORD=admin123 # 默认管理员账户
+      - API_KEY=your_api_key_here # 替换为您的API密钥 从https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey 获取
+      - OpenAIEndpoint=https://api.deepseek.com/v1 # OpenAI API端点
+      - DEFAULT_IMAGE_GENERATION_MODEL=doubao-seed-1-6-250615 # 用于优化图片提示词的基础模型
+      - IMAGE_GENERATION_MODEL=gpt-image-1,dall-e-3 # 用于生成图片的模型列表，逗号分隔
+      - CHAT_MODEL=doubao-seed-1-6,doubao-seed-1-6-flash,doubao-seed-1-6-thinking,skylark2-lite-8k,skylark2-pro-4k,skylark2-pro-32k,skylark3-lite-4k,skylark3-lite-128k,skylark3-pro-4k,skylark3-pro-128k,skylark-embedding,doubao-lite-4k,doubao-lite-32k,doubao-lite-128k,doubao-pro-4k,doubao-pro-32k,doubao-pro-128k,doubao-embedding,moonshot-v1-8k,moonshot-v1-32k,moonshot-v1-128k,llama3-8b,llama3-70b,chatglm3-130-fin,chatglm3-130b-fc,mistral-7b,skylark2-lite-vision,intimate-lite-4k,intimate-lite-32k,doubao-pro-256k,doubao-embedding-large,doubao-pro-vision,doubao-pro-vision-32k,doubao-lite-vision-32k,intimate-pro-32k,doubao-vision-pro-32k,doubao-vision-lite-32k,t2i-modelservice,doubao-seaweed,doubao-clasi-s2t,doubao-1-5-lite-32k,doubao-1-5-pro-32k,doubao-1-5-vision-pro-32k,doubao-1-5-pro-256k,doubao-embedding-vision,deepseek-r1,deepseek-v3,deepseek-r1-distill-qwen-7b,deepseek-r1-distill-qwen-32b,doubao-1-5-vision-lite,doubao-1-5-ui-tars,doubao-1-5-pro,doubao-1-5-vision-pro,doubao-1-5-thinking-pro,doubao-1-5-thinking-vision-pro,doubao-seedream-3-0-t2i,doubao-3d-asset-beaver,doubao-seedance-1-0-lite-t2v,doubao-seedance-1-0-lite-i2v,wan2-1-14b,dreamina-omnihuman,doubao-1-5-thinking-vision-lite,doubao-seedance-1-0-pro # 聊天模型列表，逗号分隔
+      - DEFAULT_CHAT_MODEL=doubao-seed-1-6-250615 # 默认聊天模型
+    volumes:
+      - ./data:/app/data

@@ -158,7 +158,7 @@ services:
       - DEFAULT_CHAT_MODEL=qwen2.5-coder:32b
       - GenerationChatModel=qwen2.5-coder:32b
       - ConnectionStrings:Type=sqlite
-      - ConnectionStrings:Default=Data Source=/data/ConsoleService.db
+      - ConnectionStrings:Default=Data Source=/app/data/ConsoleService.db
     volumes:
       - ./data:/app/data
     depends_on:
