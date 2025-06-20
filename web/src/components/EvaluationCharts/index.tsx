@@ -21,13 +21,12 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { useThemeStore } from '../../stores/themeStore';
-import type { EvaluationRecord } from '../../utils/indexedDB';
 
 const { Title } = Typography;
 
 interface EvaluationChartsProps {
-  evaluations: EvaluationRecord[];
-  currentEvaluation?: EvaluationRecord;
+  evaluations: any[];
+  currentEvaluation?: any;
 }
 
 const EvaluationCharts: React.FC<EvaluationChartsProps> = ({ evaluations, currentEvaluation }) => {
@@ -40,43 +39,6 @@ const EvaluationCharts: React.FC<EvaluationChartsProps> = ({ evaluations, curren
   // 文字颜色
   const textColor = theme === 'dark' ? '#ffffff' : '#000000';
   const secondaryTextColor = theme === 'dark' ? '#999999' : '#666666';
-
-  // 处理评分分布数据
-  const getScoreDistributionData = () => {
-    if (!currentEvaluation) return [];
-    
-    const distribution = {
-      '优秀(90-100)': 0,
-      '良好(80-89)': 0,
-      '中等(70-79)': 0,
-      '及格(60-69)': 0,
-      '待提升(0-59)': 0
-    };
-
-    Object.values(currentEvaluation.results).forEach(result => {
-      if (result.score >= 90) distribution['优秀(90-100)']++;
-      else if (result.score >= 80) distribution['良好(80-89)']++;
-      else if (result.score >= 70) distribution['中等(70-79)']++;
-      else if (result.score >= 60) distribution['及格(60-69)']++;
-      else distribution['待提升(0-59)']++;
-    });
-
-    return Object.entries(distribution)
-      .filter(([, value]) => value > 0)
-      .map(([name, value]) => ({ name, value }));
-  };
-
-  // 处理模型对比数据
-  const getModelComparisonData = () => {
-    if (!currentEvaluation) return [];
-    
-    return Object.entries(currentEvaluation.results).map(([model, result]) => ({
-      model: model.length > 15 ? model.substring(0, 15) + '...' : model,
-      fullModel: model,
-      score: result.score,
-      duration: Math.round(result.duration / 1000)
-    }));
-  };
 
   // 处理雷达图数据
   const getRadarData = () => {
@@ -150,8 +112,6 @@ const EvaluationCharts: React.FC<EvaluationChartsProps> = ({ evaluations, curren
     return Object.entries(categoryCount).map(([name, value]) => ({ name, value }));
   };
 
-  const scoreDistributionData = getScoreDistributionData();
-  const modelComparisonData = getModelComparisonData();
   const radarData = getRadarData();
   const historyTrendData = getHistoryTrendData();
   const categoryDistributionData = getCategoryDistributionData();
@@ -182,11 +142,11 @@ const EvaluationCharts: React.FC<EvaluationChartsProps> = ({ evaluations, curren
                 size="small"
                 style={{ height: '320px' }}
               >
-                {scoreDistributionData.length > 0 ? (
+                {currentEvaluation.statistics.scoreDistribution.length > 0 ? (
                   <ResponsiveContainer width="100%" height={240}>
                     <PieChart>
                       <Pie
-                        data={scoreDistributionData}
+                        data={currentEvaluation.statistics.scoreDistribution}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -195,7 +155,7 @@ const EvaluationCharts: React.FC<EvaluationChartsProps> = ({ evaluations, curren
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {scoreDistributionData.map((_, index) => (
+                        {currentEvaluation.statistics.scoreDistribution.map((_:any, index:any) => (
                           <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
                         ))}
                       </Pie>
@@ -215,9 +175,9 @@ const EvaluationCharts: React.FC<EvaluationChartsProps> = ({ evaluations, curren
                 size="small"
                 style={{ height: '320px' }}
               >
-                {modelComparisonData.length > 0 ? (
+                  {currentEvaluation.statistics.modelComparisonData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={240}>
-                    <BarChart data={modelComparisonData}>
+                    <BarChart data={currentEvaluation.statistics.modelComparisonData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="model" 
