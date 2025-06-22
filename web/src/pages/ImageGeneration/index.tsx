@@ -252,7 +252,7 @@ const ImageGeneration: React.FC = () => {
     if (isAuthenticated && !historyLoaded && !loadingHistory) {
       loadHistoryImages();
     }
-  }, [isAuthenticated, historyLoaded, loadingHistory, loadHistoryImages]);
+  }, [isAuthenticated, loadHistoryImages]);
 
   // 组件卸载时清理所有 Blob URL
   useEffect(() => {

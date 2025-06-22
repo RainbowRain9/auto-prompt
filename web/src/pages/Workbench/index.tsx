@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Button, Select, Typography,  Card, Input,  message, Collapse,  } from 'antd';
+import { Layout, Button, Select, Typography, Card, Input, message, Collapse } from 'antd';
 import {
   PlusOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
-import styled  from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../stores/themeStore';
 import { useChatStore } from '../../stores/chatStore';
@@ -25,6 +25,18 @@ import WorkbenchTour from '../../components/WorkbenchTour';
 const { Content, Header } = Layout;
 const {  Text } = Typography;
 const { TextArea } = Input;
+
+// 添加slideDown动画
+const slideDown = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const WorkbenchContainer = styled.div`
   height: 100vh;
@@ -263,6 +275,18 @@ const ReasoningContent = styled.div<{ $theme: 'dark' | 'light' }>`
   overflow-y: auto;
 `;
 
+// 创建带动画的推理内容组件
+const AnimatedReasoningContent = styled(ReasoningContent)<{ $theme: 'dark' | 'light' }>`
+  margin-top: 0;
+  border-radius: 0 0 8px 8px;
+  border: 1px solid ${props => props.$theme === 'dark' ? '#3d3d3d' : '#e0e0e0'};
+  border-top: none;
+  max-height: 200px;
+  font-size: 13px;
+  line-height: 1.5;
+  animation: ${slideDown} 0.2s ease-out;
+`;
+
 const MessageContent = styled.div<{ $theme: 'dark' | 'light' }>`
   font-size: 15px;
   line-height: 1.6;
@@ -458,14 +482,85 @@ const StreamingMessage: React.FC<{ theme: 'dark' | 'light' }> = ({ theme }) => {
     addTempToMessages,
   } = useChatStore();
 
+  // 添加推理内容展开/收缩状态
+  const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
+
   // 判断是否有内容显示
   const hasContent = !!streamingContent || isLoading;
+
+  // 添加调试日志
+  console.log('StreamingMessage render:', { 
+    streamingContent: !!streamingContent, 
+    streamingReasoningContent: !!streamingReasoningContent,
+    reasoningContentLength: streamingReasoningContent?.length || 0,
+    isLoading 
+  });
 
   // 如果没有内容和不在加载中，不渲染组件
   if (!hasContent) return null;
 
   return (
     <StreamingMessageContainer $theme={theme}>
+      {/* 推理内容区域 - 显示在主要内容上方 */}
+      {streamingReasoningContent && (
+        <div style={{ marginBottom: '16px' }}>
+          {/* 推理内容标题栏，可点击展开/收缩 */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer',
+              padding: '8px 12px',
+              background: theme === 'dark' ? '#2a2a2a' : '#f8f9fa',
+              borderRadius: '8px 8px 0 0',
+              border: `1px solid ${theme === 'dark' ? '#3d3d3d' : '#e0e0e0'}`,
+              borderBottom: isReasoningExpanded ? 'none' : `1px solid ${theme === 'dark' ? '#3d3d3d' : '#e0e0e0'}`,
+              transition: 'all 0.2s ease-in-out',
+            }}
+            onClick={() => setIsReasoningExpanded(!isReasoningExpanded)}
+          >
+            <div
+              style={{
+                marginRight: '8px',
+                transition: 'transform 0.2s ease-in-out',
+                transform: isReasoningExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+              }}
+            >
+              ▶
+            </div>
+            <Text
+              strong
+              style={{
+                color: theme === 'dark' ? '#4facfe' : '#1677ff',
+                fontSize: '14px',
+                flex: 1
+              }}
+            >
+              {t('workbench.reasoningProcess')}
+            </Text>
+            <Text
+              type="secondary"
+              style={{
+                fontSize: '12px',
+                color: theme === 'dark' ? '#999' : '#666',
+              }}
+            >
+              {isReasoningExpanded ? '收起' : '展开'}
+            </Text>
+          </div>
+
+          {/* 推理内容区域 */}
+          {isReasoningExpanded && (
+            <AnimatedReasoningContent 
+              $theme={theme}
+            >
+              {streamingReasoningContent}
+            </AnimatedReasoningContent>
+          )}
+        </div>
+      )}
+
+      {/* 主要内容区域 */}
       <MessageContent style={{
         overflow: 'auto',
       }} $theme={theme}>
@@ -477,19 +572,6 @@ const StreamingMessage: React.FC<{ theme: 'dark' | 'light' }> = ({ theme }) => {
           </ReactMarkdown>
         )}
       </MessageContent>
-
-      {streamingReasoningContent && (
-        <div style={{
-          overflow: 'auto',
-        }}>
-          <Text strong style={{ marginBottom: '8px', display: 'block' }}>
-            {t('workbench.reasoningProcess')}:
-          </Text>
-          <ReasoningContent $theme={theme}>
-            {streamingReasoningContent}
-          </ReasoningContent>
-        </div>
-      )}
 
       {streamingContent && !isLoading && (
         <div style={{ display: 'flex', gap: '12px' }}>

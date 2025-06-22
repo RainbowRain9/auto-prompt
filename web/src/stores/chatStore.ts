@@ -478,18 +478,30 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
       // 处理流式响应
       for await (const chunk of stream) {
+        console.log('收到chunk:', JSON.stringify(chunk, null, 2)); // 添加完整chunk调试
+        
         // 更新内容
         const content = chunk.choices[0]?.delta?.content || '';
+        // 检查是否存在reasoning_content字段
+        const reasoningContentDelta = (chunk.choices[0]?.delta as any)?.reasoning_content;
+        
+        console.log('content:', content, 'reasoningContentDelta:', reasoningContentDelta); // 添加调试日志
+        
+        // 处理普通内容
         if (content) {
           assistantContent += content;
-
-          // 检查是否存在reasoning_content字段
-          const reasoningContentDelta = (chunk.choices[0]?.delta as any)?.reasoning_content;
-          if (reasoningContentDelta) {
-            reasoningContent = reasoningContent || '';
-            reasoningContent += reasoningContentDelta;
-          }
-
+        }
+        
+        // 处理推理内容（独立于普通内容）
+        if (reasoningContentDelta) {
+          reasoningContent = reasoningContent || '';
+          reasoningContent += reasoningContentDelta;
+          console.log('收到推理内容:', reasoningContentDelta); // 添加调试日志
+          console.log('当前推理内容总和:', reasoningContent); // 添加累积内容调试
+        }
+        
+        // 如果有任何内容更新（普通内容或推理内容），则更新UI
+        if (content || reasoningContentDelta) {
           // 创建新的临时消息对象，避免直接修改引用
           const newTempMessage: Message = {
             role: 'assistant' as MessageRole,
