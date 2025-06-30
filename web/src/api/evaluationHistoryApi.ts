@@ -1,7 +1,7 @@
 import { getToken } from '../utils/auth';
 import { useAuthStore } from '../stores/authStore';
 
-const API_BASE_URL = '/v1/evaluation-history';
+const API_BASE_URL = '/api/v1/evaluation-history';
 
 // 评估记录数据结构（与 IndexedDB 保持兼容）
 export interface EvaluationRecord {

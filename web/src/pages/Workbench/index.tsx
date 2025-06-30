@@ -21,6 +21,7 @@ import SendButton from '../../components/SendButton';
 import GeneratePromptPanel from '../../components/GeneratePromptPanel';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import WorkbenchTour from '../../components/WorkbenchTour';
+import AIServiceConfigSelector from '../../components/AIServiceConfigSelector';
 
 const { Content, Header } = Layout;
 const {  Text } = Typography;
@@ -760,6 +761,19 @@ const Workbench: React.FC = () => {
 
       <WorkbenchContent>
         <PromptSection>
+          {/* AI服务配置选择器 */}
+          <ModelSelectorSection theme={theme} className="ai-config-selector-section">
+            <div className="model-label">AI服务配置:</div>
+            <UiverseModelSelector theme={theme}>
+              <AIServiceConfigSelector
+                placeholder="选择AI服务配置"
+                size="middle"
+                showManageButton={true}
+                style={{ width: '100%' }}
+              />
+            </UiverseModelSelector>
+          </ModelSelectorSection>
+
           <ModelSelectorSection theme={theme} className="model-selector-section">
             <div className="model-label">{t('workbench.model')}:</div>
             <UiverseModelSelector theme={theme}>

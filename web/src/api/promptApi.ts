@@ -234,7 +234,7 @@ export async function* generateFunctionCallingPrompt(
     data: Record<string, any>,
     config: Partial<SSEConfig> = {}
   ): AsyncGenerator<SSEEvent, void, unknown> {
-    const url = '/v1/prompt/optimize-function-calling';
+    const url = '/api/v1/prompt/optimize-function-calling';
     // 默认配置，专门为这个接口优化
     const defaultConfig: Partial<SSEConfig> = {
       headers: {
@@ -266,7 +266,7 @@ export const GeneratePromptTemplateParameters = async (prompt: string, language:
     // 获取用户token用于身份验证
     const { token } = useAuthStore.getState();
 
-    const response = await fetch('/v1/prompt/generateprompttemplateparameters', {
+    const response = await fetch('/api/v1/prompt/generateprompttemplateparameters', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

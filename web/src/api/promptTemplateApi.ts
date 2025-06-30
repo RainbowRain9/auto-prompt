@@ -77,7 +77,7 @@ export interface ApiResponse<T = any> {
 
 // 获取API基础URL
 const getApiBaseUrl = () => {
-  return '/v1/prompt-templates';
+  return '/api/v1/prompt-templates';
 };
 
 // 获取认证头

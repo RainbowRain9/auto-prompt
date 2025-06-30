@@ -21,6 +21,8 @@ public interface IDbContext
 
     public DbSet<ApiKey> ApiKeys { get; set; }
 
+    public DbSet<AIServiceConfig> AIServiceConfigs { get; set; }
+
     public DbSet<EvaluationRecord> EvaluationRecords { get; set; }
 
     public Task SaveChangesAsync();

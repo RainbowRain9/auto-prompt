@@ -21,7 +21,9 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
     public DbSet<GeneratedImage> GeneratedImages { get; set; } = null!;
 
     public DbSet<ApiKey> ApiKeys { get; set; } = null!;
-    
+
+    public DbSet<AIServiceConfig> AIServiceConfigs { get; set; } = null!;
+
     public DbSet<EvaluationRecord> EvaluationRecords { get; set; }
 
     public Task SaveChangesAsync()
@@ -40,11 +42,26 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
         {
             options.HasKey(e => e.Id);
 
+            options.Property(x => x.UserId)
+                .IsRequired()
+                .HasMaxLength(100);
+
             options.Property(x => x.Prompt)
                 .IsRequired();
 
-            options.HasIndex(e => e.Prompt);
+            options.Property(x => x.Requirement)
+                .IsRequired();
 
+            options.Property(x => x.Result)
+                .IsRequired();
+
+            options.Property(x => x.ChatModel)
+                .HasMaxLength(100);
+
+            options.HasIndex(e => e.UserId);
+            options.HasIndex(e => e.CreatedTime);
+            options.HasIndex(e => e.ConfigId);
+            options.HasIndex(e => e.Prompt);
             options.HasIndex(e => e.Id);
         });
 
@@ -234,6 +251,64 @@ public class ConsoleDbContext<TDbContext>(DbContextOptions<TDbContext> options)
             options.HasIndex(e => e.IsEnabled);
             options.HasIndex(e => e.ExpiresAt);
             options.HasIndex(e => new { e.UserId, e.Name }).IsUnique();
+        });
+
+        modelBuilder.Entity<AIServiceConfig>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.Property(x => x.UserId)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.Property(x => x.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            options.Property(x => x.Provider)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            options.Property(x => x.ApiEndpoint)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            options.Property(x => x.EncryptedApiKey)
+                .IsRequired()
+                .HasMaxLength(1000);
+
+            options.Property(x => x.ChatModels)
+                .HasMaxLength(2000);
+
+            options.Property(x => x.ImageModels)
+                .HasMaxLength(2000);
+
+            options.Property(x => x.DefaultChatModel)
+                .HasMaxLength(100);
+
+            options.Property(x => x.DefaultImageModel)
+                .HasMaxLength(100);
+
+            options.Property(x => x.Description)
+                .HasMaxLength(500);
+
+            options.Property(x => x.ExtraConfig)
+                .HasMaxLength(2000);
+
+            options.Property(x => x.ConnectionStatus)
+                .HasMaxLength(20);
+
+            options.Property(x => x.LastTestError)
+                .HasMaxLength(1000);
+
+            options.HasIndex(e => e.UserId);
+            options.HasIndex(e => new { e.UserId, e.Name }).IsUnique();
+            options.HasIndex(e => new { e.UserId, e.IsDefault });
+            options.HasIndex(e => e.Provider);
+            options.HasIndex(e => e.IsEnabled);
+            options.HasIndex(e => e.ConnectionStatus);
+            options.HasIndex(e => e.CreatedTime);
+            options.HasIndex(e => e.SortOrder);
         });
     }
 }

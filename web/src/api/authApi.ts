@@ -33,7 +33,7 @@ export interface ApiResponse<T = any> {
   message: string;
 }
 
-const getApiBaseUrl = () => '/v1/auth';
+const getApiBaseUrl = () => '/api/v1/auth';
 
 // 用户登录
 export const loginWithPassword = async (input: LoginInput): Promise<ApiResponse<LoginResponse>> => {

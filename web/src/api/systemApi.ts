@@ -7,7 +7,7 @@ interface SystemInfo{
 
 // 获取API基础URL
 const getApiBaseUrl = () => {
-    return '/v1/system';
+    return '/api/v1/system';
   };
 
 // 获取系统信息 - 不需要认证

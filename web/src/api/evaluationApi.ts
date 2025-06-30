@@ -2,7 +2,7 @@ import { authenticatedFetch } from '../utils/apiUtils';
 
 // 获取API基础URL
 const getApiBaseUrl = () => {
-  return '/v1/evaluation';
+  return '/api/v1/evaluation';
 };
 
 // 评估结果接口
@@ -178,7 +178,7 @@ export interface EvaluationExample {
  * 获取评估示例数据
  */
 export const getEvaluationExamples = async (): Promise<EvaluationExample[]> => {
-  const response = await fetch('/v1/evaluation/examples', {
+  const response = await fetch('/api/v1/evaluation/examples', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

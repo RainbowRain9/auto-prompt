@@ -68,7 +68,7 @@ export interface ApiResponse<T = any> {
 
 // 获取API基础URL
 const getApiBaseUrl = () => {
-  return '/v1/apikeys';
+  return '/api/v1/api-keys';
 };
 
 // 搜索API Key

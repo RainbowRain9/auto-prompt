@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Home, Dashboard, Prompts, Workbench, ImageGeneration, ModelScores, ModelEvaluation } from '../pages';
 import ApiKeysPage from '../pages/ApiKeys';
+import AIServiceConfigPage from '../pages/AIServiceConfig';
 
 export interface RouteConfig {
   path: string;
@@ -67,6 +68,15 @@ export const mainRoutes: RouteConfig[] = [
     key: 'apikeys',
     title: 'API Key 管理',
     icon: 'KeyOutlined',
+    showInSidebar: true,
+    requireAuth: false,
+  },
+  {
+    path: '/ai-service-config',
+    element: <AIServiceConfigPage />,
+    key: 'ai-service-config',
+    title: 'AI服务配置',
+    icon: 'ApiOutlined',
     showInSidebar: true,
     requireAuth: false,
   },

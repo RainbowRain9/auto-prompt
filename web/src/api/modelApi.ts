@@ -2,7 +2,7 @@ import { authenticatedFetch } from '../utils/apiUtils';
 
 // 获取API基础URL
 const getApiBaseUrl = () => {
-  return '/v1';
+  return '/api/v1';
 };
 
 // 获取所有可用模型
