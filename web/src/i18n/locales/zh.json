@@ -10,6 +10,7 @@
     "documentation": "文档",
     "settings": "设置",
     "apikeys": "API Key 管理",
+    "ai-service-config": "AI服务配置",
     "scores": "模型评分"
   },
   "common": {

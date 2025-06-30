@@ -16,7 +16,9 @@ import {
   BarChartOutlined,
   CodeOutlined,
   FileTextOutlined,
-  MessageOutlined
+  MessageOutlined,
+  ApiOutlined,
+  CloudServerOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -252,7 +254,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     'TrophyOutlined': <TrophyOutlined />,
     'FileTextOutlined': <FileTextOutlined />,
     'SettingOutlined': <SettingOutlined />,
-    'BulbOutlined': <BulbOutlined />
+    'BulbOutlined': <BulbOutlined />,
+    'ApiOutlined': <ApiOutlined />,
+    'CloudServerOutlined': <CloudServerOutlined />
   };
 
   // 从路由配置获取菜单项

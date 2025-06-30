@@ -76,7 +76,7 @@ export const mainRoutes: RouteConfig[] = [
     element: <AIServiceConfigPage />,
     key: 'ai-service-config',
     title: 'AI服务配置',
-    icon: 'ApiOutlined',
+    icon: 'CloudServerOutlined',
     showInSidebar: true,
     requireAuth: false,
   },
