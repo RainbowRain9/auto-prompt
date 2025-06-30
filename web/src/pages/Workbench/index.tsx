@@ -22,6 +22,8 @@ import GeneratePromptPanel from '../../components/GeneratePromptPanel';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import WorkbenchTour from '../../components/WorkbenchTour';
 import AIServiceConfigSelector from '../../components/AIServiceConfigSelector';
+import { useSelectedConfig } from '../../stores/aiServiceConfigStore';
+import type { AIServiceConfigListDto } from '../../api/aiServiceConfig';
 
 const { Content, Header } = Layout;
 const {  Text } = Typography;
@@ -645,7 +647,7 @@ const Workbench: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
   const { shouldShowWorkbenchTour, setWorkbenchTourCompleted } = useTourStore();
   const [showTour, setShowTour] = useState(false);
-  
+
   const {
     messages,
     systemPrompt,
@@ -671,8 +673,23 @@ const Workbench: React.FC = () => {
     error: modelsError,
   } = useModelStore();
 
-  // 获取聊天模型选项
-  const modelOptions = getChatModelOptions();
+  // 使用AI服务配置 store
+  const { selectedConfig } = useSelectedConfig();
+
+  // 获取聊天模型选项 - 优先使用选择的AI服务配置中的模型
+  const getAvailableModelOptions = () => {
+    if (selectedConfig && selectedConfig.chatModels && selectedConfig.chatModels.length > 0) {
+      // 使用选择的AI服务配置中的模型
+      return selectedConfig.chatModels.map(model => ({
+        value: model,
+        label: model,
+      }));
+    }
+    // 回退到系统默认模型
+    return getChatModelOptions();
+  };
+
+  const modelOptions = getAvailableModelOptions();
 
   // 获取模型列表
   useEffect(() => {
@@ -686,6 +703,17 @@ const Workbench: React.FC = () => {
       message.warning(`模型列表获取失败，使用默认模型: ${modelsError}`);
     }
   }, [modelsError]);
+
+  // 当AI服务配置变化时，自动选择该配置的默认模型
+  useEffect(() => {
+    if (selectedConfig && selectedConfig.defaultChatModel) {
+      // 如果选择的配置有默认聊天模型，使用它
+      setSelectedModel(selectedConfig.defaultChatModel);
+    } else if (modelOptions.length > 0 && !selectedModel) {
+      // 否则选择第一个可用模型
+      setSelectedModel(modelOptions[0].value);
+    }
+  }, [selectedConfig, modelOptions, selectedModel, setSelectedModel]);
 
   // 当模型列表加载完成后，如果没有选中模型，自动选择第一个
   useEffect(() => {
@@ -729,6 +757,14 @@ const Workbench: React.FC = () => {
     setShowTour(true);
   };
 
+  // 处理AI服务配置变化
+  const handleAIConfigChange = (configId: string | null, config: AIServiceConfigListDto | null) => {
+    // 配置变化时，如果新配置有默认聊天模型，自动选择它
+    if (config && config.defaultChatModel) {
+      setSelectedModel(config.defaultChatModel);
+    }
+  };
+
   return (
     <WorkbenchContainer theme={theme}>
       <WorkbenchHeader theme={theme}>
@@ -770,6 +806,7 @@ const Workbench: React.FC = () => {
                 size="middle"
                 showManageButton={true}
                 style={{ width: '100%' }}
+                onChange={handleAIConfigChange}
               />
             </UiverseModelSelector>
           </ModelSelectorSection>
@@ -782,7 +819,13 @@ const Workbench: React.FC = () => {
                 value={selectedModel}
                 onChange={(value) => setSelectedModel(value as string)}
                 loading={modelsLoading}
-                placeholder={modelsLoading ? t('workbench.loadingModels') : '选择聊天模型'}
+                placeholder={
+                  modelsLoading
+                    ? t('workbench.loadingModels')
+                    : selectedConfig
+                      ? `选择${selectedConfig.provider}模型`
+                      : '选择聊天模型'
+                }
                 filterOption={(input, option) =>
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                 }
