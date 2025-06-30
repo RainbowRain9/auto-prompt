@@ -8,6 +8,7 @@ using Console.Service.Options;
 using Console.Service.Services;
 using Scalar.AspNetCore;
 using Serilog;
+using System.Text.Json;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
@@ -82,10 +83,158 @@ app.MapFastApis(options =>
     options.Version = "v1";
 });
 
-// 临时解决方案：直接注册AI服务提供商API
+// 临时解决方案：直接注册AI服务配置相关API端点
 app.MapGet("/api/v1/ai-service-configs/providers", async (AIServiceConfigService aiService, HttpContext context) =>
 {
     var result = await aiService.GetProvidersAsync(context);
+    return Results.Ok(result);
+});
+
+app.MapPost("/api/v1/ai-service-configs", async (AIServiceConfigService aiService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.CreateAIServiceConfigInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await aiService.CreateConfigAsync(input!, context);
+    return Results.Ok(result);
+});
+
+app.MapPost("/api/v1/ai-service-configs/test-connection", async (AIServiceConfigService aiService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.TestConnectionInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await aiService.TestConnectionAsync(input!, context);
+    return Results.Ok(result);
+});
+
+app.MapPost("/api/v1/ai-service-configs/search", async (AIServiceConfigService aiService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.AIServiceConfigSearchInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await aiService.SearchConfigsAsync(input!, context);
+    return Results.Ok(result);
+});
+
+app.MapPut("/api/v1/ai-service-configs", async (AIServiceConfigService aiService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.UpdateAIServiceConfigInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await aiService.UpdateConfigAsync(input!, context);
+    return Results.Ok(result);
+});
+
+app.MapPost("/api/v1/ai-service-configs/{id}/test-connection", async (string id, AIServiceConfigService aiService, HttpContext context) =>
+{
+    var result = await aiService.TestSavedConfigConnectionAsync(id, context);
+    return Results.Ok(result);
+});
+
+// 添加其他关键API端点映射
+app.MapGet("/api/v1/models", async (Console.Service.Services.ModelsService modelsService) =>
+{
+    var result = await modelsService.GetModelsAsync();
+    return Results.Ok(result);
+});
+
+app.MapGet("/api/v1/system/info", async (Console.Service.Services.SystemService systemService) =>
+{
+    var result = await systemService.GetInfoAsync();
+    return Results.Ok(result);
+});
+
+// 添加缺失的enhanced-prompt相关端点
+app.MapGet("/api/v1/enhanced-prompt/user-configs", async (Console.Service.Services.EnhancedPromptService enhancedPromptService, HttpContext context) =>
+{
+    var result = await enhancedPromptService.GetUserConfigsAsync(context);
+    return Results.Ok(result);
+});
+
+app.MapGet("/api/v1/enhanced-prompt/default-config", async (HttpContext context) =>
+{
+    // 返回默认配置
+    var defaultConfig = new
+    {
+        success = true,
+        data = new
+        {
+            enableDeepReasoning = false,
+            chatModel = "gpt-4o-mini",
+            configId = "",
+            description = "默认配置"
+        }
+    };
+    return Results.Ok(defaultConfig);
+});
+
+// 添加缺失的api-keys相关端点
+app.MapPost("/api/v1/api-keys/search", async (Console.Service.Services.ApiKeyService apiKeyService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.ApiKeySearchInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await apiKeyService.SearchApiKeysAsync(input!, context);
+    return Results.Ok(result);
+});
+
+// 添加缺失的images相关端点
+app.MapPost("/api/v1/images/search", async (Console.Service.Services.ImageService imageService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.ImageSearchInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await imageService.SearchImagesAsync(input!, context);
+    return Results.Ok(result);
+});
+
+// 添加缺失的prompt-templates相关端点
+app.MapPost("/api/v1/prompt-templates/search", async (Console.Service.Services.PromptTemplateService promptTemplateService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.PromptTemplateSearchInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await promptTemplateService.SearchPromptTemplatesAsync(input!, context);
+    return Results.Ok(result);
+});
+
+app.MapPost("/api/v1/prompt-templates/shared/search", async (Console.Service.Services.PromptTemplateService promptTemplateService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.SharedPromptTemplateSearchInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await promptTemplateService.SearchSharedPromptTemplatesAsync(input!);
+    return Results.Ok(result);
+});
+
+// 添加缺失的evaluation相关端点
+app.MapGet("/api/v1/evaluation/examples", async (Console.Service.Services.EvaluationService evaluationService) =>
+{
+    var result = await evaluationService.GetEvaluationExamples();
+    return Results.Ok(result);
+});
+
+app.MapPost("/api/v1/evaluation/execute-model-task-stream", async (Console.Service.Services.EvaluationService evaluationService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.ExecuteTestInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+    // 设置SSE响应头
+    context.Response.Headers.ContentType = "text/event-stream";
+    context.Response.Headers.CacheControl = "no-cache";
+    context.Response.Headers.Connection = "keep-alive";
+
+    // 调用现有的评估方法并流式返回结果
+    var result = await evaluationService.EvaluationAsync(input!);
+    await context.Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(result)}\n\n");
+});
+
+// 添加缺失的evaluation-history相关端点
+app.MapGet("/api/v1/evaluation-history/all", async (Console.Service.Services.EvaluationHistoryService evaluationHistoryService, HttpContext context) =>
+{
+    var result = await evaluationHistoryService.GetAllEvaluationRecordsAsync(context);
     return Results.Ok(result);
 });
 
