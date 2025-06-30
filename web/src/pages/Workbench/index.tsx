@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Layout, Button, Select, Typography, Card, Input, message, Collapse } from 'antd';
 import {
   PlusOutlined,
@@ -677,7 +677,7 @@ const Workbench: React.FC = () => {
   const { selectedConfig } = useSelectedConfig();
 
   // 获取聊天模型选项 - 优先使用选择的AI服务配置中的模型
-  const getAvailableModelOptions = () => {
+  const modelOptions = useMemo(() => {
     if (selectedConfig && selectedConfig.chatModels && selectedConfig.chatModels.length > 0) {
       // 使用选择的AI服务配置中的模型
       return selectedConfig.chatModels.map(model => ({
@@ -687,9 +687,7 @@ const Workbench: React.FC = () => {
     }
     // 回退到系统默认模型
     return getChatModelOptions();
-  };
-
-  const modelOptions = getAvailableModelOptions();
+  }, [selectedConfig, getChatModelOptions]);
 
   // 获取模型列表
   useEffect(() => {
