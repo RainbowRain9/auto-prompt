@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { getLLMClient } from '../utils/llmClient';
+import OpenAI from 'openai';
+import { getLLMClient, setSessionAIConfig, getSessionAIConfig } from '../utils/llmClient';
 import {
   getConfig,
   saveConfig,
@@ -12,6 +13,8 @@ import {
 } from '../utils/db'; // 假设 db.ts 在 utils 文件夹下
 import { replaceParameters } from '../utils/messageHelper';
 import { useModelStore } from './modelStore';
+import { useAuthStore } from './authStore';
+import type { AIServiceConfigListDto } from '../api/aiServiceConfig';
 
 // 定义消息类型，与 db.ts 中的 WorkbenchMessage 保持一致
 export type MessageRole = 'system' | 'user' | 'assistant';
@@ -52,12 +55,14 @@ interface ChatState {
   streamingReasoningContent: string | null; // 用于存储推理内容
   tempMessage: Message | null; // 用于存储临时消息（未保存到会话的消息）
   lastUpdateTime: number; // 添加最后更新时间字段
+  sessionAIConfig: AIServiceConfigListDto | null; // 会话级别的AI服务配置
 
   // 操作方法
   loadFromDB: (workspaceId?: string) => Promise<void>;
   setWorkspaceId: (workspaceId: string) => void;
   setSystemPrompt: (prompt: string) => void;
   setSelectedModel: (model: string) => void;
+  setSessionAIConfig: (config: AIServiceConfigListDto | null) => void; // 设置会话AI配置
   addUserMessage: (content: string, parameters?: Parameter[]) => Promise<void>;
   addAssistantMessage: (content: string, parameters?: Parameter[]) => Promise<void>;
   updateMessageContent: (messageId: string, content: string) => Promise<void>;
@@ -85,6 +90,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   streamingReasoningContent: null, // 初始化为null
   tempMessage: null, // 初始化为null
   lastUpdateTime: 0, // 初始化最后更新时间为0
+  sessionAIConfig: null, // 初始化会话AI配置为null
 
   loadFromDB: async (workspaceId: string = get().workspaceId) => {
     if (get().isLoading) return;
@@ -154,6 +160,21 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     set({ selectedModel: model });
     const { workspaceId, systemPrompt } = get();
     await saveConfig({ workspaceId, selectedModel: model, systemPrompt });
+  },
+
+  // 设置会话级别的AI服务配置
+  setSessionAIConfig: (config: AIServiceConfigListDto | null) => {
+    set({ sessionAIConfig: config });
+    // 更新llmClient的会话配置
+    setSessionAIConfig(config);
+
+    console.log('🔧 [ChatStore] 设置会话AI配置:', {
+      configId: config?.id,
+      provider: config?.provider,
+      name: config?.name,
+      endpoint: config?.apiEndpoint,
+      hasApiKey: !!config?.apiKey
+    });
   },
 
   // 添加用户消息
@@ -404,10 +425,22 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   sendMessages: async () => {
     const state = get();
-    const openai = getLLMClient();
-    if (!openai) {
-      set({ error: '请先配置API设置' });
-      return;
+
+    console.log('🔍 [ChatStore] 开始发送消息，当前状态:', {
+      hasSessionConfig: !!state.sessionAIConfig,
+      sessionConfigId: state.sessionAIConfig?.id,
+      sessionConfigName: state.sessionAIConfig?.name,
+      selectedModel: state.selectedModel,
+    });
+
+    // 检查是否有会话级别的AI配置或全局配置
+    if (!state.sessionAIConfig) {
+      console.log('⚠️ [ChatStore] 没有会话配置，尝试使用全局配置');
+      const openai = getLLMClient();
+      if (!openai) {
+        set({ error: '请先选择AI服务配置或配置全局API设置' });
+        return;
+      }
     }
 
     // 确保至少有一条用户消息或系统提示
@@ -464,8 +497,51 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
       console.log('Sending messages to API:', messagesToSend);
 
+      // 创建OpenAI客户端实例，支持会话级别配置
+      let openaiClient;
+      let baseURL = `${window.location.origin}/openai`;
+      let headers: Record<string, string> = {};
+
+      if (state.sessionAIConfig) {
+        // 使用会话级别配置
+        const { token, isAuthenticated } = useAuthStore.getState();
+        if (!isAuthenticated || !token) {
+          set({ error: '用户未登录，无法使用会话配置', isLoading: false });
+          return;
+        }
+
+        // 使用会话级别的代理端点
+        baseURL = `${window.location.origin}/openai/session`;
+        headers = {
+          'X-AI-Config-Id': state.sessionAIConfig.id,
+          'Authorization': `Bearer ${token}`, // 后端会从这里解析用户ID
+        };
+
+        // 创建临时的OpenAI客户端
+        openaiClient = new OpenAI({
+          apiKey: 'session-config', // 占位符，实际密钥由后端处理
+          baseURL: baseURL,
+          dangerouslyAllowBrowser: true,
+          defaultHeaders: headers,
+        });
+
+        console.log('🚀 [ChatStore] 使用会话级别配置发送请求:', {
+          configId: state.sessionAIConfig.id,
+          provider: state.sessionAIConfig.provider,
+          endpoint: baseURL,
+          model: state.selectedModel,
+        });
+      } else {
+        // 使用全局配置
+        openaiClient = getLLMClient();
+        if (!openaiClient) {
+          set({ error: '请先配置API设置', isLoading: false });
+          return;
+        }
+      }
+
       // 使用流式API
-      const stream = await openai.chat.completions.create({
+      const stream = await openaiClient.chat.completions.create({
         model: state.selectedModel,
         messages: messagesToSend,
         temperature: 0.5,

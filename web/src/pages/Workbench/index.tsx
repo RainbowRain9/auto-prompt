@@ -654,9 +654,11 @@ const Workbench: React.FC = () => {
     selectedModel,
     isLoading,
     error,
+    sessionAIConfig,
     loadFromDB,
     setSystemPrompt,
     setSelectedModel,
+    setSessionAIConfig,
     addUserMessage,
     addAssistantMessage,
     sendMessages,
@@ -784,6 +786,11 @@ const Workbench: React.FC = () => {
 
   // 处理AI服务配置变化
   const handleAIConfigChange = (configId: string | null, config: AIServiceConfigListDto | null) => {
+    console.log('🔄 [Workbench] AI配置变化:', { configId, config });
+
+    // 设置会话级别的AI配置
+    setSessionAIConfig(config);
+
     // 配置变化时，如果新配置有默认聊天模型，自动选择它
     if (config && config.defaultChatModel) {
       setSelectedModel(config.defaultChatModel);
@@ -839,9 +846,21 @@ const Workbench: React.FC = () => {
           <ModelSelectorSection theme={theme} className="model-selector-section">
             <div className="model-label">{t('workbench.model')}:</div>
 
-            {/* 调试信息显示 */}
-            <div className="text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded mb-2">
-              模型数量: {modelOptions.length} | 当前: {selectedModel || '未选择'} | 配置: {selectedConfig?.name || '无'}
+            {/* 当前配置状态显示 */}
+            <div className="text-xs px-2 py-1 rounded mb-2" style={{
+              backgroundColor: sessionAIConfig ? '#f6ffed' : '#fff7e6',
+              color: sessionAIConfig ? '#52c41a' : '#fa8c16',
+              border: `1px solid ${sessionAIConfig ? '#b7eb8f' : '#ffd591'}`
+            }}>
+              {sessionAIConfig ? (
+                <>
+                  ✅ 会话配置: {sessionAIConfig.name} ({sessionAIConfig.provider}) | 模型: {selectedModel || '未选择'}
+                </>
+              ) : (
+                <>
+                  ⚠️ 使用全局配置 | 模型数量: {modelOptions.length} | 当前: {selectedModel || '未选择'}
+                </>
+              )}
             </div>
 
 

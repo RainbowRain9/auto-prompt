@@ -292,3 +292,11 @@ export const getGlobalConfigStatus = async (): Promise<ApiResponse> => {
   });
   return response.json();
 };
+
+// 获取会话级别配置（包含解密后的API密钥）
+export const getSessionConfig = async (id: string): Promise<ApiResponse<AIServiceConfigListDto>> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/${id}/session-config`, {
+    method: 'GET',
+  });
+  return response.json();
+};

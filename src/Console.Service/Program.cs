@@ -157,6 +157,12 @@ app.MapGet("/api/v1/ai-service-configs/global-status", async (AIServiceConfigSer
     return Results.Ok(result);
 });
 
+app.MapGet("/api/v1/ai-service-configs/{id}/session-config", async (string id, AIServiceConfigService aiService, HttpContext context) =>
+{
+    var result = await aiService.GetSessionConfigAsync(id, context);
+    return Results.Ok(result);
+});
+
 // 添加其他关键API端点映射
 app.MapGet("/api/v1/models", async (Console.Service.Services.ModelsService modelsService) =>
 {

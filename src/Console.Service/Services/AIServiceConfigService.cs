@@ -253,13 +253,23 @@ public class AIServiceConfigService : FastApi
                     .ExecuteUpdateAsync(x => x.SetProperty(a => a.IsDefault, false));
             }
 
+            // 为 Google AI 自动添加 v1beta 路径
+            var apiEndpoint = input.ApiEndpoint;
+            if (input.Provider.Equals("GoogleAI", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrEmpty(apiEndpoint) &&
+                !apiEndpoint.Contains("/v1beta") &&
+                !apiEndpoint.Contains("generativelanguage.googleapis.com"))
+            {
+                apiEndpoint = apiEndpoint.TrimEnd('/') + "/v1beta";
+            }
+
             var entity = new AIServiceConfig
             {
                 Id = Guid.NewGuid(),
                 UserId = userId!,
                 Name = input.Name,
                 Provider = input.Provider,
-                ApiEndpoint = input.ApiEndpoint,
+                ApiEndpoint = apiEndpoint,
                 EncryptedApiKey = EncryptionHelper.EncryptApiKey(input.ApiKey),
                 ChatModels = JsonSerializer.Serialize(input.ChatModels),
                 ImageModels = JsonSerializer.Serialize(input.ImageModels),
@@ -328,10 +338,20 @@ public class AIServiceConfigService : FastApi
                     .ExecuteUpdateAsync(x => x.SetProperty(a => a.IsDefault, false));
             }
 
+            // 为 Google AI 自动添加 v1beta 路径
+            var apiEndpoint = input.ApiEndpoint;
+            if (input.Provider.Equals("GoogleAI", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrEmpty(apiEndpoint) &&
+                !apiEndpoint.Contains("/v1beta") &&
+                !apiEndpoint.Contains("generativelanguage.googleapis.com"))
+            {
+                apiEndpoint = apiEndpoint.TrimEnd('/') + "/v1beta";
+            }
+
             // 更新实体
             entity.Name = input.Name;
             entity.Provider = input.Provider;
-            entity.ApiEndpoint = input.ApiEndpoint;
+            entity.ApiEndpoint = apiEndpoint;
             if (!string.IsNullOrEmpty(input.ApiKey))
             {
                 entity.EncryptedApiKey = EncryptionHelper.EncryptApiKey(input.ApiKey);
@@ -528,7 +548,7 @@ public class AIServiceConfigService : FastApi
                     Name = "GoogleAI",
                     DisplayName = "Google AI",
                     Description = "Google AI服务，支持Gemini系列模型",
-                    DefaultEndpoint = "https://generativelanguage.googleapis.com/v1beta",
+                    DefaultEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai",
                     SupportedFeatures = new() { "chat", "image", "multimodal" },
                     ConfigTemplate = new Dictionary<string, object>
                     {
@@ -732,7 +752,13 @@ public class AIServiceConfigService : FastApi
             // Google AI使用不同的认证方式
             httpClient.DefaultRequestHeaders.Clear();
 
-            var testUrl = $"{apiEndpoint.TrimEnd('/')}/models?key={apiKey}";
+            // 确保 Google AI 端点包含 v1beta 路径
+            var baseEndpoint = apiEndpoint.TrimEnd('/');
+            if (!baseEndpoint.Contains("/v1beta"))
+            {
+                baseEndpoint += "/v1beta";
+            }
+            var testUrl = $"{baseEndpoint}/models?key={apiKey}";
             var response = await httpClient.GetAsync(testUrl);
 
             if (!response.IsSuccessStatusCode)
@@ -1046,6 +1072,94 @@ public class AIServiceConfigService : FastApi
         catch (Exception ex)
         {
             return new { success = false, message = $"获取全局配置状态失败: {ex.Message}" };
+        }
+    }
+
+    [EndpointSummary("获取会话级别配置（包含解密后的API密钥）")]
+    [HttpGet("{id}/session-config")]
+    public async Task<object> GetSessionConfigAsync(string id, HttpContext context)
+    {
+        var (isValid, userId, errorResponse, userName) = ValidateTokenAndGetUserId(context);
+        if (!isValid)
+            return errorResponse!;
+
+        try
+        {
+            var entity = await dbContext.AIServiceConfigs
+                .FirstOrDefaultAsync(x => x.Id.ToString().ToLower() == id.ToLower() &&
+                                         x.UserId == userId &&
+                                         x.IsEnabled);
+
+            if (entity == null)
+            {
+                return new { success = false, message = "配置不存在或无权限访问" };
+            }
+
+            // 解密API密钥
+            string decryptedApiKey;
+            try
+            {
+                decryptedApiKey = EncryptionHelper.DecryptApiKey(entity.EncryptedApiKey);
+                if (string.IsNullOrEmpty(decryptedApiKey))
+                {
+                    return new { success = false, message = "API密钥解密失败" };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new { success = false, message = $"API密钥解密失败: {ex.Message}" };
+            }
+
+            // 解析模型列表
+            var chatModels = new List<string>();
+            var imageModels = new List<string>();
+
+            if (!string.IsNullOrEmpty(entity.ChatModels))
+            {
+                try
+                {
+                    chatModels = JsonSerializer.Deserialize<List<string>>(entity.ChatModels) ?? new List<string>();
+                }
+                catch (Exception ex)
+                {
+                    System.Console.WriteLine($"解析聊天模型失败: {ex.Message}");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(entity.ImageModels))
+            {
+                try
+                {
+                    imageModels = JsonSerializer.Deserialize<List<string>>(entity.ImageModels) ?? new List<string>();
+                }
+                catch (Exception ex)
+                {
+                    System.Console.WriteLine($"解析图像模型失败: {ex.Message}");
+                }
+            }
+
+            var result = new
+            {
+                id = entity.Id.ToString(),
+                name = entity.Name,
+                provider = entity.Provider,
+                apiEndpoint = entity.ApiEndpoint,
+                apiKey = decryptedApiKey, // 返回解密后的API密钥
+                chatModels = chatModels,
+                imageModels = imageModels,
+                defaultChatModel = entity.DefaultChatModel,
+                defaultImageModel = entity.DefaultImageModel,
+                isEnabled = entity.IsEnabled,
+                isDefault = entity.IsDefault,
+                description = entity.Description,
+                connectionStatus = entity.ConnectionStatus
+            };
+
+            return new { success = true, data = result };
+        }
+        catch (Exception ex)
+        {
+            return new { success = false, message = $"获取会话配置失败: {ex.Message}" };
         }
     }
 }

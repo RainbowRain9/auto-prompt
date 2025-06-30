@@ -9,6 +9,7 @@ import {
   Typography,
   Badge,
   Alert,
+  message,
 } from 'antd';
 import {
   ApiOutlined,
@@ -26,6 +27,7 @@ import {
   useSelectedConfig,
 } from '../stores/aiServiceConfigStore';
 import type { AIServiceConfigListDto } from '../api/aiServiceConfig';
+import { getSessionConfig } from '../api/aiServiceConfig';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -67,14 +69,56 @@ const AIServiceConfigSelector: React.FC<AIServiceConfigSelectorProps> = ({
   }, [value]);
 
   // 处理配置选择
-  const handleChange = (configId: string | null) => {
-    const config = configId ? userConfigs.find(c => c.id === configId) || null : null;
-    
-    setLocalValue(configId || undefined);
-    setSelectedConfig(config);
-    
-    if (onChange) {
-      onChange(configId, config);
+  const handleChange = async (configId: string | null) => {
+    if (!configId) {
+      setLocalValue(undefined);
+      setSelectedConfig(null);
+      if (onChange) {
+        onChange(null, null);
+      }
+      return;
+    }
+
+    try {
+      // 获取包含解密API密钥的完整配置
+      const response = await getSessionConfig(configId);
+      if (response.success && response.data) {
+        const sessionConfig = response.data;
+
+        setLocalValue(configId);
+        setSelectedConfig(sessionConfig);
+
+        console.log('🔑 [AIServiceConfigSelector] 获取会话配置成功:', {
+          configId: sessionConfig.id,
+          provider: sessionConfig.provider,
+          name: sessionConfig.name,
+          hasApiKey: !!sessionConfig.apiKey,
+          chatModelsCount: sessionConfig.chatModels?.length || 0
+        });
+
+        if (onChange) {
+          onChange(configId, sessionConfig);
+        }
+      } else {
+        message.error(`获取AI服务配置失败: ${response.message}`);
+        // 回退到基础配置
+        const basicConfig = userConfigs.find(c => c.id === configId) || null;
+        setLocalValue(configId);
+        setSelectedConfig(basicConfig);
+        if (onChange) {
+          onChange(configId, basicConfig);
+        }
+      }
+    } catch (error) {
+      console.error('获取会话配置失败:', error);
+      message.error('获取AI服务配置失败，请重试');
+      // 回退到基础配置
+      const basicConfig = userConfigs.find(c => c.id === configId) || null;
+      setLocalValue(configId);
+      setSelectedConfig(basicConfig);
+      if (onChange) {
+        onChange(configId, basicConfig);
+      }
     }
   };
 

@@ -1,14 +1,60 @@
 import OpenAI from 'openai';
 import { useAuthStore } from '../stores/authStore';
+import type { AIServiceConfigListDto } from '../api/aiServiceConfig';
 
 // LLM客户端配置接口
 export interface LLMConfig {
   apiKey: string;
+  endpoint?: string;
+  provider?: string;
+}
+
+// 会话级别的AI服务配置接口
+export interface SessionAIConfig {
+  id: string;
+  name: string;
+  provider: string;
+  apiEndpoint: string;
+  apiKey: string;
+  chatModels: string[];
+  defaultChatModel?: string;
 }
 
 // 创建OpenAI客户端单例
 let openaiInstance: OpenAI | null = null;
 let currentConfig: LLMConfig | null = null;
+
+// 会话级别的配置缓存
+let sessionConfig: SessionAIConfig | null = null;
+
+/**
+ * 设置会话级别的AI服务配置
+ */
+export const setSessionAIConfig = (config: AIServiceConfigListDto | null): void => {
+  if (config) {
+    sessionConfig = {
+      id: config.id,
+      name: config.name,
+      provider: config.provider,
+      apiEndpoint: config.apiEndpoint,
+      apiKey: config.apiKey || '', // 注意：这里需要解密后的API密钥
+      chatModels: config.chatModels || [],
+      defaultChatModel: config.defaultChatModel,
+    };
+  } else {
+    sessionConfig = null;
+  }
+
+  // 重置客户端实例，强制使用新配置
+  resetLLMClient();
+};
+
+/**
+ * 获取当前会话的AI服务配置
+ */
+export const getSessionAIConfig = (): SessionAIConfig | null => {
+  return sessionConfig;
+};
 
 /**
  * 清除LLM配置
@@ -19,8 +65,19 @@ export const clearLLMConfig = (): void => {
 
 /**
  * 获取当前有效的LLM配置
+ * 优先使用会话级别的配置，然后回退到全局配置
  */
 export const getCurrentLLMConfig = (): LLMConfig | null => {
+  // 优先使用会话级别的配置
+  if (sessionConfig) {
+    return {
+      apiKey: sessionConfig.apiKey,
+      endpoint: sessionConfig.apiEndpoint,
+      provider: sessionConfig.provider,
+    };
+  }
+
+  // 回退到全局配置
   const authState = useAuthStore.getState();
   const { systemInfo } = useAuthStore.getState();
 
@@ -48,6 +105,7 @@ export const getLLMClient = (): OpenAI | null => {
   const { systemInfo } = useAuthStore.getState();
 
   let apiKey = config?.apiKey;
+  let baseURL = `${window.location.origin}/openai`;
 
   if (systemInfo?.builtInApiKey === true) {
     apiKey = "sk-1234567890";
@@ -57,10 +115,15 @@ export const getLLMClient = (): OpenAI | null => {
     }
   }
 
+  // 如果使用会话级别的配置，需要检查更多参数
+  const configKey = sessionConfig
+    ? `${sessionConfig.id}-${sessionConfig.apiKey}-${sessionConfig.apiEndpoint}`
+    : apiKey;
 
   // 如果配置没有变化，返回现有实例
   if (openaiInstance && currentConfig &&
-    currentConfig.apiKey === apiKey) {
+    currentConfig.apiKey === apiKey &&
+    (!sessionConfig || currentConfig.endpoint === sessionConfig.apiEndpoint)) {
     return openaiInstance;
   }
 
@@ -68,7 +131,7 @@ export const getLLMClient = (): OpenAI | null => {
   currentConfig = config;
   openaiInstance = new OpenAI({
     apiKey: apiKey,
-    baseURL: `${window.location.origin}/openai`,
+    baseURL: baseURL,
     dangerouslyAllowBrowser: true
   });
 
@@ -85,9 +148,22 @@ export const resetLLMClient = (): void => {
 };
 
 /**
+ * 清除会话级别的配置
+ */
+export const clearSessionConfig = (): void => {
+  sessionConfig = null;
+  resetLLMClient();
+};
+
+/**
  * 检查是否有可用的LLM配置
  */
 export const hasValidLLMConfig = (): boolean => {
+  // 优先检查会话级别的配置
+  if (sessionConfig && sessionConfig.apiKey && sessionConfig.apiKey.trim() !== '') {
+    return true;
+  }
+
   const { systemInfo } = useAuthStore.getState();
 
   if (systemInfo?.builtInApiKey) {
