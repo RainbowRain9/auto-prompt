@@ -50,7 +50,10 @@ import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useTourStore } from '../../stores/tourStore';
+import { useSelectedConfig } from '../../stores/aiServiceConfigStore';
 import { getModels } from '../../api/modelApi';
+import AIServiceConfigSelector from '../../components/AIServiceConfigSelector';
+import type { AIServiceConfigListDto } from '../../api/aiServiceConfig';
 import { streamEvaluateModels, getEvaluationExamples } from '../../api/evaluationApi';
 import { evaluationDB, type EvaluationRecord } from '../../api/evaluationHistoryApi';
 import EvaluationCharts from '../../components/EvaluationCharts';
@@ -86,7 +89,18 @@ const ModelEvaluationPage: React.FC = () => {
   const { theme } = useThemeStore();
   const { systemInfo, apiKey } = useAuthStore();
   const { shouldShowModelEvaluationTour, setModelEvaluationTourCompleted } = useTourStore();
+  const { selectedConfig } = useSelectedConfig();
   const [form] = Form.useForm();
+
+  // 获取可用模型 - 优先使用选择的AI服务配置中的模型
+  const getAvailableModels = () => {
+    if (selectedConfig && selectedConfig.chatModels && selectedConfig.chatModels.length > 0) {
+      return selectedConfig.chatModels;
+    }
+    return models; // 回退到系统默认模型
+  };
+
+  const availableModels = getAvailableModels();
 
   // 状态管理
   const [models, setModels] = useState<string[]>([]);
@@ -119,9 +133,31 @@ const ModelEvaluationPage: React.FC = () => {
   // 引导相关状态
   const [showTour, setShowTour] = useState(false);
 
+  // 处理AI服务配置变化
+  const handleAIConfigChange = (configId: string | null, config: AIServiceConfigListDto | null) => {
+    console.log('🔄 [ModelEvaluation] AI配置变化:', { configId, config });
+
+    // 配置变化时，更新可选模型并重置选择
+    if (config && config.chatModels && config.chatModels.length > 0) {
+      // 使用AI服务配置的模型，默认选择前3个
+      const modelsToSelect = config.chatModels.slice(0, Math.min(3, config.chatModels.length));
+      setSelectedModels(modelsToSelect);
+    } else {
+      // 回退到系统模型
+      if (models.length > 0) {
+        setSelectedModels(models.slice(0, Math.min(3, models.length)));
+      }
+    }
+  };
+
   // 加载模型列表
   useEffect(() => {
     const loadModels = async () => {
+      if (selectedConfig) {
+        // 如果有AI服务配置，不需要加载系统模型
+        return;
+      }
+
       try {
         setIsLoadingModels(true);
         const response = (await getModels()) as any;
@@ -142,7 +178,7 @@ const ModelEvaluationPage: React.FC = () => {
       }
     };
     loadModels();
-  }, [t]);
+  }, [selectedConfig, t]);
 
   // 加载示例数据
   useEffect(() => {
@@ -708,6 +744,26 @@ const ModelEvaluationPage: React.FC = () => {
 
                       <Divider style={{ margin: '16px 0' }} />
 
+                      {/* AI服务配置选择器 */}
+                      <Form.Item
+                        label={
+                          <Space>
+                            <Text strong>AI服务配置</Text>
+                            <Tooltip title="选择要使用的AI服务配置，将使用该配置中的模型进行评估">
+                              <QuestionCircleOutlined style={{ color: '#999' }} />
+                            </Tooltip>
+                          </Space>
+                        }
+                      >
+                        <AIServiceConfigSelector
+                          placeholder="选择AI服务配置"
+                          size="middle"
+                          showManageButton={true}
+                          style={{ width: '100%' }}
+                          onChange={handleAIConfigChange}
+                        />
+                      </Form.Item>
+
                       <Form.Item
                         label={
                           <Space>
@@ -718,12 +774,18 @@ const ModelEvaluationPage: React.FC = () => {
                           </Space>
                         }
                         required
-                        extra={`${t('modelEvaluation.messages.selectedModels', { count: selectedModels.length })} | ${t('modelEvaluation.messages.totalModels', { count: models.length })}`}
+                        extra={`${t('modelEvaluation.messages.selectedModels', { count: selectedModels.length })} | ${t('modelEvaluation.messages.totalModels', { count: availableModels.length })}`}
                         data-tour="model-selector"
                       >
                         <Select
                           mode="multiple"
-                          placeholder={isLoadingModels ? t('modelEvaluation.placeholders.loadingModels') : t('modelEvaluation.placeholders.selectModels')}
+                          placeholder={
+                            isLoadingModels
+                              ? t('modelEvaluation.placeholders.loadingModels')
+                              : selectedConfig
+                                ? `选择${selectedConfig.provider}模型进行评估`
+                                : t('modelEvaluation.placeholders.selectModels')
+                          }
                           value={selectedModels}
                           onChange={setSelectedModels}
                           style={{ width: '100%' }}
@@ -738,7 +800,7 @@ const ModelEvaluationPage: React.FC = () => {
                             return label.includes(input.toLowerCase()) || value.includes(input.toLowerCase());
                           }}
                         >
-                          {models.map(model => (
+                          {availableModels.map(model => (
                             <Option key={model} value={model} label={model}>
                               <Space>
                                 <RocketOutlined style={{ color: '#1677ff' }} />

@@ -42,7 +42,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { useModelStore } from '../../stores/modelStore';
+import { useSelectedConfig } from '../../stores/aiServiceConfigStore';
 import { hasValidLLMConfig } from '../../utils/llmClient';
+import AIServiceConfigSelector from '../../components/AIServiceConfigSelector';
+import type { AIServiceConfigListDto } from '../../api/aiServiceConfig';
 import {
   generateImage,
   editImage,
@@ -120,8 +123,22 @@ const ImageGeneration: React.FC = () => {
     error: modelsError,
   } = useModelStore();
 
-  // 获取图片模型选项
-  const imageModelOptions = getImageModelOptions();
+  const { selectedConfig } = useSelectedConfig();
+
+  // 获取图像模型选项 - 优先使用选择的AI服务配置中的模型
+  const getAvailableImageModelOptions = () => {
+    if (selectedConfig && selectedConfig.imageModels && selectedConfig.imageModels.length > 0) {
+      // 使用选择的AI服务配置中的图像模型
+      return selectedConfig.imageModels.map(model => ({
+        value: model,
+        label: model,
+      }));
+    }
+    // 回退到系统默认模型
+    return getImageModelOptions();
+  };
+
+  const imageModelOptions = getAvailableImageModelOptions();
 
   // 生成状态
   const [loading, setLoading] = useState(false);
@@ -217,14 +234,16 @@ const ImageGeneration: React.FC = () => {
   // 初始化时获取模型列表
   useEffect(() => {
     const initializeModels = async () => {
-      const response = await fetchModels();
-      // 如果表单还没有设置模型值，使用默认图片模型
-      if (response.imageModels && !form.getFieldValue('model')) {
-        form.setFieldValue('model', response.imageModels[0].id);
+      if (!selectedConfig) {
+        const response = await fetchModels();
+        // 如果表单还没有设置模型值，使用默认图片模型
+        if (response.imageModels && !form.getFieldValue('model')) {
+          form.setFieldValue('model', response.imageModels[0].id);
+        }
       }
     };
     initializeModels();
-  }, [fetchModels, form]);
+  }, [selectedConfig, fetchModels, form]);
 
   // 如果获取模型失败，显示错误信息
   useEffect(() => {
@@ -233,19 +252,47 @@ const ImageGeneration: React.FC = () => {
     }
   }, [modelsError, t]);
 
-  // 当图片模型列表加载完成后，设置默认模型
+  // 当AI服务配置或图像模型列表变化时，设置默认模型
   useEffect(() => {
-    if (imageModelOptions.length > 0 && !form.getFieldValue('model')) {
-      form.setFieldValue('model', imageModelOptions[0].value);
-    }
-  }, [imageModelOptions, form]);
+    if (imageModelOptions.length > 0) {
+      let defaultModel: string;
 
-  // 当默认图片模型可用时，更新表单默认值
-  useEffect(() => {
-    if (defaultImageGenerationModel && !form.getFieldValue('model')) {
-      form.setFieldValue('model', defaultImageGenerationModel);
+      if (selectedConfig && selectedConfig.defaultImageModel) {
+        // 使用AI服务配置的默认图像模型
+        defaultModel = selectedConfig.defaultImageModel;
+      } else if (selectedConfig && selectedConfig.imageModels && selectedConfig.imageModels.length > 0) {
+        // 使用AI服务配置的第一个图像模型
+        defaultModel = selectedConfig.imageModels[0];
+      } else {
+        // 回退到第一个可用模型
+        defaultModel = imageModelOptions[0].value;
+      }
+
+      if (!form.getFieldValue('model')) {
+        form.setFieldValue('model', defaultModel);
+      }
     }
-  }, [defaultImageGenerationModel, form]);
+  }, [selectedConfig, imageModelOptions, form]);
+
+  // 处理AI服务配置变化
+  const handleAIConfigChange = (configId: string | null, config: AIServiceConfigListDto | null) => {
+    console.log('🔄 [ImageGeneration] AI配置变化:', { configId, config });
+
+    // 配置变化时，如果新配置有默认图像模型，自动选择它
+    if (config) {
+      let defaultModel: string | undefined;
+
+      if (config.defaultImageModel) {
+        defaultModel = config.defaultImageModel;
+      } else if (config.imageModels && config.imageModels.length > 0) {
+        defaultModel = config.imageModels[0];
+      }
+
+      if (defaultModel) {
+        form.setFieldValue('model', defaultModel);
+      }
+    }
+  };
 
   // 用户登录后加载历史记录
   useEffect(() => {
@@ -1046,10 +1093,21 @@ const ImageGeneration: React.FC = () => {
                   </div>
                 </Form.Item>
 
+                {/* AI服务配置选择器 */}
+                <Form.Item label="AI服务配置">
+                  <AIServiceConfigSelector
+                    placeholder="选择AI服务配置"
+                    size="middle"
+                    showManageButton={true}
+                    style={{ width: '100%' }}
+                    onChange={handleAIConfigChange}
+                  />
+                </Form.Item>
+
                 {/* 模型选择 */}
-                <Form.Item name="model" label="模型">
+                <Form.Item name="model" label={selectedConfig ? `${selectedConfig.provider}模型` : "模型"}>
                   <Select
-                    placeholder="选择图片生成模型"
+                    placeholder={selectedConfig ? `选择${selectedConfig.provider}图像模型` : "选择图片生成模型"}
                     allowClear
                     style={{ width: '100%' }}
                     loading={modelsLoading}

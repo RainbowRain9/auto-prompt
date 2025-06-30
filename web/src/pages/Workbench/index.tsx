@@ -784,6 +784,19 @@ const Workbench: React.FC = () => {
     setShowTour(true);
   };
 
+  // 自动设置默认AI服务配置
+  useEffect(() => {
+    if (selectedConfig && !sessionAIConfig) {
+      console.log('🔄 [Workbench] 自动设置默认AI配置:', selectedConfig);
+      setSessionAIConfig(selectedConfig);
+
+      // 如果有默认聊天模型，自动选择它
+      if (selectedConfig.defaultChatModel) {
+        setSelectedModel(selectedConfig.defaultChatModel);
+      }
+    }
+  }, [selectedConfig, sessionAIConfig, setSessionAIConfig, setSelectedModel]);
+
   // 处理AI服务配置变化
   const handleAIConfigChange = (configId: string | null, config: AIServiceConfigListDto | null) => {
     console.log('🔄 [Workbench] AI配置变化:', { configId, config });
@@ -834,6 +847,7 @@ const Workbench: React.FC = () => {
             <div className="model-label">AI服务配置:</div>
             <UiverseModelSelector theme={theme}>
               <AIServiceConfigSelector
+                value={selectedConfig?.id}
                 placeholder="选择AI服务配置"
                 size="middle"
                 showManageButton={true}

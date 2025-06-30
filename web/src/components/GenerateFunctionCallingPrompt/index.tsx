@@ -8,7 +8,10 @@ import { generateFunctionCallingPrompt } from '../../api/promptApi';
 import { createPromptTemplate } from '../../api/promptTemplateApi';
 import type { CreatePromptTemplateInput } from '../../api/promptTemplateApi';
 import { useModelStore } from '../../stores/modelStore';
+import { useSelectedConfig } from '../../stores/aiServiceConfigStore';
 import ReactMarkdown from 'react-markdown';
+import AIServiceConfigSelector from '../AIServiceConfigSelector';
+import type { AIServiceConfigListDto } from '../../api/aiServiceConfig';
 
 interface GenerateFunctionCallingPromptProps {
     open: boolean;
@@ -27,8 +30,9 @@ export default function GenerateFunctionCallingPrompt({
     onOk,
 }: GenerateFunctionCallingPromptProps) {
     const { t, i18n } = useTranslation();
-    const { selectedModel } = useChatStore();
+    const { selectedModel, sessionAIConfig } = useChatStore();
     const { getChatModelOptions, fetchModels } = useModelStore();
+    const { selectedConfig } = useSelectedConfig();
     const [templateForm] = Form.useForm();
     const { token } = theme.useToken();
 
@@ -46,8 +50,20 @@ export default function GenerateFunctionCallingPrompt({
     const [evaluationContent, setEvaluationContent] = useState('');
     const [isEvaluating, setIsEvaluating] = useState(false);
 
-    // 获取聊天模型选项
-    const modelOptions = getChatModelOptions();
+    // 获取模型选项 - 优先使用选择的AI服务配置中的模型
+    const getAvailableModelOptions = () => {
+        if (selectedConfig && selectedConfig.chatModels && selectedConfig.chatModels.length > 0) {
+            // 使用选择的AI服务配置中的模型
+            return selectedConfig.chatModels.map(model => ({
+                value: model,
+                label: model,
+            }));
+        }
+        // 回退到系统默认模型
+        return getChatModelOptions();
+    };
+
+    const modelOptions = getAvailableModelOptions();
     const [modelsLoading, setModelsLoading] = useState(false);
 
     // 推理过程展开收起状态
@@ -66,31 +82,49 @@ export default function GenerateFunctionCallingPrompt({
 
     // 获取模型列表
     useEffect(() => {
-        if (open && modelOptions.length === 0) {
+        if (open && !selectedConfig && modelOptions.length === 0) {
             setModelsLoading(true);
             fetchModels().finally(() => {
                 setModelsLoading(false);
             });
         }
-    }, [open, modelOptions.length, fetchModels]);
+    }, [open, selectedConfig, modelOptions.length, fetchModels]);
 
-    // 当模型列表加载完成后，设置默认模型
+    // 当AI服务配置或模型列表变化时，设置默认模型
     useEffect(() => {
         if (modelOptions.length > 0) {
-            // 优先选择 claude-sonnet-4-20250514，否则选择第一个可用模型
-            const claudeModel = modelOptions.find(model => model.value === 'claude-sonnet-4-20250514');
-            const defaultModel = claudeModel ? claudeModel.value : modelOptions[0].value;
-            
+            let defaultModel: string;
+
+            if (selectedConfig && selectedConfig.defaultChatModel) {
+                // 使用AI服务配置的默认模型
+                defaultModel = selectedConfig.defaultChatModel;
+            } else {
+                // 回退到第一个可用模型
+                defaultModel = modelOptions[0].value;
+            }
+
             if (!input.chatModel || !modelOptions.some(model => model.value === input.chatModel)) {
                 setInput(prev => ({ ...prev, chatModel: defaultModel }));
             }
         }
-    }, [modelOptions, input.chatModel]);
+    }, [selectedConfig, modelOptions, input.chatModel]);
 
     // 当selectedModel变化时，更新input.chatModel
     useEffect(() => {
-        setInput(prev => ({ ...prev, chatModel: selectedModel }));
+        if (selectedModel) {
+            setInput(prev => ({ ...prev, chatModel: selectedModel }));
+        }
     }, [selectedModel]);
+
+    // 处理AI服务配置变化
+    const handleAIConfigChange = (configId: string | null, config: AIServiceConfigListDto | null) => {
+        console.log('🔄 [GenerateFunctionCallingPrompt] AI配置变化:', { configId, config });
+
+        // 配置变化时，如果新配置有默认聊天模型，自动选择它
+        if (config && config.defaultChatModel) {
+            setInput(prev => ({ ...prev, chatModel: config.defaultChatModel! }));
+        }
+    };
 
     // 监听推理状态变化，自动控制展开收起
     useEffect(() => {
@@ -380,6 +414,29 @@ export default function GenerateFunctionCallingPrompt({
                         </TextArea>
                     </div>
 
+                    {/* AI服务配置选择器 */}
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                        marginBottom: 16
+                    }}>
+                        <span style={{
+                            fontSize: 14,
+                            fontWeight: 500,
+                            color: '#000000d9'
+                        }}>
+                            AI服务配置:
+                        </span>
+                        <AIServiceConfigSelector
+                            placeholder="选择AI服务配置"
+                            size="middle"
+                            showManageButton={true}
+                            style={{ width: '100%' }}
+                            onChange={handleAIConfigChange}
+                        />
+                    </div>
+
                     {/* 模型选择 */}
                     <div style={{
                         display: 'flex',
@@ -401,7 +458,13 @@ export default function GenerateFunctionCallingPrompt({
                             }}
                             loading={modelsLoading}
                             showSearch
-                            placeholder={modelsLoading ? t('workbench.loadingModels') : t('workbench.searchOrSelectModel')}
+                            placeholder={
+                                modelsLoading
+                                    ? t('workbench.loadingModels')
+                                    : selectedConfig
+                                        ? `选择${selectedConfig.provider}模型`
+                                        : t('workbench.searchOrSelectModel')
+                            }
                             filterOption={(inputValue, option) =>
                                 (option?.label ?? '').toLowerCase().includes(inputValue.toLowerCase())
                             }

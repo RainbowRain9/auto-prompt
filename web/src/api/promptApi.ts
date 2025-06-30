@@ -67,15 +67,27 @@ export async function* SSE<T = any>(
         
         // 获取用户token用于身份验证
         const { token } = useAuthStore.getState();
-        
+
+        // 获取AI服务配置ID（如果有的话）
+        const { useChatStore } = await import('../stores/chatStore');
+        const chatState = useChatStore.getState();
+
+        // 构建请求头
+        const headers: Record<string, string> = {
+            ...finalConfig.headers,
+            "Authorization": `Bearer ${token}`, // 用户身份验证
+            "api-key": llmConfig.apiKey, // 使用LLM配置的API Key
+        };
+
+        // 如果有AI服务配置，添加配置ID头
+        if (chatState.sessionAIConfig?.id) {
+            headers["X-AI-Config-Id"] = chatState.sessionAIConfig.id;
+        }
+
         // 发送请求
         const response = await fetch(url, {
             method: "POST",
-            headers: {
-                ...finalConfig.headers,
-                "Authorization": `Bearer ${token}`, // 用户身份验证
-                "api-key": llmConfig.apiKey, // 使用LLM配置的API Key
-            },
+            headers,
             body: JSON.stringify(data),
             signal: controller.signal,
         });
@@ -266,13 +278,25 @@ export const GeneratePromptTemplateParameters = async (prompt: string, language:
     // 获取用户token用于身份验证
     const { token } = useAuthStore.getState();
 
+    // 获取AI服务配置ID（如果有的话）
+    const { useChatStore } = await import('../stores/chatStore');
+    const chatState = useChatStore.getState();
+
+    // 构建请求头
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`, // 用户身份验证
+        'api-key': llmConfig.apiKey,
+    };
+
+    // 如果有AI服务配置，添加配置ID头
+    if (chatState.sessionAIConfig?.id) {
+        headers["X-AI-Config-Id"] = chatState.sessionAIConfig.id;
+    }
+
     const response = await fetch('/api/v1/prompt/generateprompttemplateparameters', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`, // 用户身份验证
-            'api-key': llmConfig.apiKey,
-        },
+        headers,
         body: JSON.stringify({
             prompt: prompt,
             language: language

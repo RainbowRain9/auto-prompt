@@ -6,6 +6,7 @@ using Console.Core.Entities;
 using Console.Service.AI;
 using Console.Service.Dto;
 using Console.Service.Options;
+using Console.Service.Utils;
 using FastService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -103,9 +104,13 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             token = apiKey.OpenAiApiKey;
         }
 
+        // 设置默认的API端点和配置ID
+        string apiEndpoint = ConsoleOptions.OpenAIEndpoint;
+        string configId = null;
+
         if (input.EnableDeepReasoning)
         {
-            await DeepReasoningFunctionCallingAsync(input, context, token, ConsoleOptions.OpenAIEndpoint);
+            await DeepReasoningFunctionCallingAsync(input, context, token, apiEndpoint);
         }
         else
         {
@@ -164,7 +169,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             }, JsonSerializerOptions.Web)}\n\n");
 
             await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
-                               ConsoleOptions.OpenAIEndpoint))
+                               apiEndpoint, input.ChatModel, configId))
             {
                 await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
                 {
@@ -319,6 +324,10 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     {
         var kernel = KernelFactory.CreateKernel(input.ChatModel, apiUrl, token);
 
+        // 设置默认值，这个方法使用传入的apiUrl
+        string apiEndpoint = apiUrl;
+        string configId = null;
+
         var isFirst = true;
 
         context.Response.Headers.ContentType = "text/event-stream";
@@ -413,7 +422,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         }, JsonSerializerOptions.Web)}\n\n");
 
         await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
-                           ConsoleOptions.OpenAIEndpoint))
+                           apiEndpoint, input.ChatModel, configId))
         {
             await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
             {
@@ -457,32 +466,80 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     [HttpPost("generate")]
     public async Task GeneratePromptAsync(GeneratePromptInput input, HttpContext context)
     {
-        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
+        // 统一从Authorization头获取JWT token，与其他服务保持一致
+        var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "").Trim();
+        var configId = context.Request.Headers["X-AI-Config-Id"].ToString();
 
-        if (string.IsNullOrEmpty(token))
+        // 获取AI服务配置信息
+        string apiEndpoint = ConsoleOptions.OpenAIEndpoint; // 默认端点
+
+        if (!string.IsNullOrEmpty(configId))
         {
-            context.Response.StatusCode = 401;
-            return;
+            // 如果有配置ID，获取用户的AI服务配置
+            var userId = context.User.FindFirst("sub")?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var aiConfig = await dbContext.AIServiceConfigs
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id.ToString() == configId && x.UserId == userId && x.IsEnabled);
+
+                if (aiConfig != null)
+                {
+                    apiEndpoint = aiConfig.ApiEndpoint;
+                    // 当使用配置ID时，保持用户token不变，让代理服务处理API密钥
+                    // actualToken 保持为用户的JWT token
+                }
+            }
         }
-
-        if (token.StartsWith("tk-"))
+        else
         {
-            // 如果是sk 则是API Key
-            var apiKey = await dbContext.ApiKeys
+            // 没有配置ID时，验证JWT token
+            if (string.IsNullOrEmpty(token))
+            {
+                context.Response.StatusCode = 401;
+                return;
+            }
+
+            // 验证JWT token
+            var jwtService = context.RequestServices.GetRequiredService<JwtService>();
+            var userId = jwtService.GetUserIdFromToken(token);
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                context.Response.StatusCode = 401;
+                return;
+            }
+
+            if (!jwtService.IsTokenValid(token))
+            {
+                context.Response.StatusCode = 401;
+                return;
+            }
+
+            // 获取用户的默认AI服务配置
+            var defaultConfig = await dbContext.AIServiceConfigs
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Key == token);
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.IsDefault && x.IsEnabled);
 
-            if (apiKey == null)
+            if (defaultConfig != null)
             {
-                throw new InvalidOperationException("API Key not found.");
+                // 使用默认配置，通过代理服务调用
+                apiEndpoint = defaultConfig.ApiEndpoint;
+                configId = defaultConfig.Id.ToString(); // 设置配置ID以使用代理服务
             }
-
-            if (apiKey.ExpiresAt != null && apiKey.ExpiresAt < DateTime.Now)
+            else
             {
-                throw new InvalidOperationException("API Key has expired.");
+                // 如果没有默认配置，检查全局配置
+                if (string.IsNullOrEmpty(ConsoleOptions.DefaultAPIKey))
+                {
+                    context.Response.StatusCode = 400;
+                    await context.Response.WriteAsync("请先配置AI服务或设置默认配置");
+                    return;
+                }
+                // 使用全局配置（直接调用）
+                // 注意：这里需要使用API密钥而不是JWT token
+                token = ConsoleOptions.DefaultAPIKey;
             }
-
-            token = apiKey.OpenAiApiKey;
         }
 
         if (input.EnableDeepReasoning)
@@ -502,7 +559,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             try
             {
                 await foreach (var (deep, value) in GenerateDeepReasoningPromptAsync(input.ChatModel, input.Prompt,
-                                   input.Requirements, token))
+                                   input.Requirements, token, apiEndpoint, configId))
                 {
                     if (isFirst && deep)
                     {
@@ -568,7 +625,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             }, JsonSerializerOptions.Web)}\n\n");
 
             await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
-                               ConsoleOptions.OpenAIEndpoint))
+                               apiEndpoint, input.ChatModel, configId))
             {
                 await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
                 {
@@ -607,7 +664,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
             await foreach (var chatMessageContent in OptimizeInitialPromptAsync(input.ChatModel, input.Prompt,
                                input.Requirements, token,
-                               ConsoleOptions.OpenAIEndpoint))
+                               apiEndpoint, configId))
             {
                 if (isFirst)
                 {
@@ -641,7 +698,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             }, JsonSerializerOptions.Web)}\n\n");
 
             await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
-                               ConsoleOptions.OpenAIEndpoint))
+                               apiEndpoint, input.ChatModel, configId))
             {
                 await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
                 {
@@ -687,9 +744,24 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async IAsyncEnumerable<(bool, string)> GenerateDeepReasoningPromptAsync(
         string model,
         string prompt,
-        string requirements, string token)
+        string requirements, string token, string apiEndpoint = null, string configId = null)
     {
-        var kernel = KernelFactory.CreateKernel(model, ConsoleOptions.OpenAIEndpoint, token);
+        var endpoint = apiEndpoint ?? ConsoleOptions.OpenAIEndpoint;
+
+        // 如果有配置ID，使用会话级别代理服务
+        Dictionary<string, string> customHeaders = null;
+
+        if (!string.IsNullOrEmpty(configId))
+        {
+            endpoint = "http://localhost:5298/openai/session";
+            // 保持原始token，代理服务需要它来验证用户身份
+            customHeaders = new Dictionary<string, string>
+            {
+                { "X-AI-Config-Id", configId }
+            };
+        }
+
+        var kernel = KernelFactory.CreateKernel(model, endpoint, token, customHeaders);
 
         var deepReasoning = new StringBuilder();
 
@@ -773,9 +845,24 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         string model,
         string prompt,
         string requirements,
-        string token, string apiUrl)
+        string token, string apiUrl, string configId = null)
     {
-        var kernel = KernelFactory.CreateKernel(model, apiUrl, token);
+        // 如果有配置ID，使用会话级别代理服务
+        string actualApiUrl = apiUrl;
+        string actualToken = token;
+        Dictionary<string, string> customHeaders = null;
+
+        if (!string.IsNullOrEmpty(configId))
+        {
+            actualApiUrl = "http://localhost:5298/openai/session";
+            // 保持原始token，代理服务需要它来验证用户身份
+            customHeaders = new Dictionary<string, string>
+            {
+                { "X-AI-Config-Id", configId }
+            };
+        }
+
+        var kernel = KernelFactory.CreateKernel(model, actualApiUrl, actualToken, customHeaders);
 
         await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["OptimizeInitialPrompt"],
                            new KernelArguments(
@@ -806,15 +893,29 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     /// </summary>
     /// <returns></returns>
     private async IAsyncEnumerable<string> EvaluatePromptWordAsync(string prompt, string newPrompt, string token,
-        string apiUrl)
+        string apiUrl, string model = null, string configId = null)
     {
-        var kernel = KernelFactory.CreateKernel(ConsoleOptions.DefaultChatModel, apiUrl, token);
+        var chatModel = model ?? ConsoleOptions.DefaultChatModel;
+
+        // 如果有配置ID，使用会话级别代理服务
+        Dictionary<string, string> customHeaders = null;
+        if (!string.IsNullOrEmpty(configId))
+        {
+            customHeaders = new Dictionary<string, string>
+            {
+                { "X-AI-Config-Id", configId }
+            };
+            // 使用会话级别代理服务URL
+            apiUrl = "http://localhost:5298/openai/session";
+        }
+
+        var kernel = KernelFactory.CreateKernel(chatModel, apiUrl, token, customHeaders);
 
         await foreach (var item in kernel.InvokeStreamingAsync(kernel.Plugins["Generate"]["PromptWordEvaluation"],
                            new KernelArguments(
                                new OpenAIPromptExecutionSettings()
                                {
-                                   MaxTokens = MaxToken(ConsoleOptions.DefaultChatModel),
+                                   MaxTokens = MaxToken(chatModel),
                                    Temperature = 0.7f,
                                })
                            {

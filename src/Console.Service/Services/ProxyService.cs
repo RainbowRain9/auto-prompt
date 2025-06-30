@@ -338,7 +338,7 @@ public static class ProxyService
             generationConfig = new
             {
                 temperature = root.TryGetProperty("temperature", out var temp) ? temp.GetDouble() : 0.5,
-                maxOutputTokens = root.TryGetProperty("max_tokens", out var maxTokens) ? maxTokens.GetInt32() : 1024
+                maxOutputTokens = root.TryGetProperty("max_tokens", out var maxTokens) ? maxTokens.GetInt32() : 4096
             }
         };
 

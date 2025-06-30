@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { useAuthStore } from '../stores/authStore';
+import { useChatStore } from '../stores/chatStore';
 import type { AIServiceConfigListDto } from '../api/aiServiceConfig';
 
 // LLM客户端配置接口
@@ -65,10 +66,20 @@ export const clearLLMConfig = (): void => {
 
 /**
  * 获取当前有效的LLM配置
- * 优先使用会话级别的配置，然后回退到全局配置
+ * 优先使用新的AI服务配置系统，然后回退到旧的会话配置，最后回退到全局配置
  */
 export const getCurrentLLMConfig = (): LLMConfig | null => {
-  // 优先使用会话级别的配置
+  // 1. 优先使用新的AI服务配置系统
+  const chatState = useChatStore.getState();
+  if (chatState.sessionAIConfig) {
+    return {
+      apiKey: chatState.sessionAIConfig.apiKey,
+      endpoint: chatState.sessionAIConfig.apiEndpoint,
+      provider: chatState.sessionAIConfig.provider,
+    };
+  }
+
+  // 2. 回退到旧的会话级别配置
   if (sessionConfig) {
     return {
       apiKey: sessionConfig.apiKey,
@@ -77,7 +88,7 @@ export const getCurrentLLMConfig = (): LLMConfig | null => {
     };
   }
 
-  // 回退到全局配置
+  // 3. 回退到全局配置
   const authState = useAuthStore.getState();
   const { systemInfo } = useAuthStore.getState();
 
@@ -159,11 +170,18 @@ export const clearSessionConfig = (): void => {
  * 检查是否有可用的LLM配置
  */
 export const hasValidLLMConfig = (): boolean => {
-  // 优先检查会话级别的配置
+  // 1. 优先检查新的AI服务配置系统
+  const chatState = useChatStore.getState();
+  if (chatState.sessionAIConfig && chatState.sessionAIConfig.apiKey && chatState.sessionAIConfig.apiKey.trim() !== '') {
+    return true;
+  }
+
+  // 2. 检查旧的会话级别配置
   if (sessionConfig && sessionConfig.apiKey && sessionConfig.apiKey.trim() !== '') {
     return true;
   }
 
+  // 3. 检查全局配置
   const { systemInfo } = useAuthStore.getState();
 
   if (systemInfo?.builtInApiKey) {
