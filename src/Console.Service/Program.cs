@@ -132,6 +132,31 @@ app.MapPost("/api/v1/ai-service-configs/{id}/test-connection", async (string id,
     return Results.Ok(result);
 });
 
+// 添加全局默认配置相关端点
+app.MapPost("/api/v1/ai-service-configs/{id}/set-global-default", async (string id, AIServiceConfigService aiService, HttpContext context) =>
+{
+    var result = await aiService.SetGlobalDefaultAsync(id, context);
+    return Results.Ok(result);
+});
+
+app.MapGet("/api/v1/ai-service-configs/global-default", async (AIServiceConfigService aiService, HttpContext context) =>
+{
+    var result = await aiService.GetGlobalDefaultAsync(context);
+    return Results.Ok(result);
+});
+
+app.MapDelete("/api/v1/ai-service-configs/global-default", async (AIServiceConfigService aiService, HttpContext context) =>
+{
+    var result = await aiService.ClearGlobalDefaultAsync(context);
+    return Results.Ok(result);
+});
+
+app.MapGet("/api/v1/ai-service-configs/global-status", async (AIServiceConfigService aiService, HttpContext context) =>
+{
+    var result = await aiService.GetGlobalStatusAsync(context);
+    return Results.Ok(result);
+});
+
 // 添加其他关键API端点映射
 app.MapGet("/api/v1/models", async (Console.Service.Services.ModelsService modelsService) =>
 {

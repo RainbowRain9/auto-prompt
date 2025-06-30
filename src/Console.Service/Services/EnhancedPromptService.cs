@@ -99,22 +99,31 @@ public class EnhancedPromptService : FastApi
         try
         {
             var configs = await kernelFactory.GetUserConfigsAsync(userContext.UserId);
-            var configDtos = configs.Select(c => new
-            {
-                c.Id,
-                c.Name,
-                c.Provider,
-                c.IsDefault,
-                c.IsEnabled,
-                ChatModels = JsonSerializer.Deserialize<List<string>>(c.ChatModels) ?? new(),
-                ImageModels = JsonSerializer.Deserialize<List<string>>(c.ImageModels) ?? new(),
-                c.DefaultChatModel,
-                c.DefaultImageModel,
-                c.ConnectionStatus,
-                c.LastUsedTime,
-                c.UsageCount
+            var configDtos = configs.Select(c => {
+                var chatModels = JsonSerializer.Deserialize<List<string>>(c.ChatModels) ?? new();
+                var imageModels = JsonSerializer.Deserialize<List<string>>(c.ImageModels) ?? new();
+
+                // 添加调试日志
+                System.Console.WriteLine($"🔍 [EnhancedPromptService] 配置: {c.Name}, ChatModels原始: {c.ChatModels}, 解析后: [{string.Join(", ", chatModels)}]");
+
+                return new
+                {
+                    c.Id,
+                    c.Name,
+                    c.Provider,
+                    c.IsDefault,
+                    c.IsEnabled,
+                    ChatModels = chatModels,
+                    ImageModels = imageModels,
+                    c.DefaultChatModel,
+                    c.DefaultImageModel,
+                    c.ConnectionStatus,
+                    c.LastUsedTime,
+                    c.UsageCount
+                };
             }).ToList();
 
+            System.Console.WriteLine($"🎯 [EnhancedPromptService] 返回 {configDtos.Count} 个配置给用户 {userContext.UserId}");
             return new { success = true, data = configDtos };
         }
         catch (Exception ex)

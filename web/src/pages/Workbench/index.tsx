@@ -678,16 +678,53 @@ const Workbench: React.FC = () => {
 
   // 获取聊天模型选项 - 优先使用选择的AI服务配置中的模型
   const modelOptions = useMemo(() => {
-    if (selectedConfig && selectedConfig.chatModels && selectedConfig.chatModels.length > 0) {
+    console.log('🔍 [Workbench] 计算模型选项:', {
+      selectedConfig,
+      chatModels: selectedConfig?.chatModels,
+      chatModelsLength: selectedConfig?.chatModels?.length,
+      chatModelsType: typeof selectedConfig?.chatModels,
+      isArray: Array.isArray(selectedConfig?.chatModels),
+    });
+
+    // 确保有有效的模型数据
+    if (selectedConfig && Array.isArray(selectedConfig.chatModels) && selectedConfig.chatModels.length > 0) {
       // 使用选择的AI服务配置中的模型
-      return selectedConfig.chatModels.map(model => ({
+      const options = selectedConfig.chatModels.map(model => ({
         value: model,
         label: model,
       }));
+      console.log('✅ [Workbench] 使用AI服务配置模型:', options);
+      return options;
     }
+
     // 回退到系统默认模型
-    return getChatModelOptions();
+    const defaultOptions = getChatModelOptions();
+    console.log('⚠️ [Workbench] 使用系统默认模型:', defaultOptions);
+    return defaultOptions;
   }, [selectedConfig, getChatModelOptions]);
+
+  // 确保选中的模型在可用选项中 - 只在modelOptions变化时检查
+  useEffect(() => {
+    if (modelOptions.length > 0 && selectedModel) {
+      const currentModelExists = modelOptions.some(option => option.value === selectedModel);
+
+      if (!currentModelExists) {
+        // 如果当前选中的模型不在选项中，选择第一个可用模型
+        const firstModel = modelOptions[0]?.value;
+        if (firstModel) {
+          setSelectedModel(firstModel);
+        }
+      }
+    } else if (modelOptions.length > 0 && !selectedModel) {
+      // 如果没有选中模型，选择第一个
+      const firstModel = modelOptions[0]?.value;
+      if (firstModel) {
+        setSelectedModel(firstModel);
+      }
+    }
+  }, [modelOptions, setSelectedModel]);
+
+
 
   // 获取模型列表
   useEffect(() => {
@@ -707,18 +744,8 @@ const Workbench: React.FC = () => {
     if (selectedConfig && selectedConfig.defaultChatModel) {
       // 如果选择的配置有默认聊天模型，使用它
       setSelectedModel(selectedConfig.defaultChatModel);
-    } else if (modelOptions.length > 0 && !selectedModel) {
-      // 否则选择第一个可用模型
-      setSelectedModel(modelOptions[0].value);
     }
-  }, [selectedConfig, modelOptions, selectedModel, setSelectedModel]);
-
-  // 当模型列表加载完成后，如果没有选中模型，自动选择第一个
-  useEffect(() => {
-    if (modelOptions.length > 0 && !selectedModel) {
-      setSelectedModel(modelOptions[0].value);
-    }
-  }, [modelOptions, selectedModel, setSelectedModel]);
+  }, [selectedConfig, setSelectedModel]);
 
   // 检查是否是首次使用，如果是则自动显示引导
   useEffect(() => {
@@ -811,11 +838,21 @@ const Workbench: React.FC = () => {
 
           <ModelSelectorSection theme={theme} className="model-selector-section">
             <div className="model-label">{t('workbench.model')}:</div>
+
+            {/* 调试信息显示 */}
+            <div className="text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded mb-2">
+              模型数量: {modelOptions.length} | 当前: {selectedModel || '未选择'} | 配置: {selectedConfig?.name || '无'}
+            </div>
+
+
+
             <UiverseModelSelector theme={theme}>
               <ModelSelector
                 theme={theme}
                 value={selectedModel}
-                onChange={(value) => setSelectedModel(value as string)}
+                onChange={(value) => {
+                  setSelectedModel(value as string);
+                }}
                 loading={modelsLoading}
                 placeholder={
                   modelsLoading

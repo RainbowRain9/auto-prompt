@@ -3,6 +3,7 @@ using Console.Core;
 using Console.Core.Entities;
 using Console.Service.Dto;
 using Console.Service.Infrastructure;
+using Console.Service.Options;
 using Console.Service.Utils;
 using FastService;
 using Microsoft.AspNetCore.Mvc;
@@ -870,6 +871,181 @@ public class AIServiceConfigService : FastApi
                 Success = false,
                 Message = $"连接测试失败: {ex.Message}"
             };
+        }
+    }
+
+    [EndpointSummary("设置AI服务配置为全局默认")]
+    [HttpPost("{id}/set-global-default")]
+    public async Task<object> SetGlobalDefaultAsync(string id, HttpContext context)
+    {
+        var (isValid, userId, errorResponse, userName) = ValidateTokenAndGetUserId(context);
+        if (!isValid)
+            return errorResponse!;
+
+        try
+        {
+            // 查找指定的AI服务配置
+            var config = await dbContext.AIServiceConfigs
+                .FirstOrDefaultAsync(c => c.Id.ToString().ToLower() == id.ToLower() &&
+                                         c.UserId == userId &&
+                                         c.IsEnabled);
+
+            if (config == null)
+            {
+                return new { success = false, message = "AI服务配置不存在或无权限访问" };
+            }
+
+            // 验证配置是否可用（连接状态为成功）
+            if (config.ConnectionStatus != "Connected")
+            {
+                return new { success = false, message = "只有连接测试成功的配置才能设置为全局默认" };
+            }
+
+            // 解密API密钥
+            string decryptedApiKey;
+            try
+            {
+                decryptedApiKey = EncryptionHelper.DecryptApiKey(config.EncryptedApiKey);
+                if (string.IsNullOrEmpty(decryptedApiKey))
+                {
+                    return new { success = false, message = "API密钥解密失败" };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new { success = false, message = $"API密钥解密失败: {ex.Message}" };
+            }
+
+            // 清除当前用户的其他全局默认设置
+            var currentGlobalDefaults = await dbContext.AIServiceConfigs
+                .Where(c => c.UserId == userId && c.IsDefault)
+                .ToListAsync();
+
+            foreach (var defaultConfig in currentGlobalDefaults)
+            {
+                defaultConfig.IsDefault = false;
+            }
+
+            // 设置新的全局默认
+            config.IsDefault = true;
+            config.LastUsedTime = DateTime.Now;
+
+            await dbContext.SaveChangesAsync();
+
+            // 更新系统全局配置
+            ConsoleOptions.UpdateGlobalConfig(config, decryptedApiKey);
+
+            return new {
+                success = true,
+                message = "已成功设置为全局默认配置",
+                data = new {
+                    configId = config.Id,
+                    provider = config.Provider,
+                    name = config.Name,
+                    endpoint = config.ApiEndpoint,
+                    defaultChatModel = config.DefaultChatModel
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new { success = false, message = $"设置全局默认配置失败: {ex.Message}" };
+        }
+    }
+
+    [EndpointSummary("获取当前全局默认配置")]
+    [HttpGet("global-default")]
+    public async Task<object> GetGlobalDefaultAsync(HttpContext context)
+    {
+        var (isValid, userId, errorResponse, userName) = ValidateTokenAndGetUserId(context);
+        if (!isValid)
+            return errorResponse!;
+
+        try
+        {
+            // 查找当前用户的全局默认配置
+            var globalDefault = await dbContext.AIServiceConfigs
+                .FirstOrDefaultAsync(c => c.UserId == userId && c.IsDefault && c.IsEnabled);
+
+            if (globalDefault == null)
+            {
+                return new {
+                    success = true,
+                    data = new { },
+                    message = "未设置全局默认配置"
+                };
+            }
+
+            var result = new
+            {
+                id = globalDefault.Id,
+                name = globalDefault.Name,
+                provider = globalDefault.Provider,
+                description = globalDefault.Description,
+                apiEndpoint = globalDefault.ApiEndpoint,
+                defaultChatModel = globalDefault.DefaultChatModel,
+                defaultImageModel = globalDefault.DefaultImageModel,
+                connectionStatus = globalDefault.ConnectionStatus,
+                lastUsedTime = globalDefault.LastUsedTime,
+                isDefault = globalDefault.IsDefault
+            };
+
+            return new { success = true, data = result };
+        }
+        catch (Exception ex)
+        {
+            return new { success = false, message = $"获取全局默认配置失败: {ex.Message}" };
+        }
+    }
+
+    [EndpointSummary("清除全局默认配置")]
+    [HttpDelete("global-default")]
+    public async Task<object> ClearGlobalDefaultAsync(HttpContext context)
+    {
+        var (isValid, userId, errorResponse, userName) = ValidateTokenAndGetUserId(context);
+        if (!isValid)
+            return errorResponse!;
+
+        try
+        {
+            // 清除当前用户的全局默认设置
+            var globalDefaults = await dbContext.AIServiceConfigs
+                .Where(c => c.UserId == userId && c.IsDefault)
+                .ToListAsync();
+
+            foreach (var config in globalDefaults)
+            {
+                config.IsDefault = false;
+            }
+
+            await dbContext.SaveChangesAsync();
+
+            // 清除系统全局配置
+            ConsoleOptions.ClearGlobalConfig();
+
+            return new {
+                success = true,
+                message = "已清除全局默认配置，回退到系统默认设置"
+            };
+        }
+        catch (Exception ex)
+        {
+            return new { success = false, message = $"清除全局默认配置失败: {ex.Message}" };
+        }
+    }
+
+    [EndpointSummary("获取全局配置状态")]
+    [HttpGet("global-status")]
+    public async Task<object> GetGlobalStatusAsync(HttpContext context)
+    {
+        try
+        {
+            var status = ConsoleOptions.GetGlobalConfigStatus();
+            return new { success = true, data = status };
+        }
+        catch (Exception ex)
+        {
+            return new { success = false, message = $"获取全局配置状态失败: {ex.Message}" };
         }
     }
 }

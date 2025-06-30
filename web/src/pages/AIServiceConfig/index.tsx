@@ -33,6 +33,8 @@ import {
   StarFilled,
   ApiOutlined,
   ThunderboltOutlined,
+  GlobalOutlined,
+  CrownOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -42,6 +44,9 @@ import {
   updateAIServiceConfig,
   deleteAIServiceConfig,
   setDefaultAIServiceConfig,
+  setGlobalDefaultAIServiceConfig,
+  getGlobalDefaultAIServiceConfig,
+  clearGlobalDefaultAIServiceConfig,
   testSavedConfigConnection,
   getAIProviders,
   type AIServiceConfigListDto,
@@ -74,6 +79,9 @@ const AIServiceConfigPage: React.FC = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [testModalVisible, setTestModalVisible] = useState(false);
   const [currentConfig, setCurrentConfig] = useState<AIServiceConfigListDto | null>(null);
+
+  // 全局默认配置状态
+  const [globalDefaultConfig, setGlobalDefaultConfig] = useState<AIServiceConfigListDto | null>(null);
 
   // 加载数据
   const loadData = async () => {
@@ -131,12 +139,28 @@ const AIServiceConfigPage: React.FC = () => {
     }
   };
 
+  // 加载全局默认配置
+  const loadGlobalDefaultConfig = async () => {
+    try {
+      const response = await getGlobalDefaultAIServiceConfig();
+      if (response.success && response.data) {
+        setGlobalDefaultConfig(response.data);
+      } else {
+        setGlobalDefaultConfig(null);
+      }
+    } catch (error) {
+      console.error('加载全局默认配置失败:', error);
+      setGlobalDefaultConfig(null);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, [page, pageSize, searchText, providerFilter, enabledFilter, statusFilter]);
 
   useEffect(() => {
     loadProviders();
+    loadGlobalDefaultConfig();
   }, []);
 
   // 处理搜索
@@ -214,6 +238,38 @@ const AIServiceConfigPage: React.FC = () => {
     }
   };
 
+  // 设置全局默认配置
+  const handleSetGlobalDefault = async (id: string) => {
+    try {
+      const response = await setGlobalDefaultAIServiceConfig(id);
+      if (response.success) {
+        message.success('设置全局默认配置成功，工作台聊天功能现在可以使用了');
+        loadData();
+        loadGlobalDefaultConfig();
+      } else {
+        message.error(response.message || '设置全局默认配置失败');
+      }
+    } catch (error) {
+      message.error('设置全局默认配置失败: ' + (error as Error).message);
+    }
+  };
+
+  // 清除全局默认配置
+  const handleClearGlobalDefault = async () => {
+    try {
+      const response = await clearGlobalDefaultAIServiceConfig();
+      if (response.success) {
+        message.success('已清除全局默认配置');
+        loadData();
+        loadGlobalDefaultConfig();
+      } else {
+        message.error(response.message || '清除全局默认配置失败');
+      }
+    } catch (error) {
+      message.error('清除全局默认配置失败: ' + (error as Error).message);
+    }
+  };
+
   // 测试连接
   const handleTestConnection = async (config: AIServiceConfigListDto) => {
     try {
@@ -266,6 +322,18 @@ const AIServiceConfigPage: React.FC = () => {
     const config = providerConfig[provider as keyof typeof providerConfig] || { color: 'default', text: provider };
     
     return <Tag color={config.color}>{config.text}</Tag>;
+  };
+
+  // 获取提供商标签颜色
+  const getProviderColor = (provider: string) => {
+    const colors = {
+      OpenAI: 'blue',
+      DeepSeek: 'purple',
+      GoogleAI: 'red',
+      Ollama: 'green',
+      VolcEngine: 'orange',
+    };
+    return colors[provider as keyof typeof colors] || 'default';
   };
 
   // 表格列定义
@@ -354,57 +422,79 @@ const AIServiceConfigPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 200,
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="测试连接">
-            <Button
-              type="text"
-              icon={<ThunderboltOutlined />}
-              onClick={() => handleTestConnection(record)}
-              size="small"
-            />
-          </Tooltip>
-          
-          <Tooltip title={record.isDefault ? '已是默认配置' : '设为默认'}>
-            <Button
-              type="text"
-              icon={record.isDefault ? <StarFilled /> : <StarOutlined />}
-              onClick={() => handleSetDefault(record.id)}
-              disabled={record.isDefault}
-              size="small"
-            />
-          </Tooltip>
-          
-          <Tooltip title="编辑">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setCurrentConfig(record);
-                setEditModalVisible(true);
-              }}
-              size="small"
-            />
-          </Tooltip>
-          
-          <Popconfirm
-            title="确定要删除这个配置吗？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Tooltip title="删除">
+      width: 280,
+      render: (_, record) => {
+        const isGlobalDefault = globalDefaultConfig?.id === record.id;
+        const canSetGlobalDefault = record.connectionStatus === 'Connected' && record.isEnabled;
+
+        return (
+          <Space size="small">
+            <Tooltip title="测试连接">
               <Button
                 type="text"
-                icon={<DeleteOutlined />}
-                danger
+                icon={<ThunderboltOutlined />}
+                onClick={() => handleTestConnection(record)}
                 size="small"
               />
             </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
+
+            <Tooltip title={record.isDefault ? '已是用户默认' : '设为用户默认'}>
+              <Button
+                type="text"
+                icon={record.isDefault ? <StarFilled /> : <StarOutlined />}
+                onClick={() => handleSetDefault(record.id)}
+                disabled={record.isDefault}
+                size="small"
+              />
+            </Tooltip>
+
+            <Tooltip title={
+              isGlobalDefault
+                ? '已是全局默认配置'
+                : canSetGlobalDefault
+                  ? '设为全局默认（工作台可用）'
+                  : '需要连接成功且启用才能设为全局默认'
+            }>
+              <Button
+                type="text"
+                icon={isGlobalDefault ? <CrownOutlined /> : <GlobalOutlined />}
+                onClick={() => handleSetGlobalDefault(record.id)}
+                disabled={isGlobalDefault || !canSetGlobalDefault}
+                size="small"
+                style={isGlobalDefault ? { color: '#faad14' } : {}}
+              />
+            </Tooltip>
+
+            <Tooltip title="编辑">
+              <Button
+                type="text"
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setCurrentConfig(record);
+                  setEditModalVisible(true);
+                }}
+                size="small"
+              />
+            </Tooltip>
+
+            <Popconfirm
+              title="确定要删除这个配置吗？"
+              onConfirm={() => handleDelete(record.id)}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Tooltip title="删除">
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  danger
+                  size="small"
+                />
+              </Tooltip>
+            </Popconfirm>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -432,6 +522,41 @@ const AIServiceConfigPage: React.FC = () => {
             </Col>
           </Row>
         </div>
+
+        {/* 全局配置状态显示 */}
+        {globalDefaultConfig ? (
+          <Alert
+            message={
+              <Space>
+                <CrownOutlined style={{ color: '#faad14' }} />
+                <span>当前全局默认配置: <strong>{globalDefaultConfig.name}</strong></span>
+                <Tag color={getProviderColor(globalDefaultConfig.provider)}>
+                  {globalDefaultConfig.provider}
+                </Tag>
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={handleClearGlobalDefault}
+                  style={{ padding: 0 }}
+                >
+                  清除
+                </Button>
+              </Space>
+            }
+            description="工作台聊天功能正在使用此配置，您可以随时切换到其他配置"
+            type="success"
+            showIcon={false}
+            style={{ marginBottom: '16px' }}
+          />
+        ) : (
+          <Alert
+            message="未设置全局默认配置"
+            description="请选择一个连接成功的配置设为全局默认，以便在工作台中使用聊天功能"
+            type="warning"
+            showIcon
+            style={{ marginBottom: '16px' }}
+          />
+        )}
 
         <Divider />
 

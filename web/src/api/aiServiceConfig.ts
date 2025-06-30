@@ -258,3 +258,37 @@ export const getUserDefaultConfig = async (): Promise<ApiResponse<any>> => {
   });
   return response.json();
 };
+
+// 设置AI服务配置为全局默认
+export const setGlobalDefaultAIServiceConfig = async (
+  id: string
+): Promise<ApiResponse> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/${id}/set-global-default`, {
+    method: 'POST',
+  });
+  return response.json();
+};
+
+// 获取当前全局默认配置
+export const getGlobalDefaultAIServiceConfig = async (): Promise<ApiResponse<AIServiceConfigListDto>> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/global-default`, {
+    method: 'GET',
+  });
+  return response.json();
+};
+
+// 清除全局默认配置
+export const clearGlobalDefaultAIServiceConfig = async (): Promise<ApiResponse> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/global-default`, {
+    method: 'DELETE',
+  });
+  return response.json();
+};
+
+// 获取全局配置状态
+export const getGlobalConfigStatus = async (): Promise<ApiResponse> => {
+  const response = await authenticatedFetch(`${getApiBaseUrl()}/global-status`, {
+    method: 'GET',
+  });
+  return response.json();
+};
