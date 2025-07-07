@@ -24,7 +24,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async Task<PromptTemplateParameterDto> GeneratePromptTemplateParametersAsync(
         [FromBody] GeneratePromptTemplateParameterInput input, HttpContext context)
     {
-        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
+        var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "").Trim();
 
         if (string.IsNullOrEmpty(token))
         {
@@ -77,7 +77,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async Task OptimizeFunctionCallingPromptAsync(
         [FromBody] OptimizeFunctionCallingPromptInput input, HttpContext context)
     {
-        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
+        var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "").Trim();
         if (string.IsNullOrEmpty(token))
         {
             context.Response.StatusCode = 401;
@@ -104,20 +104,34 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
             token = apiKey.OpenAiApiKey;
         }
 
-        // 设置默认的API端点和配置ID
+        // 获取会话配置ID
+        string configId = context.Request.Headers["X-AI-Config-Id"].ToString();
+
+        // 设置API端点和认证信息
         string apiEndpoint = ConsoleOptions.OpenAIEndpoint;
-        string configId = null;
+        string actualToken = token;
+        Dictionary<string, string> customHeaders = null;
+
+        // 如果有配置ID，使用会话级别代理服务
+        if (!string.IsNullOrEmpty(configId))
+        {
+            apiEndpoint = "http://localhost:5298/openai/session";
+            // 保持原始token，代理服务需要它来验证用户身份
+            customHeaders = new Dictionary<string, string>
+            {
+                { "X-AI-Config-Id", configId }
+            };
+        }
 
         if (input.EnableDeepReasoning)
         {
-            await DeepReasoningFunctionCallingAsync(input, context, token, apiEndpoint);
+            await DeepReasoningFunctionCallingAsync(input, context, actualToken, apiEndpoint, configId);
         }
         else
         {
             bool isFirst = true;
 
-            var kernel =
-                KernelFactory.CreateKernel(input.ChatModel, ConsoleOptions.OpenAIEndpoint, token);
+            var kernel = KernelFactory.CreateKernel(input.ChatModel, apiEndpoint, actualToken, customHeaders);
 
             var result = new StringBuilder();
 
@@ -215,7 +229,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async Task OptimizeImagePromptAsync(
         [FromBody] GenerateImagePromptInput input, HttpContext context)
     {
-        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
+        var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "").Trim();
 
         if (string.IsNullOrEmpty(token))
         {
@@ -320,13 +334,22 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
 
     private async Task DeepReasoningFunctionCallingAsync(OptimizeFunctionCallingPromptInput input, HttpContext context,
         string token,
-        string apiUrl)
+        string apiUrl, string configId = null)
     {
-        var kernel = KernelFactory.CreateKernel(input.ChatModel, apiUrl, token);
+        // 设置认证信息
+        string actualToken = token;
+        Dictionary<string, string> customHeaders = null;
 
-        // 设置默认值，这个方法使用传入的apiUrl
-        string apiEndpoint = apiUrl;
-        string configId = null;
+        // 如果有配置ID，使用会话级别代理服务
+        if (!string.IsNullOrEmpty(configId))
+        {
+            customHeaders = new Dictionary<string, string>
+            {
+                { "X-AI-Config-Id", configId }
+            };
+        }
+
+        var kernel = KernelFactory.CreateKernel(input.ChatModel, apiUrl, actualToken, customHeaders);
 
         var isFirst = true;
 
@@ -422,7 +445,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
         }, JsonSerializerOptions.Web)}\n\n");
 
         await foreach (var i in EvaluatePromptWordAsync(input.Prompt, result.ToString(), token,
-                           apiEndpoint, input.ChatModel, configId))
+                           apiUrl, input.ChatModel, configId))
         {
             await context.Response.WriteAsync($"data: {JsonSerializer.Serialize(new
             {
@@ -944,7 +967,7 @@ public class PromptService(IDbContext dbContext, ILogger<PromptService> logger) 
     public async Task<string> GeneratePromptOptimizationSuggestionAsync(GeneratePromptOptimizationSuggestionInput input,
         HttpContext context)
     {
-        var token = context.Request.Headers["api-key"].ToString().Replace("Bearer ", "").Trim();
+        var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "").Trim();
 
         if (string.IsNullOrEmpty(token))
         {

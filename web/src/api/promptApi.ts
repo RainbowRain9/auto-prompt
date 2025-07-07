@@ -1,6 +1,5 @@
 
 import { useAuthStore } from "../stores/authStore";
-import { getCurrentLLMConfig } from '../utils/llmClient';
 
 // 提示词模板参数DTO
 export interface PromptTemplateParameterDto {
@@ -60,23 +59,20 @@ export async function* SSE<T = any>(
     const timeoutId = setTimeout(() => controller.abort(), finalConfig.timeout);
 
     try {
-        const llmConfig = getCurrentLLMConfig();
-        if (!llmConfig) {
-            throw new Error('没有可用的LLM配置');
-        }
-        
         // 获取用户token用于身份验证
         const { token } = useAuthStore.getState();
+        if (!token) {
+            throw new Error('请先登录');
+        }
 
         // 获取AI服务配置ID（如果有的话）
         const { useChatStore } = await import('../stores/chatStore');
         const chatState = useChatStore.getState();
 
-        // 构建请求头
+        // 构建请求头 - 使用统一认证方式
         const headers: Record<string, string> = {
             ...finalConfig.headers,
             "Authorization": `Bearer ${token}`, // 用户身份验证
-            "api-key": llmConfig.apiKey, // 使用LLM配置的API Key
         };
 
         // 如果有AI服务配置，添加配置ID头
@@ -270,23 +266,20 @@ export async function* generateFunctionCallingPrompt(
  * 生成提示词模板参数（标题、描述、标签）
  */
 export const GeneratePromptTemplateParameters = async (prompt: string, language: string = 'zh-CN'): Promise<PromptTemplateParameterDto> => {
-    const llmConfig = getCurrentLLMConfig();
-    if (!llmConfig) {
-        throw new Error('没有可用的LLM配置');
-    }
-
     // 获取用户token用于身份验证
     const { token } = useAuthStore.getState();
+    if (!token) {
+        throw new Error('请先登录');
+    }
 
     // 获取AI服务配置ID（如果有的话）
     const { useChatStore } = await import('../stores/chatStore');
     const chatState = useChatStore.getState();
 
-    // 构建请求头
+    // 构建请求头 - 使用统一认证方式
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`, // 用户身份验证
-        'api-key': llmConfig.apiKey,
     };
 
     // 如果有AI服务配置，添加配置ID头

@@ -210,6 +210,41 @@ app.MapPost("/api/v1/api-keys/search", async (Console.Service.Services.ApiKeySer
     return Results.Ok(result);
 });
 
+// 添加缺失的prompt相关端点
+app.MapPost("/api/v1/prompt/optimize-function-calling", async (Console.Service.Services.PromptService promptService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.OptimizeFunctionCallingPromptInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    await promptService.OptimizeFunctionCallingPromptAsync(input!, context);
+});
+
+app.MapPost("/api/v1/prompt/generateprompttemplateparameters", async (Console.Service.Services.PromptService promptService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.GeneratePromptTemplateParameterInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await promptService.GeneratePromptTemplateParametersAsync(input!, context);
+    return Results.Ok(result);
+});
+
+app.MapPost("/api/v1/prompt/optimizeimageprompt", async (Console.Service.Services.PromptService promptService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.GenerateImagePromptInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    await promptService.OptimizeImagePromptAsync(input!, context);
+});
+
+app.MapPost("/api/v1/prompt/generate-prompt-optimization-suggestion", async (Console.Service.Services.PromptService promptService, HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var json = await reader.ReadToEndAsync();
+    var input = System.Text.Json.JsonSerializer.Deserialize<Console.Service.Dto.GeneratePromptOptimizationSuggestionInput>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var result = await promptService.GeneratePromptOptimizationSuggestionAsync(input!, context);
+    return Results.Ok(result);
+});
+
 // 添加缺失的images相关端点
 app.MapPost("/api/v1/images/search", async (Console.Service.Services.ImageService imageService, HttpContext context) =>
 {
